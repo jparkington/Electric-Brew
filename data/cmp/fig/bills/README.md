@@ -6,7 +6,7 @@ Each of the 7 accounts in CMP has a series of PDFs available for that account. A
 There is a sample bill in this folder, which we'll use as a guideline for what to record.
 
 ### What to Retrieve from Each Bill
-The following data points from each bill should be recorded somewhere for us to turn into an underlying data table
+The following data points from each bill should be recorded somewhere for us to turn into an underlying data table:
 - Account Number
 - Number of Days
 - Bill Start Date
@@ -15,5 +15,3 @@ The following data points from each bill should be recorded somewhere for us to 
 - KWH Hours Recorded (e.g. 1487)
 - Delivery Service Rate Charged (e.g. 0.077711)
 - Service Charge (e.g. 21.47)
-
-When entering these numbers into the sheet, just enter numerical values and decimal points, not ($) or string labels like "KWH".
