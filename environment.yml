@@ -14,6 +14,6 @@ dependencies:
   - numpy      # Used for numerical operations like sqrt() and linspace()
   - pandas     # For data manipulation and analysis using DataFrames
   - pyarrow    # For curating data into `.parquet` structures with compression and logical partitioning
+  - PyPDF2     # For parsing PDF files and extracting text from them
   - scipy      # For scientific computing, specifically norm.pdf() and norm.fit() in scipy.stats
   - seaborn    # For advanced plotting of linear regressions
-  - tabulate   # For formatting DataFrames into readable tables in CLI

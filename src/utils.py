@@ -1,6 +1,9 @@
 from cycler            import cycler
+from glob              import glob
 from matplotlib.pyplot import rcParams
 from seaborn           import color_palette
+from PyPDF2            import PdfReader
+from re                import search, DOTALL
 
 import os
 import logging         as lg
@@ -101,3 +104,61 @@ def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter-usage",
 
     except Exception as e:
         lg.error(f"Error while curating meter usage data: {e}")
+
+def scrape_bills(raw    : str = "./data/cmp/raw/bills",
+                 output : str = "./data/cmp/raw/bills"):
+    '''
+    This function reads all PDFs in the specified `raw` directory, extracts specific information from the 
+    electricity bills using regular expressions, and then saves the consolidated data as a CSV file 
+    in the `output` directory.
+    
+    Methodology:
+        1. Iterate over each PDF in the `raw` directory.
+        2. Extract the text content of each page in the PDF.
+        3. Use regular expressions to scrape relevant billing and meter details.
+        4. Append the scraped data to a list of dictionaries.
+        5. Convert the list of dictionaries to a DataFrame.
+        6. Save the DataFrame as a CSV file in the `output` directory.
+        
+    Parameters:
+        raw    (str) : Path to the directory containing raw electricity bill PDF files.
+        output (str) : Directory where the scraped data CSV file should be saved.
+    '''
+    
+    try:
+        records = []
+        for pdf_path in glob(f"{raw}/**/*pdf", recursive = True):
+            with open(pdf_path, 'rb') as f:
+
+                def extract_field(pattern, replace_dict = None):
+                    search_result = search(pattern, pdf_text)
+                    field_value   = search_result.group(1) if search_result else "NULL"
+                    
+                    if replace_dict:
+                        field_value = "".join(replace_dict.get(char, char) for char in field_value)
+                        
+                    return field_value
+
+                pdf_text      = "".join(page.extract_text() for page in PdfReader(f).pages)
+                meter_details = search(r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges", 
+                                       pdf_text, 
+                                       DOTALL)
+                
+                records.append({'account_number'        : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
+                                'amount_due'            : extract_field(r"Amount Due\s*\$\s*([\d,]+\.\d{2})"),
+                                'service_charge'        : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
+                                'delivery_service_rate' : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
+                                'read_date'             : meter_details.group(1) if meter_details else "NULL",
+                                'prior_read_date'       : meter_details.group(2) if meter_details else "NULL",
+                                'kwh_delivered'         : meter_details.group(3).replace(",", "") if meter_details else "NULL",
+                                'pdf_file_name'         : os.path.basename(pdf_path)})
+
+        df = pd.DataFrame(records)
+        
+        if not os.path.exists(output):
+            os.makedirs(output)
+            
+        df.to_csv(os.path.join(output, 'scraped_bills.csv'), index = False)
+    
+    except Exception as e:
+        return f"Error while curating bill data: {e}"
