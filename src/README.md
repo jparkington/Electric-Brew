@@ -9,6 +9,7 @@ The `/src/` directory houses various utility scripts that support the main funct
 - [`utils.py`](#utilspy)
   - [`set_plot_params`](#set_plot_params)
   - [`curate_meter_usage`](#curate_meter_usage)
+  - [`scrape_bills`](#scrape_bills)
 
 ## `utils.py`
 
@@ -46,3 +47,19 @@ def curate_meter_usage(raw           : str,
 - **`partition_col`**: Columns by which the .parquet files will be partitioned.
 
 - **`schema`**: Columns that will be used as headers in the resulting DataFrame.
+
+### `scrape_bills`
+
+**Purpose** This function automates the extraction of specific fields from a collection of PDF bills stored in a directory. It is designed to capture around 90% of the values from these bills. However, due to variations in the format and content of individual documents, manual review and intervention is required for complete accuracy.
+
+**Signature** 
+```python
+def scrape_bills(raw    : str, 
+                 output : str):
+```
+
+**Parameters**
+
+- **`raw`**: Path to the directory containing the PDF bills that need to be processed.
+
+- **`output`** : Path where the extracted data will be saved as a CSV file.
