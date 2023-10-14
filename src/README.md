@@ -6,11 +6,54 @@ The `/src/` directory houses various utility scripts that support the main funct
 <!-- omit in toc -->
 ## Table of Contents
 
+- [`eda_1.ipynb`](#eda_1ipynb)
+- [`eda_2.ipynb`](#eda_2ipynb)
 - [`utils.py`](#utilspy)
   - [`set_plot_params`](#set_plot_params)
   - [`curate_meter_usage`](#curate_meter_usage)
   - [`scrape_bills`](#scrape_bills)
     - [Regular Expressions](#regular-expressions)
+
+## `eda_1.ipynb`
+
+The `eda_1.ipynb`` notebook performs exploratory data analysis on energy usage data for Austin Street Brewery Company, sourced from Central Maine Power.
+  
+**Signature** 
+```python
+import matplotlib.pyplot as plt
+import pyarrow.parquet   as pq
+import numpy   as np
+import seaborn as sns
+import pandas  as pd
+```
+
+**Exploration Topics**
+  - General DataFrame information (shape, columns, data types).
+  - Feature engineering (date-time formatting, year and month extraction).
+  - Distribution of kilowatt-hours (KWH) by `meter_id` and year.
+  - Statistics on mean and max energy usage.
+  - Instances of sudden increases in energy usage (energy spikes).
+
+## `eda_2.ipynb`
+
+The `eda_2.ipynb` notebook continues the exploratory data analysis of energy usage data and is complementary to the work in `eda_1.ipynb`.
+
+**Signature** 
+```python
+from utils import set_plot_params
+
+import matplotlib.pyplot as plt
+import pyarrow.parquet   as pq
+import pandas as pd
+```
+
+**Exploration Topics**
+  - Utilizes `set_plot_params()` for plot aesthetics.
+  - Displays data and a 'kwh' histogram.
+  - Classifies and sums 'kwh' by peak periods, and plots the usage by On/Off/Mid-Peak.
+  - Calculates and plots average hourly 'kwh' within each peak period.
+  - Provides additional scatter plots, color-coded by `meter_id` and `account_number`.
+
 
 ## `utils.py`
 
@@ -18,14 +61,16 @@ The `utils.py` script provides a variety of utility functions spanning different
 
 ### `set_plot_params`
 
-**Purpose** Initializes and returns custom plotting parameters for `matplotlib`, ensuring consistent visual style throughout the project.
+**Purpose**  
+Initializes and returns custom plotting parameters for `matplotlib`, ensuring consistent visual style throughout the project.
 
 **Signature** 
 ```python
 def set_plot_params() -> list:
 ```
 
-**Returns** A list containing RGBA color tuples that comprise the custom color palette for plots.
+**Returns**  
+A list containing RGBA color tuples that comprise the custom color palette for plots.
 
 ### `curate_meter_usage`
 
@@ -51,7 +96,8 @@ def curate_meter_usage(raw           : str,
 
 ### `scrape_bills`
 
-**Purpose** This function automates the extraction of specific fields from a collection of PDF bills stored in a directory. It is designed to capture around 90% of the values from these bills. However, due to variations in the format and content of individual documents, manual review and intervention is required for complete accuracy.
+**Purpose**  
+This function automates the extraction of specific fields from a collection of PDF bills stored in a directory. It is designed to capture around 90% of the values from these bills. However, due to variations in the format and content of individual documents, manual review and intervention is required for complete accuracy.
 
 **Signature** 
 ```python
@@ -74,7 +120,8 @@ The `scrape_bills` function uses various regular expressions (REGEX) to identify
     - `\s*`: Matches zero or more whitespace characters.
     - `([\d-]+)`: Captures one or more digits or dashes.
     
-    **Purpose**: Captures the account number that follows the literal text "Account Number", allowing for possible whitespace and dashes.
+    **Purpose**  
+    Captures the account number that follows the literal text "Account Number", allowing for possible whitespace and dashes.
 
 2. **Amount Due**: `r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"`
     - `Amount Due Date Due`: Literal text that the REGEX searches for.
@@ -84,7 +131,8 @@ The `scrape_bills` function uses various regular expressions (REGEX) to identify
     - `\$\s*`: Captures the dollar sign and any following whitespace.
     - `([\d,]+\.\d{2})`: Captures one or more digits or commas, followed by a decimal and exactly two digits.
 
-    **Purpose**: Finds the amount due that follows the literal text "Amount Due Date Due", capturing the date and any uppercase letters or whitespace, accounting for optional whitespace, and ensures the amount has two decimal places.
+    **Purpose**  
+    Finds the amount due that follows the literal text "Amount Due Date Due", capturing the date and any uppercase letters or whitespace, accounting for optional whitespace, and ensures the amount has two decimal places.
 
 3. **Service Charge**: `r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})"`
     - `Service Charge`: Literal text that the REGEX starts with.
@@ -92,7 +140,8 @@ The `scrape_bills` function uses various regular expressions (REGEX) to identify
     - `@\$\s*`: Captures the '@$' symbol followed by any number of whitespace characters.
     - `([+-]?\d+\.\d{2})`: Captures a number that may be positive or negative, followed by a decimal and exactly two digits.
     
-    **Purpose**: Captures the service charge value found after the term "Service Charge", accounting for both positive and negative values and ensuring two decimal places.
+    **Purpose**  
+    Captures the service charge value found after the term "Service Charge", accounting for both positive and negative values and ensuring two decimal places.
 
 4. **Delivery Service Rate**: `r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"`
     - `Delivery Service`: Literal text to start the REGEX.
@@ -100,7 +149,8 @@ The `scrape_bills` function uses various regular expressions (REGEX) to identify
     - `\d+,?\d+ KWH`: Captures one or more digits, optionally a comma, and more digits followed by ' KWH'.
     - `@\$(\d+\.\d+)`: Captures the '@$' symbol followed by one or more digits, a decimal point, and more digits.
     
-    **Purpose**: Extracts the rate per kilowatt-hour (KWH) for delivery service, following the term "Delivery Service".
+    **Purpose**  
+    Extracts the rate per kilowatt-hour (KWH) for delivery service, following the term "Delivery Service".
 
 5. **Meter Details**: `r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges"`
     - `Delivery Charges.*?`: Starts with the literal text and lazily matches any number of any characters.
@@ -109,4 +159,5 @@ The `scrape_bills` function uses various regular expressions (REGEX) to identify
     - `(\d{1,4},?\d{0,3}) KWH`: Captures one or more digits, optionally a comma, and more digits followed by ' KWH'.
     - `.*?Total Current Delivery Charges`: Lazily matches any number of any characters until it finds the text 'Total Current Delivery Charges'.
 
-    **Purpose**: Captures multiple details—read date, prior read date, and kilowatt-hours (KWH) delivered—within the section starting with "Delivery Charges".
+    **Purpose**  
+    Captures multiple details (read date, prior read date, and kilowatt-hours (KWH) delivered) within the section starting with "Delivery Charges".
