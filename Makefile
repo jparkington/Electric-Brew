@@ -17,5 +17,4 @@ setup: create-env
 # Clean up the environment and created files.
 clean: remove-env
 	@echo "Cleaning up..."
-	rm data/*
 	@echo "Environment and data files removed."
