@@ -2,8 +2,8 @@ from cycler            import cycler
 from glob              import glob
 from matplotlib.pyplot import rcParams
 from seaborn           import color_palette
-from PyPDF2            import PdfReader
 from re                import search, DOTALL
+from slate             import PDF
 
 import os
 import logging         as lg
@@ -139,7 +139,7 @@ def scrape_bills(raw    : str = "./data/cmp/raw/bills",
                         
                     return field_value
 
-                pdf_text      = "".join(page.extract_text() for page in PdfReader(f).pages)
+                pdf_text = " ".join(PDF(f))
                 meter_details = search(r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges", 
                                        pdf_text, 
                                        DOTALL)
