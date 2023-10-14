@@ -146,7 +146,7 @@ def scrape_bills(raw    : str = "./data/cmp/raw/bills",
                                     DOTALL)
             
             records.append({'account_number'        : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
-                            'amount_due'            : extract_field(r"Amount Due\s*\$\s*([\d,]+\.\d{2})"),
+                            'amount_due'            : extract_field(r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"),
                             'service_charge'        : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
                             'delivery_service_rate' : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
                             'read_date'             : meter_details.group(1) if meter_details else "NULL",
