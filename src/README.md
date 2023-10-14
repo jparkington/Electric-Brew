@@ -76,13 +76,15 @@ The `scrape_bills` function uses various regular expressions (REGEX) to identify
     
     **Purpose**: Captures the account number that follows the literal text "Account Number", allowing for possible whitespace and dashes.
 
-2. **Amount Due**: `r"Amount Due\s*\$\s*([\d,]+\.\d{2})"`
-    - `Amount Due`: Literal text that the REGEX searches for.
+2. **Amount Due**: `r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"`
+    - `Amount Due Date Due`: Literal text that the REGEX searches for.
     - `\s*`: Matches zero or more whitespace characters.
+    - `\d+-\d+-\d+`: Captures a date in the format `d+-d+-d+`.
+    - `[A-Z\s]+`: Captures one or more uppercase letters or whitespace.
     - `\$\s*`: Captures the dollar sign and any following whitespace.
     - `([\d,]+\.\d{2})`: Captures one or more digits or commas, followed by a decimal and exactly two digits.
 
-    **Purpose**: Finds the amount due that follows the literal text "Amount Due", accounting for optional whitespace, and ensures the amount has two decimal places.
+    **Purpose**: Finds the amount due that follows the literal text "Amount Due Date Due", capturing the date and any uppercase letters or whitespace, accounting for optional whitespace, and ensures the amount has two decimal places.
 
 3. **Service Charge**: `r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})"`
     - `Service Charge`: Literal text that the REGEX starts with.
