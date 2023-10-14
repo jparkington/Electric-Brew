@@ -3,11 +3,11 @@ from glob              import glob
 from matplotlib.pyplot import rcParams
 from seaborn           import color_palette
 from re                import search, DOTALL
-from slate             import PDF
 
 import os
 import logging         as lg
 import pandas          as pd
+import pdfplumber      as pl
 import pyarrow         as pa
 import pyarrow.parquet as pq
 
@@ -128,30 +128,31 @@ def scrape_bills(raw    : str = "./data/cmp/raw/bills",
     try:
         records = []
         for pdf_path in glob(f"{raw}/**/*pdf", recursive = True):
-            with open(pdf_path, 'rb') as f:
 
-                def extract_field(pattern, replace_dict = None):
-                    search_result = search(pattern, pdf_text)
-                    field_value   = search_result.group(1) if search_result else "NULL"
-                    
-                    if replace_dict:
-                        field_value = "".join(replace_dict.get(char, char) for char in field_value)
-                        
-                    return field_value
-
-                pdf_text = " ".join(PDF(f))
-                meter_details = search(r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges", 
-                                       pdf_text, 
-                                       DOTALL)
+            def extract_field(pattern, replace_dict = None):
+                search_result = search(pattern, pdf_text)
+                field_value   = search_result.group(1) if search_result else "NULL"
                 
-                records.append({'account_number'        : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
-                                'amount_due'            : extract_field(r"Amount Due\s*\$\s*([\d,]+\.\d{2})"),
-                                'service_charge'        : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
-                                'delivery_service_rate' : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
-                                'read_date'             : meter_details.group(1) if meter_details else "NULL",
-                                'prior_read_date'       : meter_details.group(2) if meter_details else "NULL",
-                                'kwh_delivered'         : meter_details.group(3).replace(",", "") if meter_details else "NULL",
-                                'pdf_file_name'         : os.path.basename(pdf_path)})
+                if replace_dict:
+                    field_value = "".join(replace_dict.get(char, char) for char in field_value)
+                    
+                return field_value
+
+            with pl.open(pdf_path) as pdf:
+                pdf_text = " ".join(page.extract_text() for page in pdf.pages)
+
+            meter_details = search(r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges", 
+                                    pdf_text, 
+                                    DOTALL)
+            
+            records.append({'account_number'        : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
+                            'amount_due'            : extract_field(r"Amount Due\s*\$\s*([\d,]+\.\d{2})"),
+                            'service_charge'        : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
+                            'delivery_service_rate' : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
+                            'read_date'             : meter_details.group(1) if meter_details else "NULL",
+                            'prior_read_date'       : meter_details.group(2) if meter_details else "NULL",
+                            'kwh_delivered'         : meter_details.group(3).replace(",", "") if meter_details else "NULL",
+                            'pdf_file_name'         : os.path.basename(pdf_path)})
 
         df = pd.DataFrame(records)
         

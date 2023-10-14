@@ -13,7 +13,7 @@ dependencies:
   - matplotlib # For plotting with plt.hist(), plt.plot(), plt.savefig(), etc.
   - numpy      # Used for numerical operations like sqrt() and linspace()
   - pandas     # For data manipulation and analysis using DataFrames
+  - pdfplumber # For parsing PDF files and extracting text from them
   - pyarrow    # For curating data into `.parquet` structures with compression and logical partitioning
   - scipy      # For scientific computing, specifically norm.pdf() and norm.fit() in scipy.stats
   - seaborn    # For advanced plotting of linear regressions
-  - slate      # For parsing PDF files and extracting text from them
