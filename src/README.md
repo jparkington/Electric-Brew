@@ -6,60 +6,24 @@ The `/src/` directory houses various utility scripts that support the main funct
 <!-- omit in toc -->
 ## Table of Contents
 
-- [`eda_1.ipynb`](#eda_1ipynb)
-- [`eda_2.ipynb`](#eda_2ipynb)
 - [`utils.py`](#utilspy)
-  - [`set_plot_params`](#set_plot_params)
-  - [`curate_meter_usage`](#curate_meter_usage)
-  - [`scrape_bills`](#scrape_bills)
-    - [Regular Expressions](#regular-expressions)
-
-## `eda_1.ipynb`
-
-The `eda_1.ipynb`` notebook performs exploratory data analysis on energy usage data for Austin Street Brewery Company, sourced from Central Maine Power.
-  
-**Signature** 
-```python
-import matplotlib.pyplot as plt
-import pyarrow.parquet   as pq
-import numpy   as np
-import seaborn as sns
-import pandas  as pd
-```
-
-**Exploration Topics**
-  - General DataFrame information (shape, columns, data types).
-  - Feature engineering (date-time formatting, year and month extraction).
-  - Distribution of kilowatt-hours (KWH) by `meter_id` and year.
-  - Statistics on mean and max energy usage.
-  - Instances of sudden increases in energy usage (energy spikes).
-
-## `eda_2.ipynb`
-
-The `eda_2.ipynb` notebook continues the exploratory data analysis of energy usage data and is complementary to the work in `eda_1.ipynb`.
-
-**Signature** 
-```python
-from utils import set_plot_params
-
-import matplotlib.pyplot as plt
-import pyarrow.parquet   as pq
-import pandas as pd
-```
-
-**Exploration Topics**
-  - Utilizes `set_plot_params()` for plot aesthetics.
-  - Displays data and a 'kwh' histogram.
-  - Classifies and sums 'kwh' by peak periods, and plots the usage by On/Off/Mid-Peak.
-  - Calculates and plots average hourly 'kwh' within each peak period.
-  - Provides additional scatter plots, color-coded by `meter_id` and `account_number`.
-
+  - [Runtime](#runtime)
+    - [`set_plot_params`](#set_plot_params)
+    - [`read_data`](#read_data)
+  - [DataFrames](#dataframes)
+  - [Curation](#curation)
+    - [`curate_meter_usage`](#curate_meter_usage)
+    - [`scrape_bills`](#scrape_bills)
 
 ## `utils.py`
 
 The `utils.py` script provides a variety of utility functions spanning different aspects of the project, from visual parameter configuration to comprehensive data curation tasks.
 
-### `set_plot_params`
+### Runtime
+
+This section contains functions primarily focused on setting up and configuring the environment for data visualization and data reading. These functions make sure that all plots have a uniform appearance and that data files can be easily read into Pandas DataFrames.
+
+#### `set_plot_params`
 
 **Purpose**  
 Initializes and returns custom plotting parameters for `matplotlib`, ensuring consistent visual style throughout the project.
@@ -72,7 +36,28 @@ def set_plot_params() -> list:
 **Returns**  
 A list containing RGBA color tuples that comprise the custom color palette for plots.
 
-### `curate_meter_usage`
+#### `read_data`
+
+**Purpose**  
+Reads `.parquet` files into Pandas DataFrames. Parquet is a columnar storage file format optimized for use with big data frameworks. This utility makes it simple to ingest such data for analysis or transformation.
+
+**Signature** 
+```python
+def read_data(file_path : str) -> pd.DataFrame:
+```
+
+**Returns**  
+A DataFrame containing the data read from the supplied Parquet file path.
+
+### DataFrames
+
+This section initializes commonly used DataFrames at the start, making them readily available across different parts of the project. This promotes code reusability and performance optimization.
+
+### Curation
+
+This section comprises functions that transform raw data files into structured and query-optimized formats. This includes converting raw CSVs into partitioned Parquet files and extracting relevant data from PDFs.
+
+#### `curate_meter_usage`
 
 **Purpose** Processes all CSV files from the provided directory, integrates the specified schema, and subsequently consolidates the data into a partitioned `.parquet` file in the designated output directory. This conversion and curation process is optimized with `snappy` compression for efficiency.
 
@@ -94,7 +79,7 @@ def curate_meter_usage(raw           : str,
 
 - **`schema`**: Columns that will be used as headers in the resulting DataFrame.
 
-### `scrape_bills`
+#### `scrape_bills`
 
 **Purpose**  
 This function automates the extraction of specific fields from a collection of PDF bills stored in a directory. It is designed to capture around 90% of the values from these bills. However, due to variations in the format and content of individual documents, manual review and intervention is required for complete accuracy.
@@ -111,7 +96,7 @@ def scrape_bills(raw    : str,
 
 - **`output`** : Path where the extracted data will be saved as a CSV file.
 
-#### Regular Expressions
+**Regular Expressions**
 
 The `scrape_bills` function uses various regular expressions (REGEX) to identify and extract specific pieces of information from text content within utility bills stored as PDF files. Below, each REGEX is broken down to explain its components and what it aims to capture:
 

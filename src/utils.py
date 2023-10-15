@@ -15,6 +15,18 @@ import pyarrow.parquet as pq
 lg.basicConfig(level  = lg.INFO, 
                format = '%(asctime)s | %(levelname)s | %(message)s')
 
+'''
+=========================================
+================ RUNTIME ================
+=========================================
+
+This section contains utility functions that configure the runtime environment.
+
+Functions:
+    - set_plot_params : Sets up custom plot parameters for matplotlib.
+    - read_data       : Reads a .parquet file into a Pandas DataFrame.
+'''
+
 def set_plot_params() -> list:
     '''
     This function sets up custom plot parameters for matplotlib plots.
@@ -55,6 +67,47 @@ def set_plot_params() -> list:
                     'axes.prop_cycle'    : cycler(color = colors)})
     
     return colors
+
+def read_data(file_path : str) -> pd.DataFrame:
+    '''
+    This function reads a .parquet file from the specified file path into a Pandas DataFrame.
+    
+    Parameters:
+        file_path (str) : Relative path to the .parquet file.
+        
+    Returns:
+        pd.DataFrame : DataFrame containing the data.
+    '''
+
+    return pq.read_table(file_path).to_pandas()
+
+
+'''
+=========================================
+============== DATAFRAMES ===============
+=========================================
+
+This section contains commonly used DataFrames initialized at the start for easier access across different scripts.
+
+DataFrames:
+    - cmp_meter_usage : DataFrame containing meter usage data from CMP.
+'''
+
+# meter_usage = read_data("..data/cmp/curated/meter-usage")
+
+
+'''
+=========================================
+=============== CURATION ================
+=========================================
+
+This section contains utility functions that curate data from raw sources into more structured formats.
+
+Functions:
+    - curate_meter_usage : Curates meter usage data from raw CSVs into partitioned Parquet files.
+    - scrape_bills       : Scrapes billing data from PDFs into a CSV file.
+
+'''
 
 def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter-usage", 
                        curated       : str  = "./data/cmp/curated/meter-usage",
