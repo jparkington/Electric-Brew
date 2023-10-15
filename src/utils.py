@@ -70,13 +70,21 @@ def set_plot_params() -> list:
 
 def read_data(file_path: str) -> pd.DataFrame:
     '''
-    This function reads a .parquet file from the specified file path into a Pandas DataFrame.
+    This function reads a .parquet file from a specified relative path into a Pandas DataFrame.
+    The function automatically resolves the path relative to the project's /data/ directory.
+    
+    Steps:
+    1. Get the absolute path of the current file (utils.py) using `os.path.abspath(__file__)`.
+    2. Determine the directory of the current file (`src`) using `os.path.dirname()`.
+    3. Navigate to the project root directory by going up one level with `..`.
+    4. Append 'data' to the project root directory to reach the /data/ directory.
+    5. Join this with the user-provided `file_path` to construct the full path to the .parquet file.
     
     Parameters:
-        file_path (str) : Relative path to the .parquet file from the /data/ directory.
+        file_path (str) : Relative path to the .parquet file, starting from the /data/ directory.
         
     Returns:
-        pd.DataFrame : DataFrame containing the data.
+        pd.DataFrame : DataFrame containing the data read from the .parquet file.
     '''
     
     current_file_path = os.path.abspath(__file__)           # Get the absolute path of the current file (utils.py)

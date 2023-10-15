@@ -1,7 +1,9 @@
 <!-- omit in toc -->
 # Directory Documentation for `/src/`
 
-The `/src/` directory houses various utility scripts that support the main functionalities of this project, aligning with conventional structuring in data science and software development projects. Our instance of `/src/` houses scripts responsible for data curation, output formatting, and visualization. This document provides a brief overview of each script and its contained functions.
+The `/src/` directory contains various utility scripts that support the main functionalities of this project, aligning with conventional structuring in data science and software development projects. Our instance of `/src/` houses scripts responsible for data curation, output formatting, and visualization. This document provides a brief overview of each script and its contained functions.
+
+> **Note**: To facilitate smooth development and execution, it's recommended to run all commands out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** is set to point directly to the `src` directory within this Conda environment. This allows you to easily import the `utils` module and its DataFrames and functions from any script within the `src` directory.
 
 <!-- omit in toc -->
 ## Table of Contents
@@ -40,7 +42,7 @@ A list containing RGBA color tuples that comprise the custom color palette for p
 #### `read_data`
 
 **Purpose**  
-Reads `.parquet` files into Pandas DataFrames. Parquet is a columnar storage file format optimized for use with big data frameworks. This utility makes it simple to ingest such data for analysis or transformation.
+Reads `.parquet` files into Pandas DataFrames. The function resolves the path relative to the `data` directory of the project, no matter where your script is located within the `src` directory or where you've cloned the repo. As such, it expects a file path string that starts from within the `data` directory.
 
 **Signature** 
 ```python
