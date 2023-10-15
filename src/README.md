@@ -75,8 +75,6 @@ A repository for meter-level electrical consumption data from Central Maine Powe
   
   - `kwh` (**float**): Kilowatt-hours recorded by the meter during the interval, representing the unit of electricity consumed.
 
-
-
 ### Curation
 
 This section comprises functions that transform raw data files into structured and query-optimized formats. This includes converting raw CSVs into partitioned Parquet files and extracting relevant data from PDFs.

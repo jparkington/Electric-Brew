@@ -68,19 +68,23 @@ def set_plot_params() -> list:
     
     return colors
 
-def read_data(file_path : str) -> pd.DataFrame:
+def read_data(file_path: str) -> pd.DataFrame:
     '''
     This function reads a .parquet file from the specified file path into a Pandas DataFrame.
     
     Parameters:
-        file_path (str) : Relative path to the .parquet file.
+        file_path (str) : Relative path to the .parquet file from the /data/ directory.
         
     Returns:
         pd.DataFrame : DataFrame containing the data.
     '''
-
-    return pq.read_table(file_path).to_pandas()
-
+    
+    current_file_path = os.path.abspath(__file__)           # Get the absolute path of the current file (utils.py)
+    src_directory     = os.path.dirname(current_file_path)  # Get the directory of the file at runtime
+    project_root      = os.path.join(src_directory, '..')   # Go up one directory to get to the project root
+    data_directory    = os.path.join(project_root, 'data')  # Join with 'data' to get to the data directory
+    
+    return pq.read_table(os.path.abspath(os.path.join(data_directory, file_path))).to_pandas()
 
 '''
 =========================================
@@ -94,7 +98,7 @@ DataFrames:
     - meter_usage : DataFrame containing meter usage data from CMP.
 '''
 
-meter_usage = read_data("..data/cmp/curated/meter-usage")
+meter_usage = read_data("cmp/curated/meter-usage")
 
 
 '''
