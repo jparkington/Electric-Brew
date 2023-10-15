@@ -65,9 +65,8 @@ A repository for meter-level electrical consumption data from Central Maine Powe
 **Partitioning**: `account_number`  
 
 **Schema**:
-  - `account_number` (**int**): A unique identifier for the customer's account with CMP.
 
-  - `service_point_id` (in**t): A unique identifier for the point where the electrical service is provided, often tied to a specific location or customer.
+  - `service_point_id` (**int**): A unique identifier for the point where the electrical service is provided, often tied to a specific location or customer.
   
   - `meter_id` (**str**): Identifier for the electrical meter installed at the service point. It records the amount of electricity consumed.
   
@@ -76,6 +75,8 @@ A repository for meter-level electrical consumption data from Central Maine Powe
   - `meter_channel` (**int**): The channel number on the electrical meter. Meters with multiple channels can record different types of data.
   
   - `kwh` (**float**): Kilowatt-hours recorded by the meter during the interval, representing the unit of electricity consumed.
+
+  - `account_number` (**int**): A unique identifier for the customer's account with CMP.
 
 ### Curation
 
