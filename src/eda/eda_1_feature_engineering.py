@@ -41,9 +41,9 @@ def feature_engineering(df : pd.DataFrame) -> pd.DataFrame:
     df['month_name'] = df['interval_end_datetime'].dt.strftime('%B')
 
     # Normalize 'kwh' by 'meter_id'
-    grouped = df.groupby('meter_id').agg({'kwh': ['mean', 'std']}).reset_index()
-    grouped.columns = ['meter_id', 'mean_kwh', 'std_kwh']
-    df = pd.merge(df, grouped, on='meter_id', how='left')
+    grouped              = df.groupby('meter_id').agg({'kwh': ['mean', 'std']}).reset_index()
+    grouped.columns      = ['meter_id', 'mean_kwh', 'std_kwh']
+    df                   = pd.merge(df, grouped, on = 'meter_id', how = 'left')
     df['kwh_normalized'] = (df['kwh'] - df['mean_kwh']) / df['std_kwh']
     
     # Identify extreme outliers
@@ -100,7 +100,6 @@ def generate_usage_plot(df      : pd.DataFrame,
                                  ncols    = 1, 
                                  fancybox = True, 
                                  shadow   = True)
-            plt.setp(leg.get_title(), weight = 'bold')
         else:
             axes[i].get_legend().remove()
 

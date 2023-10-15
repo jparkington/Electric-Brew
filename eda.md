@@ -134,6 +134,9 @@ Defining an energy spike as an interval where power usage exceeds $3 \sigma$ fro
 
 The subsequent visualizations aim to spotlight the frequency and temporal distribution of these energy spikes across individual meters.
 
+![Count of Energy Spikes](fig/eda/count_of_spikes.png)
+![Energy Spikes by Meter ID & Year](fig/eda/spikes_by_year.png)
+
 ### Key Points to Consider
 
 1. **Spike Frequency and Timing**: The frequency and timing of these spikes could reveal patterns tied to specific operational processes or schedules. Understanding when spikes are most likely to occur could inform better resource allocation or even preventative measures.

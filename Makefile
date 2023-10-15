@@ -20,11 +20,14 @@ remove-env:
 	@echo "Removing Conda environment..."
 	@conda env remove -n electric-brew
 
-# Create a chain of commands to set up the entire environment and generate visuals
-setup: create-env
-	@echo "Environment setup complete."
-
-# Clean up the environment and created files.
-clean: remove-env
-	@echo "Cleaning up..."
-	@echo "Environment and data files removed."
+# Run group 1 queries
+eda1:
+	@echo "Plotting EDA 1 visuals..."
+	@echo "Generating 'Distribution of KwH, Normalized by Year & Meter ID'."
+	@conda run -n electric-brew python -B src/eda/eda_1_distribution_of_kwh.py
+	@echo "Generating 'Max Usage', 'Mean Usage', and 'Percent Difference' charts."
+	@conda run -n electric-brew python -B src/eda/eda_1_mean_and_max.py
+	@echo "Generating 'Count of Energy Spikes by Meter ID'."
+	@conda run -n electric-brew python -B src/eda/eda_1_count_of_spikes.py
+	@echo "Generating 'Count of Energy Spikes by Meter ID & Year'."
+	@conda run -n electric-brew python -B src/eda/eda_1_spikes_by_year.py
