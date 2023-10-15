@@ -51,7 +51,7 @@ def set_plot_params() -> list:
                     'axes.labelsize'     : 8,
                     'axes.labelweight'   : 'bold',               # Figure parameters
                     'axes.titlesize'     : 12,                   'figure.facecolor'   : 'black',
-                    'axes.titleweight'   : 'bold',               'figure.figsize'     : (10, 7),
+                    'axes.titleweight'   : 'bold',               'figure.figsize'     : (15, 10),
                     'axes.labelpad'      : 15,                   'figure.autolayout'  : True,
                     'axes.titlepad'      : 15,
 

@@ -1,9 +1,13 @@
 from utils import meter_usage
 
+import logging
 import numpy             as np
 import matplotlib.pyplot as plt
 import pandas            as pd
 import seaborn           as sns
+
+logger = logging.getLogger('matplotlib') # Get the logger for 'matplotlib'
+logger.setLevel(logging.WARN)            # Set the logging level to WARN to ignore INFO messages
 
 def feature_engineering(df : pd.DataFrame) -> pd.DataFrame:
     '''
@@ -35,10 +39,11 @@ def feature_engineering(df : pd.DataFrame) -> pd.DataFrame:
     df['year']       = df['interval_end_datetime'].dt.year
     df['month']      = df['interval_end_datetime'].dt.month
     df['month_name'] = df['interval_end_datetime'].dt.strftime('%B')
-    
+
     # Normalize 'kwh' by 'meter_id'
-    grouped_df = df.groupby('meter_id').agg({'kwh': ['mean', 'std']}).reset_index()
-    df = pd.merge(df, grouped_df, on = 'meter_id', how = 'left')
+    grouped = df.groupby('meter_id').agg({'kwh': ['mean', 'std']}).reset_index()
+    grouped.columns = ['meter_id', 'mean_kwh', 'std_kwh']
+    df = pd.merge(df, grouped, on='meter_id', how='left')
     df['kwh_normalized'] = (df['kwh'] - df['mean_kwh']) / df['std_kwh']
     
     # Identify extreme outliers
@@ -55,12 +60,10 @@ def generate_usage_plot(df      : pd.DataFrame,
     Generates a scatter plot to visualize usage by meter over time.
     
     Methodology:
-        1. Summarize the DataFrame by grouping by month, year, and meter_id.
-        2. Calculate the difference between maximum and mean usage as a percentage.
-        3. Identify unique years in the DataFrame for subplots.
-        4. Create subplots for each unique year.
-        5. Plot scatter plots in each subplot, coloring by the hue column.
-        6. Customize plot titles, axis labels, and legend.
+        1. Identify unique years in the DataFrame for subplots.
+        2. Create subplots for each unique year.
+        3. Plot scatter plots in each subplot, coloring by the hue column.
+        4. Customize plot titles, axis labels, and legend.
     
     Parameters:
         df      (DataFrame)  : The DataFrame containing the data to be plotted.
@@ -70,45 +73,41 @@ def generate_usage_plot(df      : pd.DataFrame,
         title   (str)        : The title of the main plot.
     '''
 
-    # Summarize the DataFrame
-    grouped_df = df.groupby(['month', 'year', 'meter_id']) \
-                   .agg({'kwh'        : ['max', 'mean', 'median'],
-                         'month_name' : 'first'}).reset_index()
-    
-    # Calculate max-mean difference as a percentage
-    grouped_df['max_mean_diff'] = (((grouped_df['kwh']['max'] - grouped_df['kwh']['mean']) / grouped_df['kwh']['mean']) * 100).round(2)
-    grouped_df.columns = grouped_df.columns.droplevel(level=1)
-    grouped_df.columns = ['month', 'year', 'meter_id', 'max_usage', 'mean_usage', 'median_usage', 'month_name', 'max_mean_diff']
-    
     # Identify unique years for subplots
-    unique_years = np.sort(grouped_df['year'].unique())[::-1]
+    unique_years = np.sort(df['year'].unique())[::-1]
     
     # Create subplots
-    fig, axes = plt.subplots(len(unique_years), 1, figsize=(8, 10), sharex=True)
+    fig, axes = plt.subplots(len(unique_years), 1, sharex = True)
     
     # Customize main plot titles and axis labels
-    fig.suptitle(title, weight = 'bold', fontsize = 16)
-    fig.supxlabel('Month', weight = 'bold')
+    fig.suptitle(title, weight = 'bold', fontsize = 15)
     fig.supylabel('Usage in Kilowatt Hours', weight = 'bold')
     
     # Generate scatter plots for each year
     for i, year in enumerate(unique_years):
-        sns.scatterplot(data    = grouped_df[grouped_df['year'] == year], 
+        sns.scatterplot(data    = df[df['year'] == year], 
                         x       = x_col, 
                         y       = y_col, 
                         ax      = axes[i], 
-                        hue     = hue_col, 
-                        palette = 'Paired')
+                        hue     = hue_col)
         
         axes[i].set_title(year)
-        axes[i].set_xlabel(None)
-        axes[i].set_ylabel(None)
-        
-        # Remove legend for all but the last plot
-        if i != len(unique_years) - 1:
+        axes[i].set_xlabel('Month')
+        axes[i].set_ylabel(' ')
+
+        if i == 0:
+            leg = axes[i].legend(title    = 'Meter IDs', 
+                                 ncols    = 1, 
+                                 fancybox = True, 
+                                 shadow   = True)
+            plt.setp(leg.get_title(), weight = 'bold')
+        else:
             axes[i].get_legend().remove()
-    
-    plt.legend(title = 'Meter IDs', fancybox = True, shadow = True, bbox_to_anchor = (1.25, len(unique_years)))
-    plt.xticks(rotation = 45)
+
+    plt.xticks(rotation = 90)
+    plt.tight_layout()
+    plt.subplots_adjust(top = 0.90)
+    plt.savefig(f"fig/eda/{y_col}.png")
+    plt.show()
 
 meter_usage_engineered = feature_engineering(meter_usage)
