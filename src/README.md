@@ -11,6 +11,7 @@ The `/src/` directory houses various utility scripts that support the main funct
     - [`set_plot_params`](#set_plot_params)
     - [`read_data`](#read_data)
   - [DataFrames](#dataframes)
+    - [`meter_usage`](#meter_usage)
   - [Curation](#curation)
     - [`curate_meter_usage`](#curate_meter_usage)
     - [`scrape_bills`](#scrape_bills)
@@ -52,6 +53,29 @@ A DataFrame containing the data read from the supplied Parquet file path.
 ### DataFrames
 
 This section initializes commonly used DataFrames at the start, making them readily available across different parts of the project. This promotes code reusability and performance optimization.
+
+#### `meter_usage`
+
+A repository for meter-level electrical consumption data from Central Maine Power (CMP) in 15-minute intervals. Used in analyses of electricity usage patterns, billing, and location-related insights. The DataFrame is partitioned by `account_number`, enabling quick data retrieval for individual accounts. 
+
+**Source**: Central Maine Power (CMP)  
+**Location**: `..data/cmp/curated/meter-usage`  
+**Partitioning**: `account_number`  
+
+**Schema**:
+  - `account_number` (**int**): A unique identifier for the customer's account with CMP.
+
+  - `service_point_id` (in**t): A unique identifier for the point where the electrical service is provided, often tied to a specific location or customer.
+  
+  - `meter_id` (**str**): Identifier for the electrical meter installed at the service point. It records the amount of electricity consumed.
+  
+  - `interval_end_datetime` (**str**): Timestamp marking the end of the meter reading interval, typically indicating when the meter was read.
+  
+  - `meter_channel` (**int**): The channel number on the electrical meter. Meters with multiple channels can record different types of data.
+  
+  - `kwh` (**float**): Kilowatt-hours recorded by the meter during the interval, representing the unit of electricity consumed.
+
+
 
 ### Curation
 

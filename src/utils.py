@@ -87,13 +87,14 @@ def read_data(file_path : str) -> pd.DataFrame:
 ============== DATAFRAMES ===============
 =========================================
 
-This section contains commonly used DataFrames initialized at the start for easier access across different scripts.
+This section contains commonly used DataFrames initialized at the start for easier access across different scripts. 
+These DataFrames are curated and optimized for efficient data operations.
 
 DataFrames:
-    - cmp_meter_usage : DataFrame containing meter usage data from CMP.
+    - meter_usage : DataFrame containing meter usage data from CMP.
 '''
 
-# meter_usage = read_data("..data/cmp/curated/meter-usage")
+meter_usage = read_data("..data/cmp/curated/meter-usage")
 
 
 '''
