@@ -23,7 +23,7 @@ remove-env:
 # Run group 1 queries
 eda1:
 	@echo "Plotting EDA 1 visuals..."
-	@echo "Generating 'Distribution of KwH, Normalized by Year & Meter ID'."
+	@echo "Generating 'Distribution of kWh, Normalized by Year & Meter ID'."
 	@conda run -n electric-brew python -B src/eda/eda_1_distribution_of_kwh.py
 	@echo "Generating 'Max Usage', 'Mean Usage', and 'Percent Difference' charts."
 	@conda run -n electric-brew python -B src/eda/eda_1_mean_and_max.py

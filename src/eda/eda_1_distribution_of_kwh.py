@@ -12,7 +12,7 @@ meter_ids = mue['meter_id'].nunique()
 
 # Initialize plot
 fig, axes = plt.subplots(len(years), 1, figsize = (15, 15), sharex = True)
-fig.suptitle('Distribution of KwH, Normalized by Year & Meter ID', weight = 'bold', fontsize = 15)
+fig.suptitle('Distribution of kWh, Normalized by Year & Meter ID', weight = 'bold', fontsize = 15)
 fig.supylabel('Normalized Usage in Kilowatt Hours', weight = 'bold')
 
 # Create subplots for each year

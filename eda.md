@@ -10,7 +10,7 @@
 - [General Information](#general-information)
 - [Feature Engineering](#feature-engineering)
   - [Fields Added or Altered](#fields-added-or-altered)
-  - [Distribution of KWH by Meter ID \& Year](#distribution-of-kwh-by-meter-id--year)
+  - [Distribution of kWh by Meter ID \& Year](#distribution-of-kwh-by-meter-id--year)
   - [Key Takeaways](#key-takeaways)
 - [Mean and Max Usage Analysis](#mean-and-max-usage-analysis)
   - [Plot Aggregations](#plot-aggregations)
@@ -48,7 +48,7 @@ The primary source of exploration is a compilation of CMP energy usage data for 
 
 The data being analyzed has been extracted directly from the consumer-facing portal at *cmpco.com*. It has been structured and optimized using the Parquet format. This [README](data/cmp/curated/README.md) provides a brief rationale for our data storage decisions and describes some of the retrieval paradigms used with `pandas` and `pyarrow`. 
 
-The location for this source's Parquet directory can be found [here](data/cmp/curated/meter-usage). To facilitate smooth development and execution as reproducibility, all commands are run out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** for this environment set to point directly to the `src` directory within this Conda environment. This allows a;ll scripts to easily import the `utils` module and its DataFrames and functions from any script within the `src` directory, including `meter_usage`.`
+The location for this source's Parquet directory can be found [here](data/cmp/curated/meter-usage). To facilitate smooth development and execution as reproducibility, all commands are run out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** for this environment set to point directly to the `src` directory within this Conda environment. This allows all scripts to easily import the `utils` module and its DataFrames and functions from any script within the `src` directory, including `meter_usage`.`
 
 **Schema** 
 
@@ -90,15 +90,15 @@ This section discusses the reformatting of existing columns and the generation o
   
   - `month_name` (**str**): Full name of the month extracted for better readability in plots and reports.
   
-  - `kwh_normalized` (**float**): Normalized energy usage, calculated as $\frac{{\text{kwh} - \mu}}{{\sigma}}$ where $\mu$ is the mean and $\sigma$ is the standard deviation, both computed grouped by `meter_id`. This normalization levels the playing field for analysis, allowing for a fair comparison across different meters and times.
+  - `kwh_normalized` (**float**): Normalized energy usage, calculated as $\frac{{\text{kWh} - \mu}}{{\sigma}}$ where $\mu$ is the mean and $\sigma$ is the standard deviation, both computed grouped by `meter_id`. This normalization levels the playing field for analysis, allowing for a fair comparison across different meters and times.
   
   - `extreme_outlier` (**bool**): Boolean flag indicating if `kwh_normalized` is greater than 3 or less than -3. Serves as an immediate and accessible flag for unusual or extreme energy usage patterns.
 
-### Distribution of KWH by Meter ID & Year
+### Distribution of kWh by Meter ID & Year
 
-This section presents a series of boxplots, each representing the distribution of normalized kilowatt-hour (KWH) usage by meter ID for different years. The plot aims to provide insights into the variability, central tendency, and outliers in the energy consumption recorded by each meter ID annually.
+This section presents a series of boxplots, each representing the distribution of normalized kilowatt-hour (kWh) usage by meter ID for different years. The plot aims to provide insights into the variability, central tendency, and outliers in the energy consumption recorded by each meter ID annually.
 
-![Distribution of KWH by Meter ID & Year](fig/eda/distribution_of_kwh.png)
+![Distribution of kWh by Meter ID & Year](fig/eda/distribution_of_kwh.png)
 
 ### Key Takeaways
 
@@ -114,9 +114,9 @@ This section delves into the analysis of mean and max energy usage by individual
 
 ### Plot Aggregations
 
-- `max_usage` (**float**): Represents the highest energy consumption in kilowatt-hours (KWH) recorded by each meter in 15-minute intervals, grouped by month and year. This metric is crucial for understanding the extreme peaks in energy usage, which can have both immediate and long-term financial ramifications, such as pushing the brewery into a higher tariff bracket.
+- `max_usage` (**float**): Represents the highest energy consumption in kilowatt-hours (kWh) recorded by each meter in 15-minute intervals, grouped by month and year. This metric is crucial for understanding the extreme peaks in energy usage, which can have both immediate and long-term financial ramifications, such as pushing the brewery into a higher tariff bracket.
 
-- `mean_usage` (**float**): Represents the average energy consumption in kilowatt-hours (KWH) for each meter, also grouped by month and year. Understanding the mean usage helps to gauge the typical energy needs and offers a baseline for potential energy-saving strategies.
+- `mean_usage` (**float**): Represents the average energy consumption in kilowatt-hours (kWh) for each meter, also grouped by month and year. Understanding the mean usage helps to gauge the typical energy needs and offers a baseline for potential energy-saving strategies.
 
 - `max_mean_diff` (**float**): Calculates the percent difference between `max_usage` and `mean_usage`. A high percent difference suggests spikes in energy usage that are not merely statistical outliers but have systemic implications. This uniform distribution of spikes across meters and years implies the need for a more in-depth analysis to better utilize space and grid.  
 
