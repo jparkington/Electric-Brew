@@ -12,6 +12,7 @@
   - [Fields Added or Altered](#fields-added-or-altered)
   - [Distribution of kWh by Meter ID \& Year](#distribution-of-kwh-by-meter-id--year)
   - [Key Takeaways](#key-takeaways)
+- [Usage by Period](#usage-by-period)
 - [Mean and Max Usage Analysis](#mean-and-max-usage-analysis)
   - [Plot Aggregations](#plot-aggregations)
   - [Key Takeaways](#key-takeaways-1)
@@ -89,6 +90,10 @@ This section discusses the reformatting of existing columns and the generation o
   - `month` (**int**): Month extracted from `interval_date_time` and added as a separate column. Allows for monthly trend analysis and comparisons.
   
   - `month_name` (**str**): Full name of the month extracted for better readability in plots and reports.
+
+  - `hour` (**int**): Hour extracted from `interval_date_time`. Useful for hourly trend analysis and period classification.
+
+  - `period` (**str**): Classifies the time of the day into three categories: 'Off-peak: 12AM to 7AM', 'Mid-peak: 7AM to 5PM, 9PM to 11PM', and 'On-peak: 5PM to 9PM'. This classification aids in understanding the energy usage patterns based on different time periods.
   
   - `kwh_normalized` (**float**): Normalized energy usage, calculated as $\frac{{\text{kWh} - \mu}}{{\sigma}}$ where $\mu$ is the mean and $\sigma$ is the standard deviation, both computed grouped by `meter_id`. This normalization levels the playing field for analysis, allowing for a fair comparison across different meters and times.
   
@@ -107,6 +112,17 @@ This section presents a series of boxplots, each representing the distribution o
 2. **Direct and Long-Term Cost Implications**: These spikes in energy usage are not merely statistical outliers; they have immediate and long-term financial ramifications. Not only do they increase the direct cost of energy, but they also risk pushing the brewery into a higher tariff bracket, which could inflate energy costs over a more extended period.
 
 3. **Systemic Nature of Spikes**: The uniform distribution of spikes across meters and years implies that this is not a localized issue but a systemic one. A more in-depth analysis of how the energy grid and machinery interact could provide insights into better space and grid utilization. Adapting operations to these insights could offer a protective buffer against unexpected, costly spikes in energy demand.
+
+## Usage by Period
+
+![Total kWh Usage by Period](fig/eda/kwh_by_period.png)
+
+```
+                              period         kwh
+0  Mid-peak: 7AM to 5PM, 9PM to 11PM  230073.873
+1              Off-peak: 12AM to 7AM   88837.882
+2                On-peak: 5PM to 9PM   94895.389
+```
 
 ## Mean and Max Usage Analysis
 
