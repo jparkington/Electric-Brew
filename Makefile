@@ -6,7 +6,7 @@ set-pythonpath:
 	@conda env config vars set PYTHONPATH="$(PWD)/src" --name electric-brew
 
 # Create Conda environment from environment.yml file
-create-env: set-pythonpath
+create-env:
 	@echo "Creating Conda environment..."
 	@conda env create -f environment.yml || echo "Environment already exists."
 
@@ -31,3 +31,7 @@ eda1:
 	@conda run -n electric-brew python -B src/eda/eda_1_count_of_spikes.py
 	@echo "Generating 'Count of Energy Spikes by Meter ID & Year'."
 	@conda run -n electric-brew python -B src/eda/eda_1_spikes_by_year.py
+
+# Create a chain of commands to set up the Conda environment properly
+setup: create-env set-pythonpath
+	@echo "Environment setup complete."
