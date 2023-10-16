@@ -15,6 +15,18 @@ import pyarrow.parquet as pq
 lg.basicConfig(level  = lg.INFO, 
                format = '%(asctime)s | %(levelname)s | %(message)s')
 
+'''
+=========================================
+================ RUNTIME ================
+=========================================
+
+This section contains utility functions that configure the runtime environment.
+
+Functions:
+    - set_plot_params : Sets up custom plot parameters for matplotlib.
+    - read_data       : Reads a .parquet file into a Pandas DataFrame.
+'''
+
 def set_plot_params() -> list:
     '''
     This function sets up custom plot parameters for matplotlib plots.
@@ -39,7 +51,7 @@ def set_plot_params() -> list:
                     'axes.labelsize'     : 8,
                     'axes.labelweight'   : 'bold',               # Figure parameters
                     'axes.titlesize'     : 12,                   'figure.facecolor'   : 'black',
-                    'axes.titleweight'   : 'bold',               'figure.figsize'     : (10, 7),
+                    'axes.titleweight'   : 'bold',               'figure.figsize'     : (15, 10),
                     'axes.labelpad'      : 15,                   'figure.autolayout'  : True,
                     'axes.titlepad'      : 15,
 
@@ -55,6 +67,60 @@ def set_plot_params() -> list:
                     'axes.prop_cycle'    : cycler(color = colors)})
     
     return colors
+
+def read_data(file_path: str) -> pd.DataFrame:
+    '''
+    This function reads a .parquet file from a specified relative path into a Pandas DataFrame.
+    The function automatically resolves the path relative to the project's /data/ directory.
+    
+    Steps:
+    1. Get the absolute path of the current file (utils.py) using `os.path.abspath(__file__)`.
+    2. Determine the directory of the current file (`src`) using `os.path.dirname()`.
+    3. Navigate to the project root directory by going up one level with `..`.
+    4. Append 'data' to the project root directory to reach the /data/ directory.
+    5. Join this with the user-provided `file_path` to construct the full path to the .parquet file.
+    
+    Parameters:
+        file_path (str) : Relative path to the .parquet file, starting from the /data/ directory.
+        
+    Returns:
+        pd.DataFrame : DataFrame containing the data read from the .parquet file.
+    '''
+    
+    current_file_path = os.path.abspath(__file__)           # Get the absolute path of the current file (utils.py)
+    src_directory     = os.path.dirname(current_file_path)  # Get the directory of the file at runtime
+    project_root      = os.path.join(src_directory, '..')   # Go up one directory to get to the project root
+    data_directory    = os.path.join(project_root, 'data')  # Join with 'data' to get to the data directory
+    
+    return pq.read_table(os.path.abspath(os.path.join(data_directory, file_path))).to_pandas()
+
+'''
+=========================================
+============== DATAFRAMES ===============
+=========================================
+
+This section contains commonly used DataFrames initialized at the start for easier access across different scripts. 
+These DataFrames are curated and optimized for efficient data operations.
+
+DataFrames:
+    - meter_usage : DataFrame containing meter usage data from CMP.
+'''
+
+meter_usage = read_data("cmp/curated/meter-usage")
+
+
+'''
+=========================================
+=============== CURATION ================
+=========================================
+
+This section contains utility functions that curate data from raw sources into more structured formats.
+
+Functions:
+    - curate_meter_usage : Curates meter usage data from raw CSVs into partitioned Parquet files.
+    - scrape_bills       : Scrapes billing data from PDFs into a CSV file.
+
+'''
 
 def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter-usage", 
                        curated       : str  = "./data/cmp/curated/meter-usage",
