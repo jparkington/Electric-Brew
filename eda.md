@@ -16,7 +16,7 @@
   - [Plot Aggregations](#plot-aggregations)
   - [Key Takeaways](#key-takeaways-1)
 - [Energy Spikes](#energy-spikes)
-  - [Key Points to Consider](#key-points-to-consider)
+  - [Key Takeaways](#key-takeaways-2)
 
 ## Introduction
 
@@ -34,9 +34,13 @@ For the shortest path to getting up and running, you can simply run the command 
 make setup
 ```  
 
-Note that each plot is then saved as a PNG file in the `.fig` directory after being closed by the user. 
+Charts can then be created and reviewed using one of the following commands:
 
-For a more detailed breakdown of the available commands to you, please see the [Available Makefile Commands](#available-makefile-commands) section.
+```bash
+make eda1
+```
+
+Note that each plot is then saved as a PNG file in the `.fig` directory after being closed by the user. 
 
 ## General Information
 
@@ -137,7 +141,7 @@ The subsequent visualizations aim to spotlight the frequency and temporal distri
 ![Count of Energy Spikes](fig/eda/count_of_spikes.png)
 ![Energy Spikes by Meter ID & Year](fig/eda/spikes_by_year.png)
 
-### Key Points to Consider
+### Key Takeaways
 
 1. **Spike Frequency and Timing**: The frequency and timing of these spikes could reveal patterns tied to specific operational processes or schedules. Understanding when spikes are most likely to occur could inform better resource allocation or even preventative measures.
 
