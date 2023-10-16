@@ -22,6 +22,10 @@ def feature_engineering(df : pd.DataFrame) -> pd.DataFrame:
 
         4. Period Classification:
             - A new string column 'period' classifies the time of the day into three categories: Off-peak, Mid-peak, and On-peak.
+
+        5. Location Mapping:
+            - A new string column 'location' maps 'account_number' to a physical location.
+            - This will be used for spatial analysis and plotting.
     
     Parameters:
         df (pd.DataFrame): The original DataFrame containing meter usage data.
@@ -52,6 +56,15 @@ def feature_engineering(df : pd.DataFrame) -> pd.DataFrame:
             'Off-peak: 12AM to 7AM' if 0 <= hour < 7 else (
             'Mid-peak: 7AM to 5PM, 9PM to 11PM' if (7 <= hour < 17) or (21 <= hour < 23) else 
             'On-peak: 5PM to 9PM'))
+    
+    # Map each account_number to a location name
+    df['location'] = df['account_number'].map({'35012787756' : "Industrial Way",
+                                               '30010320361' : "Fox Street",
+                                               '30010894035' : "Fox Street",
+                                               '30010601281' : "Fox Street",
+                                               '35012787137' : "Industrial Way",
+                                               '30010320353' : "Fox Street",
+                                               '35012790198' : "Industrial Way"})
     
     return df
 

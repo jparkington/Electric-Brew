@@ -9,15 +9,18 @@
   - [Setting Up the Environment](#setting-up-the-environment)
 - [General Information](#general-information)
 - [Feature Engineering](#feature-engineering)
-  - [Fields Added or Altered](#fields-added-or-altered)
+- [High-Level Meter Analyses](#high-level-meter-analyses)
   - [Distribution of kWh by Meter ID \& Year](#distribution-of-kwh-by-meter-id--year)
+  - [kWh Usage Over Time by Meter ID](#kwh-usage-over-time-by-meter-id)
+  - [kWh Usage at Each Location](#kwh-usage-at-each-location)
   - [Key Takeaways](#key-takeaways)
 - [Usage by Period](#usage-by-period)
+  - [Key Takeaways](#key-takeaways-1)
 - [Mean and Max Usage Analysis](#mean-and-max-usage-analysis)
   - [Plot Aggregations](#plot-aggregations)
-  - [Key Takeaways](#key-takeaways-1)
-- [Energy Spikes](#energy-spikes)
   - [Key Takeaways](#key-takeaways-2)
+- [Energy Spikes](#energy-spikes)
+  - [Key Takeaways](#key-takeaways-3)
 
 ## Introduction
 
@@ -39,6 +42,7 @@ Charts can then be created and reviewed using one of the following commands:
 
 ```bash
 make eda1
+make eda2
 ```
 
 Note that each plot is then saved as a PNG file in the `.fig` directory after being closed by the user. 
@@ -81,8 +85,6 @@ Using `.head()` on `meter_usage` yields the following results:
 
 This section discusses the reformatting of existing columns and the generation of new ones to enable more in-depth analysis. 
 
-### Fields Added or Altered
-
   - `interval_date_time` (**datetime**): Converted to datetime datatype to facilitate time-based analysis. Enables granular, time-based comparisons and trend observations.
   
   - `year` (**int**): Year extracted from `interval_date_time` and added as a separate column. Useful for annual comparative analysis and identifying yearly trends.
@@ -94,35 +96,59 @@ This section discusses the reformatting of existing columns and the generation o
   - `hour` (**int**): Hour extracted from `interval_date_time`. Useful for hourly trend analysis and period classification.
 
   - `period` (**str**): Classifies the time of the day into three categories: 'Off-peak: 12AM to 7AM', 'Mid-peak: 7AM to 5PM, 9PM to 11PM', and 'On-peak: 5PM to 9PM'. This classification aids in understanding the energy usage patterns based on different time periods.
+
+  - `location` (**str**): Maps the `account_number` to a physical location name. This new column aids in spatial analysis and allows for color-coding plots by location for better interpretability.
   
   - `kwh_normalized` (**float**): Normalized energy usage, calculated as $\frac{{\text{kWh} - \mu}}{{\sigma}}$ where $\mu$ is the mean and $\sigma$ is the standard deviation, both computed grouped by `meter_id`. This normalization levels the playing field for analysis, allowing for a fair comparison across different meters and times.
   
   - `extreme_outlier` (**bool**): Boolean flag indicating if `kwh_normalized` is greater than 3 or less than -3. Serves as an immediate and accessible flag for unusual or extreme energy usage patterns.
 
+## High-Level Meter Analyses
+
+This section examines the energy consumption patterns over time, focusing on the different meter IDs. It incorporates two types of visualizations: boxplots that aggregate data by years and scatter plots that offer granular looks at the kWh usage over the entire observed timeframe.
+
 ### Distribution of kWh by Meter ID & Year
 
-This section presents a series of boxplots, each representing the distribution of normalized kilowatt-hour (kWh) usage by meter ID for different years. The plot aims to provide insights into the variability, central tendency, and outliers in the energy consumption recorded by each meter ID annually.
+This plot presents a series of boxplots, each representing the distribution of normalized kilowatt-hour (kWh) usage by meter ID for different years. It aims to provide insights into the variability, central tendency, and outliers in the energy consumption recorded by each meter ID annually.
 
 ![Distribution of kWh by Meter ID & Year](fig/eda/distribution_of_kwh.png)
 
+### kWh Usage Over Time by Meter ID
+
+Rather than group by year, this scatter plot illustrates the kilowatt-hour (kWh) usage over time, with each meter ID represented by a unique color. The plot aims to highlight trends, outliers, and patterns in energy consumption for each meter ID throughout the observed time frame.
+
+![kWh Usage Over Time Colored by Meter ID](fig/eda/kwh_over_time_by_meter.png)
+
+### kWh Usage at Each Location
+
+After analyzing the kWh usage over time by Meter ID, the next logical step is to examine how this usage is distributed across the brewery's 2 locations. This new dimension offers insights into whether specific locations are more energy-efficient or if they encounter different challenges in terms of energy management.
+
+![kWh Usage at Each Location](fig/eda/kwh_by_location.png)
+
 ### Key Takeaways
 
-1. **Ubiquitous Energy Spikes Across Locations**: The energy consumption spikes are not isolated incidents but occur across all meters and both brewery locations. This uniformity suggests that if there are opportunities for using energy more efficiently, those strategies would likely be applicable company-wide, including potentially rescheduling equipment to operate during off-peak hours.
+1. **Location-Specific Energy Spikes**: While energy consumption spikes occur across all meters and both brewery locations, the data shows a higher mean and max kWh usage at Fox Street compared to Industrial Way. The mean kWh at Fox Street is 0.912 and 0.642 at Industrial Way, indicating a more significant energy demand at Fox Street. This differential suggests that if there are opportunities for using energy more efficiently, those strategies may need to be tailored to each location rather than being uniformly applied across the company.
 
-2. **Direct and Long-Term Cost Implications**: These spikes in energy usage are not merely statistical outliers; they have immediate and long-term financial ramifications. Not only do they increase the direct cost of energy, but they also risk pushing the brewery into a higher tariff bracket, which could inflate energy costs over a more extended period.
+2. **Direct and Long-Term Cost Implications**: The spikes in energy usage at Fox Street, with a max kWh usage of 19.944, are notably higher than at Industrial Way, with a max kWh usage of 11.061. These spikes are not merely statistical outliers; they have immediate and long-term financial ramifications, including the risk of pushing the brewery into a higher tariff bracket. This is particularly concerning for Fox Street, where the energy demand is significantly higher, inflating energy costs over an extended period.
 
-3. **Systemic Nature of Spikes**: The uniform distribution of spikes across meters and years implies that this is not a localized issue but a systemic one. A more in-depth analysis of how the energy grid and machinery interact could provide insights into better space and grid utilization. Adapting operations to these insights could offer a protective buffer against unexpected, costly spikes in energy demand.
+3. **Differential Systemic Nature of Spikes**: Spikes in energy usage are indeed a systemic issue affecting all meters and years. However, the differential mean and max kWh between Fox Street and Industrial Way indicate that the issue manifests differently at each location. This requires a more in-depth, location-specific analysis of how the energy grid and machinery interact to better utilize space and grid, thereby offering a protective buffer against unexpected, costly spikes in energy demand.
+
+4. **Customized Energy Efficiency Plans**: Given the different energy demands at each location, customized energy-saving measures could be more effective than a generalized strategy. For instance, Fox Street, with its higher energy demand, could benefit more from rescheduling equipment to operate during off-peak hours or investing in energy-efficient machinery. Such targeted strategies could offer more substantial cost savings and operational efficiencies for each location.
 
 ## Usage by Period
 
-![Total kWh Usage by Period](fig/eda/kwh_by_period.png)
+This section focuses on analyzing energy usage based on time-of-day categorization into three distinct periods: Off-peak, Mid-peak, and On-peak. The goal is to understand how energy consumption varies throughout the day and identify potential opportunities for optimizing energy costs in accessible buckets for the business.
 
-```
-                              period         kwh
-0  Mid-peak: 7AM to 5PM, 9PM to 11PM  230073.873
-1              Off-peak: 12AM to 7AM   88837.882
-2                On-peak: 5PM to 9PM   94895.389
-```
+![Total kWh Usage by Period](fig/eda/kwh_by_period.png)
+![Average kWh Usage per Hour by Period](fig/eda/avg_kwh_by_period.png)
+
+### Key Takeaways
+
+1. **High Mid-Peak Usage for Core Operations**: The Mid-peak period (7AM to 5PM, 9PM to 11PM) shows the highest energy consumption, which aligns with core operational hours for most breweries. This is typically when brewing processes—such as mashing, boiling, and fermentation control—are most active. The spike in usage during these hours may also coincide with administrative functions, quality checks, and perhaps even initial stages of packaging. While these processes are essential, the high energy consumption warrants an investigation into more energy-efficient machinery or operational adjustments to distribute energy usage more evenly throughout the day.
+
+2. **Off-Peak Opportunities for Non-Essential Processes**: The Off-peak period (12AM to 7AM) shows the lowest energy usage, which is expected as most breweries would have scaled down operations during these hours. However, certain non-time-sensitive processes, like long-term fermentation control or batch mixing, could potentially be moved to these hours. Shifting some of these activities to off-peak times could leverage lower energy rates, leading to substantial cost savings without compromising on productivity or quality.
+
+3. **On-Peak Caution for High-Cost Operations**: The On-peak period (5PM to 9PM) has energy usage that is almost as high as during Mid-peak hours, despite being a shorter time frame. This is concerning given that energy rates are often highest during this period. Breweries may be running end-of-day quality checks, clean-in-place (CIP) systems, or even late-shift brewing during these hours. Given the high cost of energy during this period, it would be prudent to review the necessity of these activities at these times and consider rescheduling or optimizing them to avoid increased rates that tend to correlate with peak usage for grids.
 
 ## Mean and Max Usage Analysis
 

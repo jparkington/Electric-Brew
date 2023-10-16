@@ -21,6 +21,7 @@ sns.barplot(data  = period_kwh,
 
 plt.title('Total kWh Usage by Period')
 plt.ylabel('kWh')
+plt.xlabel(None)
 plt.tight_layout()
 plt.savefig("fig/eda/kwh_by_period.png")
 plt.show()
