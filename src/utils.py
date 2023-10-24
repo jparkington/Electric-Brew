@@ -171,8 +171,8 @@ def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter-usage",
     except Exception as e:
         lg.error(f"Error while curating meter usage data: {e}")
 
-def scrape_bills(raw    : str = "./data/cmp/raw/bills",
-                 output : str = "./data/cmp/raw/bills"):
+def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
+                     output : str = "./data/cmp/raw/bills"):
     '''
     This function reads all PDFs in the specified `raw` directory, extracts specific information from the 
     electricity bills using regular expressions, and then saves the consolidated data as a CSV file 
@@ -215,8 +215,8 @@ def scrape_bills(raw    : str = "./data/cmp/raw/bills",
                             'amount_due'            : extract_field(r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"),
                             'service_charge'        : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
                             'delivery_service_rate' : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
-                            'read_date'             : meter_details.group(1) if meter_details else "NULL",
-                            'prior_read_date'       : meter_details.group(2) if meter_details else "NULL",
+                            'interval_start'        : meter_details.group(1) if meter_details else "NULL",
+                            'interval_end'          : meter_details.group(2) if meter_details else "NULL",
                             'kwh_delivered'         : meter_details.group(3).replace(",", "") if meter_details else "NULL",
                             'pdf_file_name'         : os.path.basename(pdf_path)})
 

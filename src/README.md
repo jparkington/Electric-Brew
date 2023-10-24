@@ -16,7 +16,7 @@ The `/src/` directory contains various utility scripts that support the main fun
     - [`meter_usage`](#meter_usage)
   - [Curation](#curation)
     - [`curate_meter_usage`](#curate_meter_usage)
-    - [`scrape_bills`](#scrape_bills)
+    - [`scrape_cmp_bills`](#scrape_cmp_bills)
 
 ## `utils.py`
 
@@ -104,15 +104,15 @@ def curate_meter_usage(raw           : str,
 
 - **`schema`**: Columns that will be used as headers in the resulting DataFrame.
 
-#### `scrape_bills`
+#### `scrape_cmp_bills`
 
 **Purpose**  
 This function automates the extraction of specific fields from a collection of PDF bills stored in a directory. It is designed to capture around 90% of the values from these bills. However, due to variations in the format and content of individual documents, manual review and intervention is required for complete accuracy.
 
 **Signature** 
 ```python
-def scrape_bills(raw    : str, 
-                 output : str):
+def scrape_cmp_bills(raw    : str, 
+                     output : str):
 ```
 
 **Parameters**
@@ -123,7 +123,7 @@ def scrape_bills(raw    : str,
 
 **Regular Expressions**
 
-The `scrape_bills` function uses various regular expressions (REGEX) to identify and extract specific pieces of information from text content within utility bills stored as PDF files. Below, each REGEX is broken down to explain its components and what it aims to capture:
+The `scrape_cmp_bills` function uses various regular expressions (REGEX) to identify and extract specific pieces of information from text content within utility bills stored as PDF files. Below, each REGEX is broken down to explain its components and what it aims to capture:
 
 1. **Account Number**: `r"Account Number\s*([\d-]+)"`
     - `Account Number`: Literal text that the REGEX searches for.
@@ -170,4 +170,4 @@ The `scrape_bills` function uses various regular expressions (REGEX) to identify
     - `.*?Total Current Delivery Charges`: Lazily matches any number of any characters until it finds the text 'Total Current Delivery Charges'.
 
     **Purpose**  
-    Captures multiple details (read date, prior read date, and kilowatt-hours (KWH) delivered) within the section starting with "Delivery Charges".
+    Captures multiple details (interval start, interval end, and kilowatt-hours (KWH) delivered) within the section starting with "Delivery Charges".

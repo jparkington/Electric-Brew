@@ -53,7 +53,7 @@ The primary source of exploration is a compilation of CMP energy usage data for 
 
 The data being analyzed has been extracted directly from the consumer-facing portal at *cmpco.com*. It has been structured and optimized using the Parquet format. This [README](data/cmp/curated/README.md) provides a brief rationale for our data storage decisions and describes some of the retrieval paradigms used with `pandas` and `pyarrow`. 
 
-The location for this source's Parquet directory can be found [here](data/cmp/curated/meter-usage). To facilitate smooth development and execution as reproducibility, all commands are run out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** for this environment set to point directly to the `src` directory within this Conda environment. This allows all scripts to easily import the `utils` module and its DataFrames and functions from any script within the `src` directory, including `meter_usage`.`
+The location for this source's Parquet directory can be found [here](data/cmp/curated/meter-usage). To facilitate smooth development and execution as reproducibility, all commands are run out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** for this environment is set to point directly to the `src` directory within this project's folder structure. This allows all scripts to easily import the `utils` module and its included DataFrames and functions from any script within the `src` directory, including `meter_usage`.
 
 **Schema** 
 
