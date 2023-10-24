@@ -229,7 +229,3 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
     
     except Exception as e:
         return f"Error while curating bill data: {e}"
-    
-# Notes on `scrape_bills`
-# Manual intervention after running this script
-# Grain change within manual intervention, in which the same billing file will have multiple records
