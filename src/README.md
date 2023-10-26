@@ -185,22 +185,22 @@ After the automated scraping process is completed by `scrape_cmp_bills`, several
 2. **Handling Null 'Amount Due'**:  
     - **Scenario**: Sometimes the `amount_due` field is NULL if the bill is fully paid off.  
     - **Action**: Manually enter a 0 for such cases.  
-    - **Example**: See [`30010320353/700000447768_bill.pdf`](data/cmp/raw/bills/30010320353/700000447768_bill.pdf).
+    - **Example**: See [`30010320353/700000447768_bill.pdf`](../data/cmp/raw/bills/30010320353/700000447768_bill.pdf).
 
 3. **Managing Multiple Billing Intervals**:  
     - **Scenario**: Some bills may have more than one billing interval, often crossing fiscal quarters.  
     - **Action**: Add an additional row in the CSV with the same `account_number`, `amount_due`, and `pdf_file_name`, but with differing values for other fields.  
         - **Special Case**: If the bill presents a single `kwh_delivered` value for multiple intervals, allocate a percentage of this to each interval based on the percentage of total `service_charge` paid.  
-    - **Example**: See [`30010320353/703001515406_bill.pdf`](data/cmp/raw/bills/30010320353/703001515406_bill.pdf) and [`30010320353/702001847715_bill.pdf`](data/cmp/raw/bills/30010320353/702001847715_bill.pdf).
+    - **Example**: See [`30010320353/703001515406_bill.pdf`](../data/cmp/raw/bills/30010320353/703001515406_bill.pdf) and [`30010320353/702001847715_bill.pdf`](../data/cmp/raw/bills/30010320353/702001847715_bill.pdf).
 
 4. **Addressing Absent 'Delivery Service Rate'**:  
     - **Scenario**: Some bills do not include a `delivery_service_rate`.  
     - **Action**: Leave this field as NULL, with the understanding that the delivery was covered by previous `Banked Generation`.  
-    - **Example**: See [`30010320353/705001871139_bill.pdf`](data/cmp/raw/bills/30010320353/705001871139_bill.pdf).
+    - **Example**: See [`30010320353/705001871139_bill.pdf`](../data/cmp/raw/bills/30010320353/705001871139_bill.pdf).
 
 5. **External Electricity Supply**:  
     - **Scenario**: In cases where electricity is supplied by an external provider.  
     - **Action**: Add an additional row to the CSV to capture the external supplier's incremental rate for the number of kWh delivered.  
-    - **Example**: See [`30010320353/701001868909_bill.pdf`](data/cmp/raw/bills/30010320353/701001868909_bill.pdf).
+    - **Example**: See [`30010320353/701001868909_bill.pdf`](../data/cmp/raw/bills/30010320353/701001868909_bill.pdf).
 
 After these manual interventions are performed, the curated CSV file is ready for conversion into Parquet format for further data processing.
