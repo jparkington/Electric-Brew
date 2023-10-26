@@ -211,14 +211,16 @@ def scrape_bills(raw    : str = "./data/cmp/raw/bills",
                                     pdf_text, 
                                     DOTALL)
             
-            records.append({'account_number'        : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
-                            'amount_due'            : extract_field(r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"),
-                            'service_charge'        : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
-                            'delivery_service_rate' : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
-                            'read_date'             : meter_details.group(1) if meter_details else "NULL",
-                            'prior_read_date'       : meter_details.group(2) if meter_details else "NULL",
-                            'kwh_delivered'         : meter_details.group(3).replace(",", "") if meter_details else "NULL",
-                            'pdf_file_name'         : os.path.basename(pdf_path)})
+            records.append({'account_number' : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
+                            'supplier'       : "", # To be manually overwritten
+                            'amount_due'     : extract_field(r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"),
+                            'service_charge' : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
+                            'delivery_rate'  : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
+                            'supply_rate'    : "", # To be manually overwritten
+                            'interval_start' : meter_details.group(1) if meter_details else "NULL",
+                            'interval_end'   : meter_details.group(2) if meter_details else "NULL",
+                            'kwh_delivered'  : meter_details.group(3).replace(",", "") if meter_details else "NULL",
+                            'pdf_file_name'  : os.path.basename(pdf_path)})
 
         df = pd.DataFrame(records)
         
