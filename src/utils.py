@@ -227,9 +227,11 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
                                     DOTALL)
             
             records.append({'account_number'        : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
+                            'supplier'              : "CMP", # To be manually overwritten
                             'amount_due'            : extract_field(r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"),
                             'service_charge'        : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
                             'delivery_service_rate' : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
+                            'supply_rate'           : "NULL", # To be manually overwritten
                             'interval_start'        : meter_details.group(1) if meter_details else "NULL",
                             'interval_end'          : meter_details.group(2) if meter_details else "NULL",
                             'kwh_delivered'         : meter_details.group(3).replace(",", "") if meter_details else "NULL",

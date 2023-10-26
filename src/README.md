@@ -193,14 +193,14 @@ After the automated scraping process is completed by `scrape_cmp_bills`, several
         - **Special Case**: If the bill presents a single `kwh_delivered` value for multiple intervals, allocate a percentage of this to each interval based on the percentage of total `service_charge` paid.  
     - **Example**: See [`30010320353/703001515406_bill.pdf`](../data/cmp/raw/bills/30010320353/703001515406_bill.pdf) and [`30010320353/702001847715_bill.pdf`](../data/cmp/raw/bills/30010320353/702001847715_bill.pdf).
 
-4. **Addressing Absent 'Delivery Service Rate'**:  
+4. **Addressing Missing 'Delivery Service Rate'**:  
     - **Scenario**: Some bills do not include a `delivery_service_rate`.  
     - **Action**: Leave this field as NULL, with the understanding that the delivery was covered by previous `Banked Generation`.  
     - **Example**: See [`30010320353/705001871139_bill.pdf`](../data/cmp/raw/bills/30010320353/705001871139_bill.pdf).
 
 5. **External Electricity Supply**:  
     - **Scenario**: In cases where electricity is supplied by an external provider.  
-    - **Action**: Add an additional row to the CSV to capture the external supplier's incremental rate for the number of kWh delivered.  
+    - **Action**: Manually add the `supplier` and `supply_rate`.
     - **Example**: See [`30010320353/701001868909_bill.pdf`](../data/cmp/raw/bills/30010320353/701001868909_bill.pdf).
 
 After these manual interventions are performed, the curated CSV file is ready for conversion into Parquet format for further data processing.
