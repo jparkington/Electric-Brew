@@ -17,6 +17,8 @@ The `/src/` directory contains various utility scripts that support the main fun
   - [Curation](#curation)
     - [`curate_meter_usage`](#curate_meter_usage)
     - [`scrape_cmp_bills`](#scrape_cmp_bills)
+      - [**Regular Expressions**](#regular-expressions)
+      - [**Manual Interventions**](#manual-interventions)
 
 ## `utils.py`
 
@@ -121,7 +123,7 @@ def scrape_cmp_bills(raw    : str,
 
 - **`output`** : Path where the extracted data will be saved as a CSV file.
 
-**Regular Expressions**
+##### **Regular Expressions**
 
 The `scrape_cmp_bills` function uses various regular expressions (RegEx) to identify and extract specific pieces of information from text content within utility bills stored as PDF files. Below, each RegEx is broken down to explain its components and what it aims to capture. Patterns were detected and tested using [**RegExr**](https://regexr.com), a visual IDE for finding RegEx patterns within blocks of text.
 
@@ -160,7 +162,7 @@ The `scrape_cmp_bills` function uses various regular expressions (RegEx) to iden
     - `@\$(\d+\.\d+)`: Captures the '@$' symbol followed by one or more digits, a decimal point, and more digits.
     
     **Purpose**  
-    Extracts the rate per kilowatt-hour (KWH) for delivery service, following the term "Delivery Service".
+    Extracts the rate per kilowatt-hour (kWh) for delivery service, following the term "Delivery Service".
 
 5. **Meter Details**: `r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges"`
     - `Delivery Charges.*?`: Starts with the literal text and lazily matches any number of any characters.
@@ -170,4 +172,35 @@ The `scrape_cmp_bills` function uses various regular expressions (RegEx) to iden
     - `.*?Total Current Delivery Charges`: Lazily matches any number of any characters until it finds the text 'Total Current Delivery Charges'.
 
     **Purpose**  
-    Captures multiple details (interval start, interval end, and kilowatt-hours (KWH) delivered) within the section starting with "Delivery Charges".
+    Captures multiple details (interval start, interval end, and kilowatt-hours (kWh) delivered) within the section starting with "Delivery Charges".
+
+##### **Manual Interventions**
+
+After the automated scraping process is completed by `scrape_cmp_bills`, several manual inputs are generally required to ensure data accuracy and completeness. Here are the steps for those interventions:
+
+1. **File Relocation and Renaming**:  
+    - **Initial State**: A CSV file named `scraped_bills.csv` is generated in the `cmp/raw/bills` directory.  
+    - **Action**: Rename this file to `scraped_bills_with_edits` and move it to `cmp/curated/bills` to avoid accidental overwrites of manually curated data.
+
+2. **Handling Null 'Amount Due'**:  
+    - **Scenario**: Sometimes the `amount_due` field is NULL if the bill is fully paid off.  
+    - **Action**: Manually enter a 0 for such cases.  
+    - **Example**: See [`30010320353/700000447768_bill.pdf`](../data/cmp/raw/bills/30010320353/700000447768_bill.pdf).
+
+3. **Managing Multiple Billing Intervals**:  
+    - **Scenario**: Some bills may have more than one billing interval, often crossing fiscal quarters.  
+    - **Action**: Add an additional row in the CSV with the same `account_number`, `amount_due`, and `pdf_file_name`, but with differing values for other fields.  
+        - **Special Case**: If the bill presents a single `kwh_delivered` value for multiple intervals, allocate a percentage of this to each interval based on the percentage of total `service_charge` paid.  
+    - **Example**: See [`30010320353/703001515406_bill.pdf`](../data/cmp/raw/bills/30010320353/703001515406_bill.pdf) and [`30010320353/702001847715_bill.pdf`](../data/cmp/raw/bills/30010320353/702001847715_bill.pdf).
+
+4. **Addressing Missing 'Delivery Service Rate'**:  
+    - **Scenario**: Some bills do not include a `delivery_service_rate`.  
+    - **Action**: Leave this field as NULL, with the understanding that the delivery was covered by previous `Banked Generation`.  
+    - **Example**: See [`30010320353/705001871139_bill.pdf`](../data/cmp/raw/bills/30010320353/705001871139_bill.pdf).
+
+5. **External Electricity Supply**:  
+    - **Scenario**: In cases where electricity is supplied by an external provider.  
+    - **Action**: Manually add the `supplier` and `supply_rate`.
+    - **Example**: See [`30010320353/701001868909_bill.pdf`](../data/cmp/raw/bills/30010320353/701001868909_bill.pdf).
+
+After these manual interventions are performed, the curated CSV file is ready for conversion into Parquet format for further data processing.
