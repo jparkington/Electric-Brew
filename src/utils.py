@@ -20,7 +20,8 @@ lg.basicConfig(level  = lg.INFO,
 ================ RUNTIME ================
 =========================================
 
-This section contains utility functions that configure the runtime environment.
+Contains utility functions that configure the runtime environment and are called as scripts are
+executed. These include `rcParams` and specific paradigms for reading data into dataframes.
 
 Functions:
     - set_plot_params : Sets up custom plot parameters for matplotlib.
@@ -99,7 +100,7 @@ def read_data(file_path: str) -> pd.DataFrame:
 ============== DATAFRAMES ===============
 =========================================
 
-This section contains commonly used DataFrames initialized at the start for easier access across different scripts. 
+Contains commonly used DataFrames initialized at the start for easier access across different scripts. 
 These DataFrames are curated and optimized for efficient data operations.
 
 DataFrames:
@@ -108,13 +109,27 @@ DataFrames:
 
 meter_usage = read_data("cmp/curated/meter-usage")
 
+'''
+=========================================
+=============== MODELING ================
+=========================================
+
+Contains functions that transform DATAFRAMES into a star schema optimized for analytical queries and 
+data visualization. The aim is to create a structured, denormalized data model that enables fast and 
+intuitive querying.
+
+Here, we'll focus on building a central "fact" table encompassing key metrics such as costs and 
+kWh measurements. This table will be the heart of our star schema, surrounded by various "dimension" 
+tables. These dimension tables will provide contextual information that can be joined with the fact 
+table to enhance its analytical value.
+'''
 
 '''
 =========================================
 =============== CURATION ================
 =========================================
 
-This section contains utility functions that curate data from raw sources into more structured formats.
+Contains utility functions that scrape and restructure data from raw sources into more structured formats.
 
 Functions:
     - curate_meter_usage : Curates meter usage data from raw CSVs into partitioned Parquet files.
