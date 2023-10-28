@@ -1,5 +1,5 @@
 <!-- omit in toc -->
-# Directory Documentation for `/cmp/curated`
+# Directory Documentation for `data/model`
 
 Within this directory, we have structured and optimized our data collected from CMP using the Parquet format. This README provides a brief rationale for our data storage decisions and offers a few code examples to help you navigate the data efficiently.
 
