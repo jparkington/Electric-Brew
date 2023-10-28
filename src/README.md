@@ -14,8 +14,10 @@ The `/src/` directory contains various utility scripts that support the main fun
     - [`read_data`](#read_data)
   - [DataFrames](#dataframes)
     - [`meter_usage`](#meter_usage)
+    - [`cmp_bills`](#cmp_bills)
   - [Curation](#curation)
     - [`curate_meter_usage`](#curate_meter_usage)
+    - [`curate_cmp_bills`](#curate_cmp_bills)
     - [`scrape_cmp_bills`](#scrape_cmp_bills)
       - [**Regular Expressions**](#regular-expressions)
       - [**Manual Interventions**](#manual-interventions)
@@ -78,7 +80,38 @@ A repository for meter-level electrical consumption data from Central Maine Powe
   
   - `kwh` (**float**): Kilowatt-hours recorded by the meter during the interval, representing the unit of electricity consumed.
 
-  - `account_number` (**int**): A unique identifier for the customer's account with CMP.
+  - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account. Used for all billing and service interactions.
+
+#### `cmp_bills`
+
+A consolidated view of billing information from various suppliers for Central Maine Power (CMP) accounts. The DataFrame is partitioned by `account_number`, making it easy to retrieve data for specific accounts quickly.
+
+**Source**: Central Maine Power (CMP)  
+**Location**: `..data/cmp/curated/bills`  
+**Partitioning**: `account_number`  
+
+**Schema**:
+
+  - `supplier` (**str**): The electricity supplier for the billing period. This is often a third-party energy supplier, though some billing periods use "Banked Generation" and credits from prebious supplier purchases.
+  
+  - `amount_due` (**float**): The total monetary amount due for the billing period. This includes all charges, fees, and taxes.
+  
+  - `service_charge` (**float**): A volume-based fee charged for delivery service through the electrical grid by CMP.
+  
+  - `delivery_rate` (**float**): The rate charged per kilowatt-hour for the delivery of electricity from the power generation point to your location.
+  
+  - `supply_rate` (**float**): The rate charged per kilowatt-hour for the actual electricity consumed. This may vary based on the supplier.
+  
+  - `interval_start` (**str**): The starting date of the billing cycle, formatted as MM/DD/YYYY.
+  
+  - `interval_end` (**str**): The ending date of the billing cycle, formatted as MM/DD/YYYY.
+  
+  - `kwh_delivered` (**int**): The total amount of electricity consumed during the billing cycle, measured in kilowatt-hours.
+  
+  - `pdf_file_name` (**str**): The name of the PDF file from which the billing information was extracted. Useful for tracking the source of data.
+  
+  - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account. Used for all billing and service interactions.
+
 
 ### Curation
 
@@ -86,7 +119,7 @@ This section comprises functions that transform raw data files into structured a
 
 #### `curate_meter_usage`
 
-**Purpose** Processes all CSV files from the provided directory, integrates the specified schema, and subsequently consolidates the data into a partitioned `.parquet` file in the designated output directory. This conversion and curation process is optimized with `snappy` compression for efficiency.
+Processes all CSV files from the provided directory, integrates the specified schema, and subsequently consolidates the data into a partitioned `.parquet` file in the designated output directory. This conversion and curation process is optimized with `snappy` compression for efficiency.
 
 **Signature** 
 ```python
@@ -106,9 +139,27 @@ def curate_meter_usage(raw           : str,
 
 - **`schema`**: Columns that will be used as headers in the resulting DataFrame.
 
-#### `scrape_cmp_bills`
+#### `curate_cmp_bills`
 
-**Purpose**  
+Processes all CSV files from the provided directory (*likely one file only with this workflow*) and consolidates the data into a partitioned `.parquet` file in the designated output directory. This conversion and curation process is optimized with `snappy` compression for efficiency.
+
+**Signature** 
+```python
+def curate_meter_usage(raw           : str, 
+                       curated       : str, 
+                       partition_col : list):
+```
+
+**Parameters**
+
+- **`raw`**: Path to the directory containing raw `cmp/bills` CSV files.
+
+- **`curated`** : Directory where the consolidated `.parquet` files will be saved.
+
+- **`partition_col`**: Columns by which the .parquet files will be partitioned.
+ 
+#### `scrape_cmp_bills`
+ 
 This function automates the extraction of specific fields from a collection of PDF bills stored in a directory. It is designed to capture around 90% of the values from these bills. However, due to variations in the format and content of individual documents, manual review and intervention is required for complete accuracy.
 
 **Signature** 
@@ -180,7 +231,7 @@ After the automated scraping process is completed by `scrape_cmp_bills`, several
 
 1. **File Relocation and Renaming**:  
     - **Initial State**: A CSV file named `scraped_bills.csv` is generated in the `cmp/raw/bills` directory.  
-    - **Action**: Rename this file to `scraped_bills_with_edits` and move it to `cmp/curated/bills` to avoid accidental overwrites of manually curated data.
+    - **Action**: Rename this file to `scraped_bills_with_edits` to avoid accidental overwrites of manually curated data.
 
 2. **Handling Null 'Amount Due'**:  
     - **Scenario**: Sometimes the `amount_due` field is NULL if the bill is fully paid off.  

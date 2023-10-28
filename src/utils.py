@@ -108,6 +108,7 @@ DataFrames:
 '''
 
 meter_usage = read_data("cmp/curated/meter-usage")
+cmp_bills   = read_data("cmp/curated/bills")
 
 '''
 =========================================
@@ -133,7 +134,8 @@ Contains utility functions that scrape and restructure data from raw sources int
 
 Functions:
     - curate_meter_usage : Curates meter usage data from raw CSVs into partitioned Parquet files.
-    - scrape_bills       : Scrapes billing data from PDFs into a CSV file.
+    - curate_cmp_bills   : Curates the manuall edited CSVs from `1scrape_cmp_bills` into partitioned Parquet files.
+    - scrape_cmp_bills   : Scrapes billing data from PDFs into a CSV file.
 
 '''
 
@@ -185,6 +187,49 @@ def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter-usage",
 
     except Exception as e:
         lg.error(f"Error while curating meter usage data: {e}")
+
+def curate_cmp_bills(raw           : str  = "./data/cmp/raw/bills", 
+                     curated       : str  = "./data/cmp/curated/bills",
+                     partition_col : list = ['account_number']):
+    '''
+    This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
+    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
+    
+    Methodology:
+        1. Read all CSVs in the `raw` directory using the existing headers.
+        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
+        
+    Parameters:
+        raw           (str)  : Path to the directory containing raw `bills` CSV files.
+        curated       (str)  : Directory where the partitioned .parquet files should be saved.
+        partition_col (list) : Column name(s) to use for partitioning the parquet files.
+    '''
+
+    try:
+        # Step 1: Read all CSVs in the `raw` directory using existing headers
+        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
+        if not raw_files:
+            lg.warning(f"No CSV files found in {raw}. Exiting function.")
+            return
+    
+        concat_df = pd.concat([pd.read_csv(file) for file in raw_files])
+        
+        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
+        if not os.path.exists(curated):
+            lg.warning(f"Directory {curated} does not exist. It will now be created.")
+            os.makedirs(curated)
+
+        pq.write_to_dataset(pa.Table.from_pandas(concat_df, 
+                                                 preserve_index = False), 
+                            root_path      = curated, 
+                            partition_cols = partition_col, 
+                            compression    = 'snappy', 
+                            use_dictionary = True)
+        
+        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+
+    except Exception as e:
+        lg.error(f"Error while curating cmp bills data: {e}")
 
 def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
                      output : str = "./data/cmp/raw/bills"):
