@@ -99,4 +99,4 @@ Through this strategic partnership, Austin Street Brewery aspires not only to en
 
 This project was shaped under the supervision of [**Professor Philip Bogden**](https://www.khoury.northeastern.edu/people/philip-bogden/) during our *Intro to Data Management* class at the **Roux Institute of Northeastern University**. 
 
-We would like to express our gratitude to Professor Bogden for his consistent guidance and invaluable insights. Our thanks also extend to our TA, Meghana Chillara, for her patience, valuable input, and collaboration with each of us.
+We would like to express our gratitude to Professor Bogden for his consistent guidance and invaluable insights. Our thanks also extend to our TA, Meghana Chillara, for her patience, consistently timely input, and collaboration with each of us.
