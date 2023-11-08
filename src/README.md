@@ -7,30 +7,29 @@ The `/src/` directory contains various utility scripts that support the main fun
 
 <!-- omit in toc -->
 ## Table of Contents
+- [Runtime](#runtime)
+  - [`set_plot_params`](#set_plot_params)
+  - [`read_data`](#read_data)
+- [DataFrames](#dataframes)
+  - [`meter_usage`](#meter_usage)
+  - [`locations`](#locations)
+  - [`cmp_bills`](#cmp_bills)
+  - [`dim_datetimes`](#dim_datetimes)
+- [Modeling](#modeling)
+  - [`create_dim_datetimes`](#create_dim_datetimes)
+- [Curation](#curation)
+  - [`curate_meter_usage`](#curate_meter_usage)
+  - [`curate_cmp_bills`](#curate_cmp_bills)
+  - [`scrape_cmp_bills`](#scrape_cmp_bills)
+    - [**Regular Expressions**](#regular-expressions)
+    - [**Manual Interventions**](#manual-interventions)
 
-- [`utils.py`](#utilspy)
-  - [Runtime](#runtime)
-    - [`set_plot_params`](#set_plot_params)
-    - [`read_data`](#read_data)
-  - [DataFrames](#dataframes)
-    - [`meter_usage`](#meter_usage)
-    - [`cmp_bills`](#cmp_bills)
-  - [Curation](#curation)
-    - [`curate_meter_usage`](#curate_meter_usage)
-    - [`curate_cmp_bills`](#curate_cmp_bills)
-    - [`scrape_cmp_bills`](#scrape_cmp_bills)
-      - [**Regular Expressions**](#regular-expressions)
-      - [**Manual Interventions**](#manual-interventions)
 
-## `utils.py`
-
-The `utils.py` script provides a variety of utility functions spanning different aspects of the project, from visual parameter configuration to comprehensive data curation tasks.
-
-### Runtime
+## Runtime
 
 This section contains functions primarily focused on setting up and configuring the environment for data visualization and data reading. These functions make sure that all plots have a uniform appearance and that data files can be easily read into Pandas DataFrames.
 
-#### `set_plot_params`
+### `set_plot_params`
 
 **Purpose**  
 Initializes and returns custom plotting parameters for `matplotlib`, ensuring consistent visual style throughout the project.
@@ -43,7 +42,7 @@ def set_plot_params() -> list:
 **Returns**  
 A list containing RGBA color tuples that comprise the custom color palette for plots.
 
-#### `read_data`
+### `read_data`
 
 **Purpose**  
 Reads `.parquet` files into Pandas DataFrames. The function resolves the path relative to the `data` directory of the project, no matter where your script is located within the `src` directory or where you've cloned the repo. As such, it expects a file path string that starts from within the `data` directory.
@@ -56,16 +55,17 @@ def read_data(file_path : str) -> pd.DataFrame:
 **Returns**  
 A DataFrame containing the data read from the supplied Parquet file path.
 
-### DataFrames
+
+## DataFrames
 
 This section initializes commonly used DataFrames at the start, making them readily available across different parts of the project. This promotes code reusability and performance optimization.
 
-#### `meter_usage`
+### `meter_usage`
 
 A repository for meter-level electrical consumption data from Central Maine Power (CMP) in 15-minute intervals. Used in analyses of electricity usage patterns, billing, and location-related insights. The DataFrame is partitioned by `account_number`, enabling quick data retrieval for individual accounts. 
 
 **Source**: Central Maine Power (CMP)  
-**Location**: `..data/cmp/curated/meter-usage`  
+**Location**: `./data/cmp/curated/meter-usage`  
 **Partitioning**: `account_number`  
 
 **Schema**:
@@ -82,12 +82,28 @@ A repository for meter-level electrical consumption data from Central Maine Powe
 
   - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account. Used for all billing and service interactions.
 
-#### `cmp_bills`
+### `locations`
+
+A DataFrame that contains location-based information for CMP accounts, linking street addresses to account numbers. It is essential for correlating energy consumption with specific locations and their equipment.
+
+**Source**: Manual Entry
+**Location**: `./data/cmp/curated/locations`  
+**Partitioning**: `account_number`  
+
+**Schema**:
+
+  - `street` (**str**): The street address associated with the CMP account, detailing the exact location.
+  
+  - `label` (**str**): A simplified or common name label for the location, which may be used for easier reference.
+  
+  - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account, linking the location to the specific account for billing and service interactions.
+
+### `cmp_bills`
 
 A consolidated view of billing information from various suppliers for Central Maine Power (CMP) accounts. The DataFrame is partitioned by `account_number`, making it easy to retrieve data for specific accounts quickly.
 
 **Source**: Central Maine Power (CMP)  
-**Location**: `..data/cmp/curated/bills`  
+**Location**: `./data/cmp/curated/bills`  
 **Partitioning**: `account_number`  
 
 **Schema**:
@@ -112,12 +128,82 @@ A consolidated view of billing information from various suppliers for Central Ma
   
   - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account. Used for all billing and service interactions.
 
+### `dim_datetimes`
 
-### Curation
+A detailed dimensional table that contains the breakdown of timestamps into individual date and time components, along with a classification of each time into a specific period of the day such as 'Off-peak', 'Mid-peak', or 'On-peak'. This table is key for time series analysis and enables efficient filtering and aggregation based on time attributes in data analysis workflows.
+
+**Source**: Derived from `meter_usage` DataFrame  
+**Location**: `./data/model/dim_datetimes` 
+
+**Schema**:
+
+  - `id` (**int**): A unique identifier starting at 1 for each row in the table, serving as a surrogate key.
+  
+  - `timestamp` (**datetime**): The exact date and time the measurement was taken, precise up to minutes.
+
+  - `increment` (**int**): The minute component of the timestamp, indicating the 15-minute interval.
+  
+  - `hour` (**int**): The hour component of the timestamp, represented in a 24-hour format.
+  
+  - `date` (**date**): The date component of the timestamp in YYYY-MM-DD format.
+  
+  - `week` (**int**): The week number of the year when the timestamp occurs, according to ISO standards.
+  
+  - `week_in_year` (**int**): Duplicate of `week` for legacy support; represents the ISO week number within the year.
+  
+  - `month` (**int**): The month number extracted from the timestamp.
+  
+  - `month_name` (**str**): The full name of the month extracted from the timestamp.
+  
+  - `quarter` (**int**): The quarter of the year to which the timestamp belongs.
+  
+  - `year` (**int**): The year component extracted from the timestamp.
+  
+  - `period` (**str**): A categorical label defining the time period of the day based on the hour, used for analysis of peak and off-peak hours.
+
+
+## Modeling
+
+This section comprises functions that transform DataFrames into a structured, denormalized data model optimized for analytical queries and data visualization. It includes the generation of dimensional tables and the enhancement of timestamp data to facilitate intuitive querying.
+
+### `create_dim_datetimes`
+
+Generates a datetime dimension table, which is a key component in time series analysis and reporting. It enriches the dataset by breaking down timestamps into more granular and useful components, facilitating more sophisticated temporal queries and analyses.
+
+**Methodology**
+
+1. Extract and sort unique timestamps from `meter_usage['interval_end_datetime']`.
+2. Decompose timestamps into individual time components.
+3. Categorize timestamps into time periods based on the hour of the day.
+4. Assign a unique identifier `id` to each timestamp.
+5. Persist the resulting dataframe as a `.parquet` file with `snappy` compression.
+
+**Returns**
+
+A `.parquet` file saved in the specified `model` directory containing the datetime dimension table.
+
+**Example Output**
+
+| id      | timestamp           | increment | hour | date       | week | week_in_year | month | month_name | quarter | year | period                                 |
+|---------|---------------------|-----------|------|------------|------|--------------|-------|------------|---------|------|----------------------------------------|
+| 1       | 2020-10-08 00:00:00 | 0         | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
+| 2       | 2020-10-08 00:15:00 | 15        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
+| 3       | 2020-10-08 00:30:00 | 30        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
+| 4       | 2020-10-08 00:45:00 | 45        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
+| 5       | 2020-10-08 01:00:00 | 0         | 1    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
+| ...     | ...                 | ...       | ...  | ...        | ...  | ...          | ...   | ...        | ...     | ...  | ...                                   |
+| 104432  | 2023-09-30 22:45:00 | 45        | 22   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | Mid-peak: 7AM to 5PM, 9PM to 11PM     |
+| 104433  | 2023-09-30 23:00:00 | 0         | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
+| 104434  | 2023-09-30 23:15:00 | 15        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
+| 104435  | 2023-09-30 23:30:00 | 30        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
+| 104436  | 2023-09-30 23:45:00 | 45        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
+
+
+## Curation
 
 This section comprises functions that transform raw data files into structured and query-optimized formats. This includes converting raw CSVs into partitioned Parquet files and extracting relevant data from PDFs.
 
-#### `curate_meter_usage`
+### `curate_meter_usage`
 
 Processes all CSV files from the provided directory, integrates the specified schema, and subsequently consolidates the data into a partitioned `.parquet` file in the designated output directory. This conversion and curation process is optimized with `snappy` compression for efficiency.
 
@@ -139,7 +225,7 @@ def curate_meter_usage(raw           : str,
 
 - **`schema`**: Columns that will be used as headers in the resulting DataFrame.
 
-#### `curate_cmp_bills`
+### `curate_cmp_bills`
 
 Processes all CSV files from the provided directory (*likely one file only with this workflow*) and consolidates the data into a partitioned `.parquet` file in the designated output directory. This conversion and curation process is optimized with `snappy` compression for efficiency.
 
@@ -158,7 +244,7 @@ def curate_meter_usage(raw           : str,
 
 - **`partition_col`**: Columns by which the .parquet files will be partitioned.
  
-#### `scrape_cmp_bills`
+### `scrape_cmp_bills`
  
 This function automates the extraction of specific fields from a collection of PDF bills stored in a directory. It is designed to capture around 90% of the values from these bills. However, due to variations in the format and content of individual documents, manual review and intervention is required for complete accuracy.
 
@@ -174,7 +260,7 @@ def scrape_cmp_bills(raw    : str,
 
 - **`output`** : Path where the extracted data will be saved as a CSV file.
 
-##### **Regular Expressions**
+#### **Regular Expressions**
 
 The `scrape_cmp_bills` function uses various regular expressions (RegEx) to identify and extract specific pieces of information from text content within utility bills stored as PDF files. Below, each RegEx is broken down to explain its components and what it aims to capture. Patterns were detected and tested using [**RegExr**](https://regexr.com), a visual IDE for finding RegEx patterns within blocks of text.
 
@@ -225,7 +311,7 @@ The `scrape_cmp_bills` function uses various regular expressions (RegEx) to iden
     **Purpose**  
     Captures multiple details (interval start, interval end, and kilowatt-hours (kWh) delivered) within the section starting with "Delivery Charges".
 
-##### **Manual Interventions**
+#### **Manual Interventions**
 
 After the automated scraping process is completed by `scrape_cmp_bills`, several manual inputs are generally required to ensure data accuracy and completeness. Here are the steps for those interventions:
 

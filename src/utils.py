@@ -110,9 +110,13 @@ DataFrames:
     - locations   : DataFrame with manually CSV entries describing each of the accounts Austin St. uses.
 '''
 
+# Curated sources
 meter_usage = read_data("cmp/curated/meter-usage")
 cmp_bills   = read_data("cmp/curated/bills")
 locations   = read_data("cmp/curated/locations")
+
+# Model
+dim_datetimes = read_data("model/dim_datetimes")
 
 '''
 =========================================
@@ -123,11 +127,64 @@ Contains functions that transform DATAFRAMES into a star schema optimized for an
 data visualization. The aim is to create a structured, denormalized data model that enables fast and 
 intuitive querying.
 
-Here, we'll focus on building a central "fact" table encompassing key metrics such as costs and 
-kWh measurements. This table will be the heart of our star schema, surrounded by various "dimension" 
-tables. These dimension tables will provide contextual information that can be joined with the fact 
-table to enhance its analytical value.
+Functions:
+    - create_dim_datetimes : Generates a datetime dimension table from `meter_usage` timestamps and saves as Parquet.
 '''
+
+def create_dim_datetimes(model: str = "./data/model/dim_datetimes"):
+    '''
+    This function creates a datetime dimension table from the `meter_usage` DataFrame.
+    It extracts unique timestamps, generates various time components, and saves the result as a .parquet file.
+    
+    Methodology:
+        1. Extract unique timestamps from `meter_usage['interval_end_datetime']` and sort them.
+        2. Create a DataFrame with these timestamps and generate time components such as increment, hour, etc.
+        3. Define the period of the day based on the hour.
+        4. Insert `id` at the first column position
+        5. Save the DataFrame as a .parquet file in the specified `model` directory with snappy compression.
+        
+    Parameters:
+        model (str) : Directory where the .parquet file should be saved.
+    '''
+    
+    try:
+        # Step 1: Extract unique timestamps and sort them
+        timestamps = pd.to_datetime(meter_usage['interval_end_datetime'].unique(), format = '%m/%d/%Y %I:%M:%S %p')
+        timestamps = np.sort(timestamps)
+
+        # Step 2: Create a DataFrame for the datetime dimension
+        df = pd.DataFrame(timestamps, columns = ['timestamp'])
+        
+        # Generate standard datetime components from the timestamp
+        df['increment']    = df['timestamp'].dt.minute
+        df['hour']         = df['timestamp'].dt.hour
+        df['date']         = df['timestamp'].dt.date
+        df['week']         = df['timestamp'].dt.isocalendar().week
+        df['week_in_year'] = df['timestamp'].dt.isocalendar().week
+        df['month']        = df['timestamp'].dt.month
+        df['month_name']   = df['timestamp'].dt.month_name()
+        df['quarter']      = df['timestamp'].dt.quarter
+        df['year']         = df['timestamp'].dt.year
+
+        # Step 3: Define the period based on the hour
+        df['period'] = df['hour'].apply(
+            lambda hour: 'Off-peak: 12AM to 7AM' if 0 <= hour < 7 else (
+                         'Mid-peak: 7AM to 5PM, 9PM to 11PM' if (7 <= hour < 17) or (21 <= hour < 23) else 
+                         'On-peak: 5PM to 9PM'))
+        
+        # Step 4: Insert `id` at the first column position
+        df.insert(0, 'id', range(1, len(df) + 1))
+
+        # Step 5: Save the DataFrame as a .parquet file
+        pq.write_to_dataset(pa.Table.from_pandas(df), 
+                            root_path      = model, 
+                            compression    = 'snappy', 
+                            use_dictionary = True)
+
+        lg.info(f"Dimension table saved as .parquet file in {model}.")
+
+    except Exception as e:
+        lg.error(f"Error creating datetime dimension table: {e}")
 
 '''
 =========================================
