@@ -25,7 +25,7 @@ The `/src/` directory contains various utility scripts that support the main fun
     - [**Manual Interventions**](#manual-interventions)
 - [Modeling](#modeling)
   - [`create_dim_datetimes`](#create_dim_datetimes)
-  - [`create_dim_accounts`](#create_dim_accounts)
+  - [`create_dim_meters`](#create_dim_meters)
   - [`create_dim_suppliers`](#create_dim_suppliers)
 
 
@@ -167,20 +167,20 @@ A detailed dimensional table that contains the breakdown of timestamps into indi
 
 ### `dim_accounts`
 
-A centralized dimensional table that aggregates account-specific information, like service points, meter IDs, and location details. It merges dimensions from various curated sources into a single table, enabling easier categorization and making the data more accessible for analysis.
+A centralized dimensional table that aggregates meter-specific information, like service points, meter IDs, and location details. It merges dimensions from various curated sources into a single table, enabling easier categorization and making the data more accessible for analysis.
 
 **Source**: Derived from the `meter_usage` and `locations` DataFrames  
-**Location**: `./data/model/dim_accounts` 
+**Location**: `./data/model/dim_meters` 
 
 **Schema**:
 
   - `id` (**int**): A unique identifier starting at 1 for each row in the table, serving as a primary key.
-  
-  - `account_number` (**str**): The unique identifier for each customer account, which serves as a foreign key to other transactional data.
-  
+
+  - `meter_id` (**str**): The unique identifier for the meter that records energy consumption data.
+
   - `service_point_id` (**int**): A unique identifier for the physical location where energy consumption is measured.
   
-  - `meter_id` (**str**): The unique identifier for the meter that records energy consumption data.
+  - `account_number` (**str**): The unique identifier for each customer account, which can serve as a foreign key to other curated data.
   
   - `street` (**str**): The street address associated with the service point, providing a granular location detail.
   
@@ -381,14 +381,14 @@ A `.parquet` file saved in the specified `model` directory containing the dateti
 | 104435  | 2023-09-30 23:30:00 | 30        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
 | 104436  | 2023-09-30 23:45:00 | 45        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
 
-### `create_dim_accounts`
+### `create_dim_meters`
 
-Creates an accounts dimension table, which centralizes the account information, linking service points, meter IDs, and location details. This table simplifies the complexity of account management and enables more efficient account-related queries and analyses.
+Creates a meters dimension table, which centralizes the account information, linking service points, meter IDs, and location details. This table simplifies the complexity of account management and enables more efficient meter-related queries and analyses. This table originally was curated for accounts, but through the discovery process, we learned that it's possible for a given account to have multiple meters and service points.
 
 **Methodology**
 
 1. Read the `meter_usage` and `locations` DataFrames.
-2. Extract and join relevant columns based on the `account_number`.
+2. Extract and join relevant columns based on `account_number`.
 3. Assign a unique identifier `id` to each account entry.
 4. Persist the resulting dataframe as a `.parquet` file with `snappy` compression.
 
@@ -398,13 +398,14 @@ A `.parquet` file saved in the specified `model` directory containing the accoun
 
 **Example Output**
 
-| id    | account_number | service_point_id | meter_id   | street                 | label         |
-|-------|----------------|------------------|------------|------------------------|---------------|
-| 1     | 30010320353    | 2300822246       | L108605388 | 115 FOX ST UNIT 115    | Fox Street    |
-| 2     | 30010320361    | 2300822247       | L108605389 | 115 FOX ST UNIT 103    | Fox Street    |
-| 3     | 30010601281    | 2300822250       | L108605390 | 111 FOX ST UNIT 2      | Fox Street    |
-| ...   | ...            | ...              | ...        | ...                    | ...           |
-| 8     | 35012790198    | 2300588897       | L108607371 | 1 INDUSTRIAL WAY UNIT 10 | Industrial Way |
+| id | meter_id   | service_point_id | account_number | street               | label          |
+|----|------------|------------------|----------------|----------------------|----------------|
+| 1  | L108605388 | 2300822246       | 30010320353    | 115 FOX ST UNIT 115  | Fox Street     |
+| 2  | L108558642 | 2300822209       | 30010320361    | 115 FOX ST UNIT 103  | Fox Street     |
+| 3  | L108557737 | 2300910019       | 30010601281    | 111 FOX ST UNIT 2    | Fox Street     |
+|... | ...        | ...              | ...            | ...                  | ...            |
+| 8  | L108607371 | 2300588897       | 35012790198    | 1 INDUSTRIAL WAY U10 | Industrial Way |
+
 
 ### `create_dim_suppliers`
 
