@@ -105,9 +105,11 @@ Contains commonly used DataFrames initialized at the start for easier access acr
 These DataFrames are curated and optimized for efficient data operations.
 
 DataFrames:
-    - meter_usage : DataFrame containing meter usage data from CMP.
-    - cmp_bills   : DataFrame containing billed delivery and supplier rates for various periods of activity.
-    - locations   : DataFrame with manually CSV entries describing each of the accounts Austin St. uses.
+    - meter_usage   : Contains meter usage data from CMP.
+    - cmp_bills     : Contains billed delivery and supplier rates for various periods of activity.
+    - locations     : Adds manual CSV entries describing each of the accounts Austin St. uses to the model.
+    - dim_datetimes : Breaks down timestamps into individual date and time components, with categorization of periods.
+    - dim_accounts  : Abstracts the account numbers, service points, meter IDs, and streets dimensions into one location.
 '''
 
 # Curated sources
@@ -117,6 +119,8 @@ locations   = read_data("cmp/curated/locations")
 
 # Model
 dim_datetimes = read_data("model/dim_datetimes")
+dim_accounts  = read_data("model/dim_accounts")
+
 
 '''
 =========================================
@@ -129,9 +133,10 @@ intuitive querying.
 
 Functions:
     - create_dim_datetimes : Generates a datetime dimension table from `meter_usage` timestamps and saves as Parquet.
+    - create_dim_accounts  : Extracts account, location, and meter dimensions and saves as Parquet.
 '''
 
-def create_dim_datetimes(model: str = "./data/model/dim_datetimes"):
+def create_dim_datetimes(model : str = "./data/model/dim_datetimes"):
     '''
     This function creates a datetime dimension table from the `meter_usage` DataFrame.
     It extracts unique timestamps, generates various time components, and saves the result as a .parquet file.
@@ -185,6 +190,42 @@ def create_dim_datetimes(model: str = "./data/model/dim_datetimes"):
 
     except Exception as e:
         lg.error(f"Error creating datetime dimension table: {e}")
+
+def create_dim_accounts(model : str = "./data/model/dim_accounts"):
+    '''
+    This function creates an accounts dimension table by joining data from the `meter_usage` and `locations` DataFrames.
+    It extracts account numbers, service points, meter IDs, streets, and labels, and saves the result as a .parquet file.
+
+    Methodology:
+        1. Extract and join relevant columns based on `account_number`.
+        2. Create a unique identifier `id` for each row.
+        3. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
+
+    Parameters:
+        model (str): Directory where the .parquet file should be saved.
+    '''
+
+    try:
+        # Step 1: Extract and join relevant columns
+        df = pd.merge(meter_usage[['account_number', 'service_point_id', 'meter_id']].drop_duplicates(), 
+                      locations[['account_number', 'street', 'label']].drop_duplicates(), 
+                      on  = 'account_number', 
+                      how = 'left')
+
+        # Step 2: Create a unique identifier `id` for each row
+        df.insert(0, 'id', range(1, len(df) + 1))
+
+        # Step 3: Save the resulting DataFrame as a .parquet file
+        pq.write_to_dataset(pa.Table.from_pandas(df), 
+                            root_path      = model, 
+                            compression    = 'snappy', 
+                            use_dictionary = True)
+
+        lg.info(f"Accounts dimension table saved as .parquet file in {model}.")
+
+    except Exception as e:
+        lg.error(f"Error creating accounts dimension table: {e}")
+
 
 '''
 =========================================

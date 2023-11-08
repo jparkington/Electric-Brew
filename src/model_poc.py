@@ -39,4 +39,4 @@ def create_int_all_sources(curated       : str  = "./data/model/int_all_sources"
 
     return int_df
 
-print(locations)
+print(dim_accounts)
