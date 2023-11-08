@@ -16,15 +16,17 @@ The `/src/` directory contains various utility scripts that support the main fun
   - [`cmp_bills`](#cmp_bills)
   - [`dim_datetimes`](#dim_datetimes)
   - [`dim_accounts`](#dim_accounts)
-- [Modeling](#modeling)
-  - [`create_dim_datetimes`](#create_dim_datetimes)
-  - [`create_dim_accounts`](#create_dim_accounts)
+  - [`dim_suppliers`](#dim_suppliers)
 - [Curation](#curation)
   - [`curate_meter_usage`](#curate_meter_usage)
   - [`curate_cmp_bills`](#curate_cmp_bills)
   - [`scrape_cmp_bills`](#scrape_cmp_bills)
     - [**Regular Expressions**](#regular-expressions)
     - [**Manual Interventions**](#manual-interventions)
+- [Modeling](#modeling)
+  - [`create_dim_datetimes`](#create_dim_datetimes)
+  - [`create_dim_accounts`](#create_dim_accounts)
+  - [`create_dim_suppliers`](#create_dim_suppliers)
 
 
 ## Runtime
@@ -184,67 +186,20 @@ A centralized dimensional table that aggregates account-specific information, li
   
   - `label` (**str**): A descriptive label for the location, often used for easier identification or categorization of the service area.
 
+### `dim_suppliers`
 
-## Modeling
+A concise dimensional table that stores information about energy suppliers and their associated average supply rates. This table assists with financial analysis and comparisons between supplier costs.
 
-This section comprises functions that transform DataFrames into a structured, denormalized data model optimized for analytical queries and data visualization. It includes the generation of dimensional tables and the enhancement of timestamp data to facilitate intuitive querying.
+**Source**: Derived from the `cmp_bills` DataFrame  
+**Location**: `./data/model/dim_suppliers` 
 
-### `create_dim_datetimes`
+**Schema**:
 
-Generates a datetime dimension table, which is a key component in time series analysis and reporting. It enriches the dataset by breaking down timestamps into more granular and useful components, facilitating more sophisticated temporal queries and analyses.
-
-**Methodology**
-
-1. Extract and sort unique timestamps from `meter_usage['interval_end_datetime']`.
-2. Decompose timestamps into individual time components.
-3. Categorize timestamps into time periods based on the hour of the day.
-4. Assign a unique identifier `id` to each timestamp.
-5. Persist the resulting dataframe as a `.parquet` file with `snappy` compression.
-
-**Returns**
-
-A `.parquet` file saved in the specified `model` directory containing the datetime dimension table.
-
-**Example Output**
-
-| id      | timestamp           | increment | hour | date       | week | week_in_year | month | month_name | quarter | year | period                                 |
-|---------|---------------------|-----------|------|------------|------|--------------|-------|------------|---------|------|----------------------------------------|
-| 1       | 2020-10-08 00:00:00 | 0         | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
-| 2       | 2020-10-08 00:15:00 | 15        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
-| 3       | 2020-10-08 00:30:00 | 30        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
-| 4       | 2020-10-08 00:45:00 | 45        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
-| 5       | 2020-10-08 01:00:00 | 0         | 1    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
-| ...     | ...                 | ...       | ...  | ...        | ...  | ...          | ...   | ...        | ...     | ...  | ...                                   |
-| 104432  | 2023-09-30 22:45:00 | 45        | 22   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | Mid-peak: 7AM to 5PM, 9PM to 11PM     |
-| 104433  | 2023-09-30 23:00:00 | 0         | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
-| 104434  | 2023-09-30 23:15:00 | 15        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
-| 104435  | 2023-09-30 23:30:00 | 30        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
-| 104436  | 2023-09-30 23:45:00 | 45        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
-
-### `create_dim_accounts`
-
-Creates an accounts dimension table, which centralizes the account information, linking service points, meter IDs, and location details. This table simplifies the complexity of account management and enables more efficient account-related queries and analyses.
-
-**Methodology**
-
-1. Read the `meter_usage` and `locations` DataFrames.
-2. Extract and join relevant columns based on the `account_number`.
-3. Assign a unique identifier `id` to each account entry.
-4. Persist the resulting dataframe as a `.parquet` file with `snappy` compression.
-
-**Returns**
-
-A `.parquet` file saved in the specified `model` directory containing the accounts dimension table.
-
-**Example Output**
-
-| id    | account_number | service_point_id | meter_id   | street                 | label         |
-|-------|----------------|------------------|------------|------------------------|---------------|
-| 1     | 30010320353    | 2300822246       | L108605388 | 115 FOX ST UNIT 115    | Fox Street    |
-| 2     | 30010320361    | 2300822247       | L108605389 | 115 FOX ST UNIT 103    | Fox Street    |
-| 3     | 30010601281    | 2300822250       | L108605390 | 111 FOX ST UNIT 2      | Fox Street    |
-| ...   | ...            | ...              | ...        | ...                    | ...           |
-| 8     | 35012790198    | 2300588897       | L108607371 | 1 INDUSTRIAL WAY UNIT 10 | Industrial Way |
+  - `id` (**int**): A unique identifier assigned sequentially starting at 1 for each supplier, serving as a primary key.
+  
+  - `supplier` (**str**): The name of the energy supplier, which can be used as a foreign key to join with transactional data related to billing and consumption.
+  
+  - `supply_rate` (**float**): The average rate at which the supplier charges for energy, vital for cost analysis and supplier comparison.
 
 
 ## Curation
@@ -389,3 +344,88 @@ After the automated scraping process is completed by `scrape_cmp_bills`, several
     - **Example**: See [`30010320353/701001868909_bill.pdf`](../data/cmp/raw/bills/30010320353/701001868909_bill.pdf).
 
 After these manual interventions are performed, the curated CSV file is ready for conversion into Parquet format for further data processing.
+
+## Modeling
+
+This section comprises functions that transform DataFrames into a structured, denormalized data model optimized for analytical queries and data visualization. It includes the generation of dimensional tables and the enhancement of timestamp data to facilitate intuitive querying.
+
+### `create_dim_datetimes`
+
+Generates a datetime dimension table, which is a key component in time series analysis and reporting. It enriches the dataset by breaking down timestamps into more granular and useful components, facilitating more sophisticated temporal queries and analyses.
+
+**Methodology**
+
+1. Extract and sort unique timestamps from `meter_usage['interval_end_datetime']`.
+2. Decompose timestamps into individual time components.
+3. Categorize timestamps into time periods based on the hour of the day.
+4. Assign a unique identifier `id` to each timestamp.
+5. Persist the resulting dataframe as a `.parquet` file with `snappy` compression.
+
+**Returns**
+
+A `.parquet` file saved in the specified `model` directory containing the datetime dimension table.
+
+**Example Output**
+
+| id      | timestamp           | increment | hour | date       | week | week_in_year | month | month_name | quarter | year | period                                 |
+|---------|---------------------|-----------|------|------------|------|--------------|-------|------------|---------|------|----------------------------------------|
+| 1       | 2020-10-08 00:00:00 | 0         | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
+| 2       | 2020-10-08 00:15:00 | 15        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
+| 3       | 2020-10-08 00:30:00 | 30        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
+| 4       | 2020-10-08 00:45:00 | 45        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
+| 5       | 2020-10-08 01:00:00 | 0         | 1    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
+| ...     | ...                 | ...       | ...  | ...        | ...  | ...          | ...   | ...        | ...     | ...  | ...                                   |
+| 104432  | 2023-09-30 22:45:00 | 45        | 22   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | Mid-peak: 7AM to 5PM, 9PM to 11PM     |
+| 104433  | 2023-09-30 23:00:00 | 0         | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
+| 104434  | 2023-09-30 23:15:00 | 15        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
+| 104435  | 2023-09-30 23:30:00 | 30        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
+| 104436  | 2023-09-30 23:45:00 | 45        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
+
+### `create_dim_accounts`
+
+Creates an accounts dimension table, which centralizes the account information, linking service points, meter IDs, and location details. This table simplifies the complexity of account management and enables more efficient account-related queries and analyses.
+
+**Methodology**
+
+1. Read the `meter_usage` and `locations` DataFrames.
+2. Extract and join relevant columns based on the `account_number`.
+3. Assign a unique identifier `id` to each account entry.
+4. Persist the resulting dataframe as a `.parquet` file with `snappy` compression.
+
+**Returns**
+
+A `.parquet` file saved in the specified `model` directory containing the accounts dimension table.
+
+**Example Output**
+
+| id    | account_number | service_point_id | meter_id   | street                 | label         |
+|-------|----------------|------------------|------------|------------------------|---------------|
+| 1     | 30010320353    | 2300822246       | L108605388 | 115 FOX ST UNIT 115    | Fox Street    |
+| 2     | 30010320361    | 2300822247       | L108605389 | 115 FOX ST UNIT 103    | Fox Street    |
+| 3     | 30010601281    | 2300822250       | L108605390 | 111 FOX ST UNIT 2      | Fox Street    |
+| ...   | ...            | ...              | ...        | ...                    | ...           |
+| 8     | 35012790198    | 2300588897       | L108607371 | 1 INDUSTRIAL WAY UNIT 10 | Industrial Way |
+
+### `create_dim_suppliers`
+
+Creates a suppliers dimension table, which encapsulates the supplier information and the average supply rates offered. This table is essential for understanding the opportunities Austin Street can move away from in banking more solar credit as their own supply.
+
+**Methodology**
+
+1. Read the `cmp_bills` DataFrame.
+2. Group by `supplier` and calculate the average `supply_rate`.
+3. Assign a unique identifier `id` to each supplier entry.
+4. Persist the resulting dataframe as a `.parquet` file with `snappy` compression.
+
+**Returns**
+
+A `.parquet` file saved in the specified `model` directory containing the suppliers dimension table.
+
+**Example Output**
+
+| id    | supplier             | supply_rate |
+|-------|----------------------|-------------|
+| 1     | Constellation        | 0.11780     |
+| 2     | Mega Energy of Maine | 0.06840     |
+| 3     | Standard Offer       | 0.17631     |
+| 4     | Town Square Energy   | 0.06840     |

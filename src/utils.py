@@ -110,6 +110,7 @@ DataFrames:
     - locations     : Adds manual CSV entries describing each of the accounts Austin St. uses to the model.
     - dim_datetimes : Breaks down timestamps into individual date and time components, with categorization of periods.
     - dim_accounts  : Abstracts the account numbers, service points, meter IDs, and streets dimensions into one location.
+    - dim_suppliers : Extracts the supplier name and calculates the average supply rate as a reference dimension.
 '''
 
 # Curated sources
@@ -120,6 +121,216 @@ locations   = read_data("cmp/curated/locations")
 # Model
 dim_datetimes = read_data("model/dim_datetimes")
 dim_accounts  = read_data("model/dim_accounts")
+dim_suppliers = read_data("model/dim_suppliers")
+
+
+'''
+=========================================
+=============== CURATION ================
+=========================================
+
+Contains utility functions that scrape and restructure data from raw sources into more structured formats.
+
+Functions:
+    - curate_meter_usage : Curates meter usage data from raw CSVs into partitioned Parquet files.
+    - curate_locations   : Converts a CSV with manual entries into Parquet files.
+    - curate_cmp_bills   : Curates the manuall edited CSVs from `1scrape_cmp_bills` into partitioned Parquet files.
+    - scrape_cmp_bills   : Scrapes billing data from PDFs into a CSV file.
+
+'''
+
+def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter-usage", 
+                       curated       : str  = "./data/cmp/curated/meter-usage",
+                       partition_col : list = ['account_number'],
+                       schema        : list = ["account_number", "service_point_id", "meter_id", 
+                                               "interval_end_datetime", "meter_channel", "kwh"]):
+    '''
+    This function reads all CSVs in the specified `raw` directory, adds the defined `schema`, and then saves
+    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
+    
+    Methodology:
+        1. Read all CSVs in the `raw` directory without headers and assign the defined column names.
+        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
+        
+    Parameters:
+        raw           (str)  : Path to the directory containing raw `meter-usage` CSV files.
+        curated       (str)  : Directory where the partitioned .parquet files should be saved.
+        partition_col (list) : Column name(s) to use for partitioning the parquet files.
+        schema        (list) : Column names(s) to apply to the resulting DataFrame as headers.
+    '''
+    
+    try:
+        # Step 1: Read all CSVs in the `raw` directory and add headers
+        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
+        if not raw_files:
+            lg.warning(f"No CSV files found in {raw}. Exiting function.")
+            return
+    
+        concat_df = pd.concat([pd.read_csv(file, 
+                                           header  = None, 
+                                           usecols = range(len(schema)),
+                                           names   = schema) for file in raw_files])
+        
+        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
+        if not os.path.exists(curated):
+            lg.warning(f"Directory {curated} does not exist. It will now be created.")
+            os.makedirs(curated)
+
+        pq.write_to_dataset(pa.Table.from_pandas(concat_df), 
+                            root_path      = curated, 
+                            partition_cols = partition_col, 
+                            compression    = 'snappy', 
+                            use_dictionary = True)
+        
+        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+
+    except Exception as e:
+        lg.error(f"Error while curating meter usage data: {e}")
+
+def curate_locations(raw           : str  = "./data/cmp/raw/locations", 
+                     curated       : str  = "./data/cmp/curated/locations",
+                     partition_col : list = ['account_number']):
+    '''
+    This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
+    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
+    
+    Methodology:
+        1. Read all CSVs in the `raw` directory using the existing headers.
+        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
+        
+    Parameters:
+        raw           (str)  : Path to the directory containing the raw `locations` CSV file.
+        curated       (str)  : Directory where the partitioned .parquet files should be saved.
+        partition_col (list) : Column name(s) to use for partitioning the parquet files.
+    '''
+
+    try:
+        # Step 1: Read all CSVs in the `raw` directory using existing headers
+        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
+        if not raw_files:
+            lg.warning(f"No CSV files found in {raw}. Exiting function.")
+            return
+    
+        concat_df = pd.concat([pd.read_csv(file) for file in raw_files])
+        
+        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
+        if not os.path.exists(curated):
+            lg.warning(f"Directory {curated} does not exist. It will now be created.")
+            os.makedirs(curated)
+
+        pq.write_to_dataset(pa.Table.from_pandas(concat_df), 
+                            root_path      = curated, 
+                            partition_cols = partition_col, 
+                            compression    = 'snappy', 
+                            use_dictionary = True)
+        
+        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+
+    except Exception as e:
+        lg.error(f"Error while curating cmp bills data: {e}")
+
+def curate_cmp_bills(raw           : str  = "./data/cmp/raw/bills", 
+                     curated       : str  = "./data/cmp/curated/bills",
+                     partition_col : list = ['account_number']):
+    '''
+    This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
+    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
+    
+    Methodology:
+        1. Read all CSVs in the `raw` directory using the existing headers.
+        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
+        
+    Parameters:
+        raw           (str)  : Path to the directory containing raw `bills` CSV files.
+        curated       (str)  : Directory where the partitioned .parquet files should be saved.
+        partition_col (list) : Column name(s) to use for partitioning the parquet files.
+    '''
+
+    try:
+        # Step 1: Read all CSVs in the `raw` directory using existing headers
+        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
+        if not raw_files:
+            lg.warning(f"No CSV files found in {raw}. Exiting function.")
+            return
+    
+        concat_df = pd.concat([pd.read_csv(file) for file in raw_files])
+        
+        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
+        if not os.path.exists(curated):
+            lg.warning(f"Directory {curated} does not exist. It will now be created.")
+            os.makedirs(curated)
+
+        pq.write_to_dataset(pa.Table.from_pandas(concat_df), 
+                            root_path      = curated, 
+                            partition_cols = partition_col, 
+                            compression    = 'snappy', 
+                            use_dictionary = True)
+        
+        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+
+    except Exception as e:
+        lg.error(f"Error while curating cmp bills data: {e}")
+
+def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
+                     output : str = "./data/cmp/raw/bills"):
+    '''
+    This function reads all PDFs in the specified `raw` directory, extracts specific information from the 
+    electricity bills using regular expressions, and then saves the consolidated data as a CSV file 
+    in the `output` directory.
+    
+    Methodology:
+        1. Iterate over each PDF in the `raw` directory.
+        2. Extract the text content of each page in the PDF.
+        3. Use regular expressions to scrape relevant billing and meter details.
+        4. Append the scraped data to a list of dictionaries.
+        5. Convert the list of dictionaries to a DataFrame.
+        6. Save the DataFrame as a CSV file in the `output` directory.
+        
+    Parameters:
+        raw    (str) : Path to the directory containing raw electricity bill PDF files.
+        output (str) : Directory where the scraped data CSV file should be saved.
+    '''
+    
+    try:
+        records = []
+        for pdf_path in glob(f"{raw}/**/*pdf", recursive = True):
+
+            def extract_field(pattern, replace_dict = None):
+                search_result = search(pattern, pdf_text)
+                field_value   = search_result.group(1) if search_result else "NULL"
+                
+                if replace_dict:
+                    field_value = "".join(replace_dict.get(char, char) for char in field_value)
+                    
+                return field_value
+
+            with pl.open(pdf_path) as pdf:
+                pdf_text = " ".join(page.extract_text() for page in pdf.pages)
+
+            meter_details = search(r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges", 
+                                    pdf_text, 
+                                    DOTALL)
+            
+            records.append({'account_number' : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
+                            'supplier'       : "", # To be manually overwritten
+                            'amount_due'     : extract_field(r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"),
+                            'service_charge' : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
+                            'delivery_rate'  : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
+                            'supply_rate'    : "", # To be manually overwritten
+                            'interval_start' : meter_details.group(1) if meter_details else "NULL",
+                            'interval_end'   : meter_details.group(2) if meter_details else "NULL",
+                            'kwh_delivered'  : meter_details.group(3).replace(",", "") if meter_details else "NULL",
+                            'pdf_file_name'  : os.path.basename(pdf_path)})
+
+        df = pd.DataFrame(records)
+        
+        if not os.path.exists(output):
+            os.makedirs(output)
+            
+        df.to_csv(os.path.join(output, 'scraped_bills.csv'), index = False)
+    
+    except Exception as e:
+        return f"Error while curating bill data: {e}"
 
 
 '''
@@ -202,7 +413,7 @@ def create_dim_accounts(model : str = "./data/model/dim_accounts"):
         3. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
 
     Parameters:
-        model (str): Directory where the .parquet file should be saved.
+        model (str) : Directory where the .parquet file should be saved.
     '''
 
     try:
@@ -226,214 +437,34 @@ def create_dim_accounts(model : str = "./data/model/dim_accounts"):
     except Exception as e:
         lg.error(f"Error creating accounts dimension table: {e}")
 
-
-'''
-=========================================
-=============== CURATION ================
-=========================================
-
-Contains utility functions that scrape and restructure data from raw sources into more structured formats.
-
-Functions:
-    - curate_meter_usage : Curates meter usage data from raw CSVs into partitioned Parquet files.
-    - curate_locations   : Converts a CSV with manual entries into Parquet files.
-    - curate_cmp_bills   : Curates the manuall edited CSVs from `1scrape_cmp_bills` into partitioned Parquet files.
-    - scrape_cmp_bills   : Scrapes billing data from PDFs into a CSV file.
-
-'''
-
-def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter-usage", 
-                       curated       : str  = "./data/cmp/curated/meter-usage",
-                       partition_col : list = ['account_number'],
-                       schema        : list = ["account_number", "service_point_id", "meter_id", 
-                                               "interval_end_datetime", "meter_channel", "kwh"]):
+def create_dim_suppliers(model : str = "./data/model/dim_suppliers"):
     '''
-    This function reads all CSVs in the specified `raw` directory, adds the defined `schema`, and then saves
-    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
-    
+    This function creates a suppliers dimension table from the `cmp_bills` DataFrame.
+    It extracts the supplier name and calculates the average supply rate, then saves the result as a .parquet file.
+
     Methodology:
-        1. Read all CSVs in the `raw` directory without headers and assign the defined column names.
-        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
-        
+        1. Group `cmp_bills` by `supplier` and calculate the average `supply_rate`.
+        2. Assign a unique identifier `id` for each row.
+        3. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
+    
     Parameters:
-        raw           (str)  : Path to the directory containing raw `meter-usage` CSV files.
-        curated       (str)  : Directory where the partitioned .parquet files should be saved.
-        partition_col (list) : Column name(s) to use for partitioning the parquet files.
-        schema        (list) : Column names(s) to apply to the resulting DataFrame as headers.
+        model (str) : Directory where the .parquet file should be saved.
     '''
-    
-    try:
-        # Step 1: Read all CSVs in the `raw` directory and add headers
-        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
-        if not raw_files:
-            lg.warning(f"No CSV files found in {raw}. Exiting function.")
-            return
-    
-        concat_df = pd.concat([pd.read_csv(file, 
-                                           header  = None, 
-                                           usecols = range(len(schema)),
-                                           names   = schema) for file in raw_files])
-        
-        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        if not os.path.exists(curated):
-            lg.warning(f"Directory {curated} does not exist. It will now be created.")
-            os.makedirs(curated)
 
-        pq.write_to_dataset(pa.Table.from_pandas(concat_df, 
-                                                 preserve_index = False), 
-                            root_path      = curated, 
-                            partition_cols = partition_col, 
+    try:
+        # Step 1: Group by `supplier` and calculate average `supply_rate`
+        df = cmp_bills.groupby('supplier', as_index = False)['supply_rate'].mean()
+        
+        # Step 2: Assign unique identifier `id`
+        df.insert(0, 'id', range(1, len(df) + 1))
+
+        # Step 3: Save the DataFrame as a .parquet file
+        pq.write_to_dataset(pa.Table.from_pandas(df), 
+                            root_path      = model, 
                             compression    = 'snappy', 
                             use_dictionary = True)
-        
-        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+
+        print(f"Suppliers dimension table saved as .parquet file in {model}.")
 
     except Exception as e:
-        lg.error(f"Error while curating meter usage data: {e}")
-
-def curate_locations(raw           : str  = "./data/cmp/raw/locations", 
-                     curated       : str  = "./data/cmp/curated/locations",
-                     partition_col : list = ['account_number']):
-    '''
-    This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
-    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
-    
-    Methodology:
-        1. Read all CSVs in the `raw` directory using the existing headers.
-        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
-        
-    Parameters:
-        raw           (str)  : Path to the directory containing the raw `locations` CSV file.
-        curated       (str)  : Directory where the partitioned .parquet files should be saved.
-        partition_col (list) : Column name(s) to use for partitioning the parquet files.
-    '''
-
-    try:
-        # Step 1: Read all CSVs in the `raw` directory using existing headers
-        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
-        if not raw_files:
-            lg.warning(f"No CSV files found in {raw}. Exiting function.")
-            return
-    
-        concat_df = pd.concat([pd.read_csv(file) for file in raw_files])
-        
-        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        if not os.path.exists(curated):
-            lg.warning(f"Directory {curated} does not exist. It will now be created.")
-            os.makedirs(curated)
-
-        pq.write_to_dataset(pa.Table.from_pandas(concat_df, 
-                                                 preserve_index = False), 
-                            root_path      = curated, 
-                            partition_cols = partition_col, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
-        
-        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
-
-    except Exception as e:
-        lg.error(f"Error while curating cmp bills data: {e}")
-
-def curate_cmp_bills(raw           : str  = "./data/cmp/raw/bills", 
-                     curated       : str  = "./data/cmp/curated/bills",
-                     partition_col : list = ['account_number']):
-    '''
-    This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
-    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
-    
-    Methodology:
-        1. Read all CSVs in the `raw` directory using the existing headers.
-        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
-        
-    Parameters:
-        raw           (str)  : Path to the directory containing raw `bills` CSV files.
-        curated       (str)  : Directory where the partitioned .parquet files should be saved.
-        partition_col (list) : Column name(s) to use for partitioning the parquet files.
-    '''
-
-    try:
-        # Step 1: Read all CSVs in the `raw` directory using existing headers
-        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
-        if not raw_files:
-            lg.warning(f"No CSV files found in {raw}. Exiting function.")
-            return
-    
-        concat_df = pd.concat([pd.read_csv(file) for file in raw_files])
-        
-        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        if not os.path.exists(curated):
-            lg.warning(f"Directory {curated} does not exist. It will now be created.")
-            os.makedirs(curated)
-
-        pq.write_to_dataset(pa.Table.from_pandas(concat_df, 
-                                                 preserve_index = False), 
-                            root_path      = curated, 
-                            partition_cols = partition_col, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
-        
-        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
-
-    except Exception as e:
-        lg.error(f"Error while curating cmp bills data: {e}")
-
-def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
-                     output : str = "./data/cmp/raw/bills"):
-    '''
-    This function reads all PDFs in the specified `raw` directory, extracts specific information from the 
-    electricity bills using regular expressions, and then saves the consolidated data as a CSV file 
-    in the `output` directory.
-    
-    Methodology:
-        1. Iterate over each PDF in the `raw` directory.
-        2. Extract the text content of each page in the PDF.
-        3. Use regular expressions to scrape relevant billing and meter details.
-        4. Append the scraped data to a list of dictionaries.
-        5. Convert the list of dictionaries to a DataFrame.
-        6. Save the DataFrame as a CSV file in the `output` directory.
-        
-    Parameters:
-        raw    (str) : Path to the directory containing raw electricity bill PDF files.
-        output (str) : Directory where the scraped data CSV file should be saved.
-    '''
-    
-    try:
-        records = []
-        for pdf_path in glob(f"{raw}/**/*pdf", recursive = True):
-
-            def extract_field(pattern, replace_dict = None):
-                search_result = search(pattern, pdf_text)
-                field_value   = search_result.group(1) if search_result else "NULL"
-                
-                if replace_dict:
-                    field_value = "".join(replace_dict.get(char, char) for char in field_value)
-                    
-                return field_value
-
-            with pl.open(pdf_path) as pdf:
-                pdf_text = " ".join(page.extract_text() for page in pdf.pages)
-
-            meter_details = search(r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges", 
-                                    pdf_text, 
-                                    DOTALL)
-            
-            records.append({'account_number' : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
-                            'supplier'       : "", # To be manually overwritten
-                            'amount_due'     : extract_field(r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"),
-                            'service_charge' : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
-                            'delivery_rate'  : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
-                            'supply_rate'    : "", # To be manually overwritten
-                            'interval_start' : meter_details.group(1) if meter_details else "NULL",
-                            'interval_end'   : meter_details.group(2) if meter_details else "NULL",
-                            'kwh_delivered'  : meter_details.group(3).replace(",", "") if meter_details else "NULL",
-                            'pdf_file_name'  : os.path.basename(pdf_path)})
-
-        df = pd.DataFrame(records)
-        
-        if not os.path.exists(output):
-            os.makedirs(output)
-            
-        df.to_csv(os.path.join(output, 'scraped_bills.csv'), index = False)
-    
-    except Exception as e:
-        return f"Error while curating bill data: {e}"
+        print(f"Error creating suppliers dimension table: {e}")
