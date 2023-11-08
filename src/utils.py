@@ -6,6 +6,7 @@ from re                import search, DOTALL
 
 import os
 import logging         as lg
+import numpy           as np
 import pandas          as pd
 import pdfplumber      as pl
 import pyarrow         as pa
