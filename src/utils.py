@@ -109,7 +109,7 @@ DataFrames:
     - cmp_bills     : Contains billed delivery and supplier rates for various periods of activity.
     - locations     : Adds manual CSV entries describing each of the accounts Austin St. uses to the model.
     - dim_datetimes : Breaks down timestamps into individual date and time components, with categorization of periods.
-    - dim_accounts  : Abstracts the account numbers, service points, meter IDs, and streets dimensions into one location.
+    - dim_meters    : Abstracts the account numbers, service points, meter IDs, and streets dimensions into one table.
     - dim_suppliers : Extracts the supplier name and calculates the average supply rate as a reference dimension.
 '''
 
@@ -120,7 +120,7 @@ locations   = read_data("cmp/curated/locations")
 
 # Model
 dim_datetimes = read_data("model/dim_datetimes")
-dim_accounts  = read_data("model/dim_accounts")
+dim_meters    = read_data("model/dim_meters")
 dim_suppliers = read_data("model/dim_suppliers")
 
 
@@ -402,9 +402,9 @@ def create_dim_datetimes(model : str = "./data/model/dim_datetimes"):
     except Exception as e:
         lg.error(f"Error creating datetime dimension table: {e}")
 
-def create_dim_accounts(model : str = "./data/model/dim_accounts"):
+def create_dim_meters(model : str = "./data/model/dim_meters"):
     '''
-    This function creates an accounts dimension table by joining data from the `meter_usage` and `locations` DataFrames.
+    This function creates a meters dimension table by joining data from the `meter_usage` and `locations` DataFrames.
     It extracts account numbers, service points, meter IDs, streets, and labels, and saves the result as a .parquet file.
 
     Methodology:
@@ -418,7 +418,7 @@ def create_dim_accounts(model : str = "./data/model/dim_accounts"):
 
     try:
         # Step 1: Extract and join relevant columns
-        df = pd.merge(meter_usage[['account_number', 'service_point_id', 'meter_id']].drop_duplicates(), 
+        df = pd.merge(meter_usage[['meter_id', 'service_point_id', 'account_number']].drop_duplicates(), 
                       locations[['account_number', 'street', 'label']].drop_duplicates(), 
                       on  = 'account_number', 
                       how = 'left')
@@ -432,10 +432,10 @@ def create_dim_accounts(model : str = "./data/model/dim_accounts"):
                             compression    = 'snappy', 
                             use_dictionary = True)
 
-        lg.info(f"Accounts dimension table saved as .parquet file in {model}.")
+        lg.info(f"Meters dimension table saved as .parquet file in {model}.")
 
     except Exception as e:
-        lg.error(f"Error creating accounts dimension table: {e}")
+        lg.error(f"Error creating meters dimension table: {e}")
 
 def create_dim_suppliers(model : str = "./data/model/dim_suppliers"):
     '''
@@ -468,3 +468,14 @@ def create_dim_suppliers(model : str = "./data/model/dim_suppliers"):
 
     except Exception as e:
         print(f"Error creating suppliers dimension table: {e}")
+
+def create_fct_eletric_brew(model         : str  = "./data/model/fct_electric_brew",
+                            partition_col : list = ['account_number']):
+    
+    try:
+        int_meter_usage = pd.merge(meter_usage, locations, on = 'account_number', how = 'left')
+
+    except Exception as e:
+        lg.error(f"Error while joining meter and locations data: {e}")
+
+    return int_meter_usage
