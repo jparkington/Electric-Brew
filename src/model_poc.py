@@ -38,5 +38,3 @@ def create_int_all_sources(curated       : str  = "./data/model/int_all_sources"
         lg.error(f"Error while joining meter and locations data: {e}")
 
     return int_df
-
-print(dim_suppliers)
