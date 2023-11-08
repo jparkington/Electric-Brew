@@ -2,13 +2,12 @@ from utils import *
 
 # 500280 rows
 # Convert the interval_end_datetime to a timestamp and select relevant columns
-# df = meter_usage.assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
-#                                                               format='%m/%d/%Y %I:%M:%S %p')) \
-#                  .merge(dim_accounts,  on = 'account_number', how = 'left').rename(columns = {'id' : 'dim_accounts_id'}) \
-#                 #  .merge(dim_datetimes, on = 'timestamp',      how = 'left').rename(columns = {'id' : 'dim_datetimes_id'})
+df = meter_usage.assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
+                                                              format='%m/%d/%Y %I:%M:%S %p')) \
+                 .merge(dim_meters,  on = 'meter_id', how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
+                 .merge(dim_datetimes, on = 'timestamp',      how = 'left').rename(columns = {'id' : 'dim_datetimes_id'})
 
-print(dim_meters)
-
+print(df)
 # # Expand each row in cmp_bills for each day in its interval
 # cmp_bills['interval_date'] = cmp_bills.apply(lambda row: pd.date_range(start=row['interval_start'], end=row['interval_end']).to_list(), axis=1)
 
