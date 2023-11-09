@@ -149,7 +149,7 @@ A detailed dimensional table that contains the breakdown of timestamps into indi
   
   - `hour` (**int**): The hour component of the timestamp, represented in a 24-hour format.
   
-  - `date` (**date**): The date component of the timestamp in YYYY-MM-DD format.
+  - `date` (**date**): The date of the timestamp, normalized to midnight of that day.
   
   - `week` (**int**): The week number of the year when the timestamp occurs, according to ISO standards.
   
@@ -199,7 +199,7 @@ A concise dimensional table that stores information about energy suppliers and t
   
   - `supplier` (**str**): The name of the energy supplier, which can be used as a foreign key to join with transactional data related to billing and consumption.
   
-  - `supply_rate` (**float**): The average rate at which the supplier charges for energy, vital for cost analysis and supplier comparison.
+  - `avg_supply_rate` (**float**): The average rate at which the supplier charges for energy, vital for cost analysis and supplier comparison.
 
 
 ## Curation
@@ -234,9 +234,9 @@ Processes all CSV files from the provided directory (*likely one file only with 
 
 **Signature** 
 ```python
-def curate_meter_usage(raw           : str, 
-                       curated       : str, 
-                       partition_col : list):
+def curate_cmp_bills(raw           : str, 
+                     curated       : str, 
+                     partition_col : list):
 ```
 
 **Parameters**
@@ -328,14 +328,13 @@ After the automated scraping process is completed by `scrape_cmp_bills`, several
     - **Example**: See [`30010320353/700000447768_bill.pdf`](../data/cmp/raw/bills/30010320353/700000447768_bill.pdf).
 
 3. **Managing Multiple Billing Intervals**:  
-    - **Scenario**: Some bills may have more than one billing interval, often crossing fiscal quarters.  
-    - **Action**: Add an additional row in the CSV with the same `account_number`, `amount_due`, and `pdf_file_name`, but with differing values for other fields.  
-        - **Special Case**: If the bill presents a single `kwh_delivered` value for multiple intervals, allocate a percentage of this to each interval based on the percentage of total `service_charge` paid.  
+    - **Scenario**: Some bills may have more than one billing interval, often crossing fiscal quarters, and the function can only pick up one.
+    - **Action**: Add an additional row in the CSV with the same `account_number`, `amount_due`, and `pdf_file_name`, but with differing values for other fields, like `kwh_delivered`  
     - **Example**: See [`30010320353/703001515406_bill.pdf`](../data/cmp/raw/bills/30010320353/703001515406_bill.pdf) and [`30010320353/702001847715_bill.pdf`](../data/cmp/raw/bills/30010320353/702001847715_bill.pdf).
 
 4. **Addressing Missing 'Delivery Service Rate'**:  
     - **Scenario**: Some bills do not include a `delivery_service_rate`.  
-    - **Action**: Leave this field as NULL, with the understanding that the delivery was covered by previous `Banked Generation`.  
+    - **Action**: Leave this field and `kwh_delivered` as NULL, with the understanding that the delivery was covered by previous `Banked Generation`.  
     - **Example**: See [`30010320353/705001871139_bill.pdf`](../data/cmp/raw/bills/30010320353/705001871139_bill.pdf).
 
 5. **External Electricity Supply**:  
@@ -367,8 +366,8 @@ A `.parquet` file saved in the specified `model` directory containing the dateti
 
 **Example Output**
 
-| id      | timestamp           | increment | hour | date       | week | week_in_year | month | month_name | quarter | year | period                                 |
-|---------|---------------------|-----------|------|------------|------|--------------|-------|------------|---------|------|----------------------------------------|
+| id      | timestamp           | increment | hour | date       | week | week_in_year | month | month_name | quarter | year | period                                |
+|---------|---------------------|-----------|------|------------|------|--------------|-------|------------|---------|------|---------------------------------------|
 | 1       | 2020-10-08 00:00:00 | 0         | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
 | 2       | 2020-10-08 00:15:00 | 15        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
 | 3       | 2020-10-08 00:30:00 | 30        | 0    | 2020-10-08 | 41   | 41           | 10    | October    | 4       | 2020 | Off-peak: 12AM to 7AM                 |
@@ -424,9 +423,9 @@ A `.parquet` file saved in the specified `model` directory containing the suppli
 
 **Example Output**
 
-| id    | supplier             | supply_rate |
-|-------|----------------------|-------------|
-| 1     | Constellation        | 0.11780     |
-| 2     | Mega Energy of Maine | 0.06840     |
-| 3     | Standard Offer       | 0.17631     |
-| 4     | Town Square Energy   | 0.06840     |
+| id    | supplier             | avg_supply_rate |
+|-------|----------------------|-----------------|
+| 1     | Constellation        | 0.11780         |
+| 2     | Mega Energy of Maine | 0.06840         |
+| 3     | Standard Offer       | 0.17631         |
+| 4     | Town Square Energy   | 0.06840         |
