@@ -105,12 +105,13 @@ Contains commonly used DataFrames initialized at the start for easier access acr
 These DataFrames are curated and optimized for efficient data operations.
 
 DataFrames:
-    - meter_usage   : Contains meter usage data from CMP.
-    - cmp_bills     : Contains billed delivery and supplier rates for various periods of activity.
-    - locations     : Adds manual CSV entries describing each of the accounts Austin St. uses to the model.
-    - dim_datetimes : Breaks down timestamps into individual date and time components, with categorization of periods.
-    - dim_meters    : Abstracts the account numbers, service points, meter IDs, and streets dimensions into one table.
-    - dim_suppliers : Extracts the supplier name and calculates the average supply rate as a reference dimension.
+    - meter_usage       : Contains meter usage data from CMP.
+    - cmp_bills         : Contains billed delivery and supplier rates for various periods of activity.
+    - locations         : Adds manual CSV entries describing each of the accounts Austin St. uses to the model.
+    - dim_datetimes     : Breaks down timestamps into individual date and time components, with categorization of periods.
+    - dim_meters        : Abstracts the account numbers, service points, meter IDs, and streets dimensions into one table.
+    - dim_suppliers     : Extracts the supplier name and calculates the average supply rate as a reference dimension.
+    - fct_electric_brew : Houses all the model's facts about usage, billing, and the cost of delivery.
 '''
 
 # Curated sources
@@ -119,9 +120,10 @@ cmp_bills   = read_data("cmp/curated/bills")
 locations   = read_data("cmp/curated/locations")
 
 # Model
-dim_datetimes = read_data("model/dim_datetimes")
-dim_meters    = read_data("model/dim_meters")
-dim_suppliers = read_data("model/dim_suppliers")
+dim_datetimes     = read_data("model/dim_datetimes")
+dim_meters        = read_data("model/dim_meters")
+dim_suppliers     = read_data("model/dim_suppliers")
+fct_electric_brew = read_data("model/fct_electric_brew")
 
 
 '''
@@ -473,10 +475,94 @@ def create_dim_suppliers(model : str = "./data/model/dim_suppliers"):
 def create_fct_eletric_brew(model         : str  = "./data/model/fct_electric_brew",
                             partition_col : list = ['account_number']):
     
+    '''
+    This function generates the central fact table which records the electric usage and associated charges for each
+    account per time interval. This table is the cornerstone of our analytics model, enabling detailed insights into 
+    usage patterns, billing calculations, and the financial implications of electric delivery.
+
+    The final result integrates data from meter readings, customer billing, and rate information, applying business
+    rules to calculate the cost of electric delivery and usage. The calculated fields include allocated service charges
+    based on usage, the cost of electric delivery, and the used kilowatt-hours (kWh). These metrics are critical for 
+    understanding electric consumption and financials at a granular level.
+
+    Methodology:
+        1. Expand 'cmp_bills' to create a daily granularity level based on the billing interval.
+        2. Curate an intermediary DataFrame by merging meter usage data with dimension tables and billing data.
+        3. Calculate cumulative and usage-based metrics such as 'allocated_service_charge', 'delivered_kwh_left', and 'delivered_kwh_used'.
+        4. Determine the 'total_cost_of_delivery' by summing up the delivery and supply rates along with an allocated service charge.
+        5. Assign a unique identifier 'id' for each row.
+        6. Save the resulting DataFrame as a .parquet file in the specified 'model' directory with snappy compression.
+
+    Parameters:
+        model (str): Directory where the .parquet file should be saved.
+        partition_col (list): List of column names to partition the .parquet file upon.
+    '''
+    
     try:
-        int_meter_usage = pd.merge(meter_usage, locations, on = 'account_number', how = 'left')
+        # Step 1: Expand 'cmp_bills' data to daily granularity
+        exploded_bills = cmp_bills.assign(date = lambda df: 
+                                  df.apply(lambda row: pd.date_range(start = row['interval_start'], 
+                                                                     end   = row['interval_end'])
+                                                         .to_list(), axis = 1)) \
+                                                         .explode('date')
+
+        # Step 2: Merge and curate intermediary DataFrame
+        int_df = meter_usage.drop('account_number', axis = 1) \
+                            .assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
+                                                                          format = '%m/%d/%Y %I:%M:%S %p')) \
+                            .merge(dim_meters,     on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
+                            .merge(dim_datetimes,  on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
+                            .merge(exploded_bills, on = ['account_number', 'date'], how = 'left') \
+                            .merge(dim_suppliers,  on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'}) \
+                            .sort_values(by = ['pdf_file_name', 'timestamp']) \
+                            .fillna({'kwh_delivered'  : 0,
+                                     'service_charge' : 0,
+                                     'delivery_rate'  : 0, 
+                                     'supply_rate'    : 0})
+
+        # Steps 3 & 4: Calculate metrics and total cost of delivery
+        fct_df = (
+            int_df.assign(
+                total_recorded_kwh       = int_df.groupby(['pdf_file_name', 'kwh_delivered'])['kwh'].transform('sum'),
+                allocated_service_charge = lambda x: x['service_charge'] * x['kwh'] / x['total_recorded_kwh'],
+                delivered_kwh_left       = int_df.groupby(['pdf_file_name', 'kwh_delivered'], group_keys = False)
+                                                 .apply(lambda g: (g['kwh_delivered'].iloc[0] - g['kwh'].iloc[::-1].cumsum())
+                                                 .clip(lower = 0)),
+                delivered_kwh_used       = lambda x: np.minimum(x['kwh'], x['delivered_kwh_left']).clip(lower = 0),
+                total_cost_of_delivery   = lambda x: x['delivered_kwh_used'] * (x['delivery_rate'] + x['supply_rate']) +
+                                                     x['allocated_service_charge'])) \
+                .sort_values(by = ['dim_meters_id', 'dim_datetimes_id']) \
+                [[
+                    # Relational and partition keys
+                    'dim_datetimes_id',
+                    'dim_meters_id',
+                    'dim_suppliers_id',
+                    'account_number',
+
+                    # Established facts from `meter_usage` and `cmp_bills`
+                    'kwh',
+                    'service_charge',
+                    'delivery_rate',
+                    'supply_rate',
+
+                    # Newly curated facts
+                    'allocated_service_charge',
+                    'delivered_kwh_left',
+                    'delivered_kwh_used',
+                    'total_cost_of_delivery'
+                ]]
+        
+        # Step 5: Create a unique identifier `id` for each row
+        fct_df.insert(0, 'id', range(1, len(fct_df) + 1))
+
+        # Step 6: Save the resulting DataFrame as a .parquet file
+        pq.write_to_dataset(pa.Table.from_pandas(fct_df), 
+                            root_path      = model, 
+                            partition_cols = partition_col, 
+                            compression    = 'snappy', 
+                            use_dictionary = True)
+
+        lg.info(f"Final fact table saved as .parquet file in {model}.")
 
     except Exception as e:
-        lg.error(f"Error while joining meter and locations data: {e}")
-
-    return int_meter_usage
+        lg.error(f"Error while creating the final fact table: {e}")
