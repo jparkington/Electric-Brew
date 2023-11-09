@@ -25,5 +25,7 @@ df = meter_usage.drop('account_number', axis = 1) \
                   'kwh_delivered',
                   'pdf_file_name']]
 
-# Window function of kwh / total_kwh_in_bill * service_charge
-# Confirm that total_kwh_in_bill is close to kwh_delivered
+print(exploded_bills)
+
+# With a window function, start at the end of the `meter_usage` based timestamps according to the range, and programatically sum-up until `running_kwh` reaches `kwh_delivered`. As the sum is going, preserve `kwh` as `kwh_billed`, which will have the rates applied to it.
+# `allocated_service_charge` will be service_charge * (`kwh` / `total_kwh`)
