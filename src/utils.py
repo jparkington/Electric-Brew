@@ -315,11 +315,12 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
                             'supplier'       : "", # To be manually overwritten
                             'amount_due'     : extract_field(r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"),
                             'service_charge' : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
+                            'kwh_delivered'  : meter_details.group(3).replace(",", "") if meter_details else "NULL",
                             'delivery_rate'  : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
                             'supply_rate'    : "", # To be manually overwritten
                             'interval_start' : meter_details.group(1) if meter_details else "NULL",
                             'interval_end'   : meter_details.group(2) if meter_details else "NULL",
-                            'kwh_delivered'  : meter_details.group(3).replace(",", "") if meter_details else "NULL",
+                            'total_kwh'      : "", # To be manually overwritten
                             'pdf_file_name'  : os.path.basename(pdf_path)})
 
         df = pd.DataFrame(records)
@@ -374,7 +375,7 @@ def create_dim_datetimes(model : str = "./data/model/dim_datetimes"):
         # Generate standard datetime components from the timestamp
         df['increment']    = df['timestamp'].dt.minute
         df['hour']         = df['timestamp'].dt.hour
-        df['date']         = df['timestamp'].dt.date
+        df['date']         = df['timestamp'].dt.normalize()
         df['week']         = df['timestamp'].dt.isocalendar().week
         df['week_in_year'] = df['timestamp'].dt.isocalendar().week
         df['month']        = df['timestamp'].dt.month
@@ -453,7 +454,7 @@ def create_dim_suppliers(model : str = "./data/model/dim_suppliers"):
 
     try:
         # Step 1: Group by `supplier` and calculate average `supply_rate`
-        df = cmp_bills.groupby('supplier', as_index = False)['supply_rate'].mean()
+        df = cmp_bills.groupby('supplier', as_index = False).agg(avg_supply_rate = ('supply_rate', 'mean'))
         
         # Step 2: Assign unique identifier `id`
         df.insert(0, 'id', range(1, len(df) + 1))
