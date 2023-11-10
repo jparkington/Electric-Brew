@@ -17,5 +17,6 @@ dependencies:
   - pyarrow         # Curating data into `.parquet` structures with compression and logical partitioning
   - scipy           # Scientific computing, specifically norm.pdf() and norm.fit() in scipy.stats
   - seaborn         # Advanced plotting of linear regressions
+  - sqlalchemy      # SQL toolkit and ORM for Python
   - sqlite          # SQLite database engine for Python
   - tabulate        # Clean Markdown-friendly table outputs of DataFrames
