@@ -1,9 +1,9 @@
 <!-- omit in toc -->
-# Directory Documentation for `/src/`
+# Utility Functions
 
-The `/src/` directory contains various utility scripts that support the main functionalities of this project, aligning with conventional structuring in data science and software development projects. Our instance of `/src/` houses scripts responsible for data curation, output formatting, and visualization. This document provides a brief overview of each script and its contained functions.
+The `/src/` directory contains a `utils` module full of scripts that support the main functionalities of this project, aligning with conventional structuring in data science and software development projects. This document provides a brief overview of each function and its purpose, signature, and expected usage.
 
-> **Note**: To facilitate smooth development and execution, it's recommended to run all commands out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** is set to point directly to the `src` directory within this Conda environment. This allows you to easily import the `utils` module and its DataFrames and functions from any script within the `src` directory.
+> **Note**: To facilitate smooth development and execution, it's recommended to run all commands out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** is set to point directly to the `/src/` directory within this Conda environment. This allows you to easily import the `utils` module and its DataFrames and functions from any script within `/src/`.
 
 <!-- omit in toc -->
 ## Table of Contents
@@ -29,6 +29,8 @@ The `/src/` directory contains various utility scripts that support the main fun
   - [`create_dim_meters`](#create_dim_meters)
   - [`create_dim_suppliers`](#create_dim_suppliers)
   - [`create_fct_electric_brew`](#create_fct_electric_brew)
+  - [`create_electric_brew_db`](#create_electric_brew_db)
+    - [Key Constraints](#key-constraints)
 
 
 ## Runtime
@@ -500,3 +502,39 @@ A `.parquet` file saved in the specified `model` directory containing the suppli
 | 498358 | 96745           | 8             | 3.0              | 3.965 | 14.42          | 0.074948      | 0.17631     | 0.044677                 | 850.885            | 3.965              | 1.040915               | 35012790198    |
 | 498359 | 96749           | 8             | 3.0              | 4.156 | 14.42          | 0.074948      | 0.17631     | 0.046829                 | 854.850            | 4.156              | 1.091057               | 35012790198    |
 | 498360 | 96753           | 8             | 3.0              | 3.994 | 14.42          | 0.074948      | 0.17631     | 0.045003                 | 859.006            | 3.994              | 1.048528               | 35012790198    |
+
+### `create_electric_brew_db`
+
+This function initializes and populates the `electric_brew` SQLite database for the Electric Brew project. It creates several tables with predefined schemas, including primary keys and foreign key relationships, to store electric consumption and billing data.
+
+Each curated or modeling DataFrame, outlined above in [DataFrames](#dataframes), has a corresponding table in this database.
+
+#### Key Constraints
+
+1. `dim_datetimes`
+   - **Primary Key**: `id`
+
+2. `dim_meters`
+   - **Primary Key**: `id`
+
+3. `dim_suppliers`
+   - **Primary Key**: `id`
+
+4. `fct_electric_brew`
+   - **Primary Key**: `id`
+   - **Foreign Keys**:
+     - `dim_datetimes_id` references `dim_datetimes(id)`
+     - `dim_meters_id` references `dim_meters(id)`
+     - `dim_suppliers_id` references `dim_suppliers(id)`
+
+**Methodology**
+
+The database is created and populated by:
+1. Establishing a connection to the specified SQLite database file.
+2. Defining tables with their respective columns, types, and constraints.
+3. Creating all tables in the database.
+4. Inserting data from provided Pandas DataFrames into the corresponding tables.
+
+**ERD Location**
+
+A comprehensive Entity-Relationship Diagram (ERD) of the database can be found in the `sql` directory's [README](../data/sql/README.md). This ERD provides a visual representation of the tables, their relationships, and constraints.
