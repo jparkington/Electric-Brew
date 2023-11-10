@@ -586,16 +586,27 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
                                           'dim_suppliers'     : dim_suppliers,
                                           'fct_electric_brew' : fct_electric_brew}):
     '''
-    This function creates a database and tables according to a predefined schema.
-    If the database already exists, it will replace the existing tables.
+    This function nitializes and populates a SQLite database for the Electric Brew project. It creates tables out of
+    each of the curated and model dataframes, as found in the "DATAFRAMES" section above.
+    
+    SQLite requires a predefined schema for creation, particularly to respect primary and froeign key constraints, so 
+    this function outlines each schema and inserts data from the corresponding DataFrames.
+
+    Methodology:
+        1. Establish a connection to the SQLite database.
+        2. Define the schema for each table, including primary keys and foreign key relationships.
+        3. Create the tables in the database.
+        4. Insert data from DataFrames into the respective tables, ensuring correct primary and foreign keys.
 
     Parameters:
-        db_path (str) : The path where the database file should be created.
+        db (str)   : Path for the SQLite database file location or creation.
+        dfs (dict) : Dictionary mapping table names to corresponding Pandas DataFrames for insertion.
     '''
-    
+    # Step 1: Establish a connection to the SQLite database
     engine   = create_engine(f'sqlite:///{db}')
     metadata = MetaData()
 
+    # Step 2: Define schema for each table
     Table('meter_usage', metadata,
           Column('service_point_id',          BigInteger),
           Column('meter_id',                  String),
@@ -665,10 +676,11 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
           Column('account_number',            String))
 
     try:
+        # Step 3: Create the tables in the database
         metadata.create_all(engine)
-
         lg.info(f"Database and tables created at {db}")
 
+        # Step 4: Insert data into the tables
         with engine.connect() as connection:
             for table_name, df in dfs.items():
                 df.to_sql(table_name, 
@@ -676,7 +688,7 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
                           if_exists = 'append', 
                           index     = 'id' in df.index.names)
 
-        # lg.info("Data inserted into tables.")
+        lg.info("Data inserted into tables.")
 
     except SQLAlchemyError as e:
         lg.error(f"Error creating database and tables: {e}")
