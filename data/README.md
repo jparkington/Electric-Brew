@@ -1,7 +1,7 @@
 <!-- omit in toc -->
 # How to Read the `data`
 
-Within this directory, we have structured and optimized our data collected from CMP using the Parquet format. This README provides a brief rationale for our data storage decisions and offers a few code examples to help you navigate the data efficiently.
+Within this directory, we have structured and optimized our collected data using the Parquet format. This README provides a brief rationale for our data storage decisions and offers a few code examples to help you navigate the data efficiently.
 
 ## Why Parquet?
 
@@ -13,7 +13,11 @@ Within this directory, we have structured and optimized our data collected from 
 
 ## Usage Guidelines
 
-Here are a couple of examples to help you get started with the Parquet format, if you haven't used it before.
+For the simplest retrieval of data from either the `/curated/` or `/modeled/` directories, take a look at our documentation on the [**DataFrames**](../src/README.md#dataframes) available to you by simply importing `utils` into a script somewhere in the `/src/` directory.
+
+We also have an exploratory SQLite database, `electric_brew.db`. Its ERD can be found [**here**](./sql/README.md).
+
+Otherwise, here are a couple of examples to help you get started with the Parquet format, if you haven't used it before.
 
 ### Reading the Complete Dataset
 

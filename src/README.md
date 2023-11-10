@@ -141,7 +141,7 @@ A consolidated view of billing information from various suppliers for Central Ma
 A detailed dimensional table that contains the breakdown of timestamps into individual date and time components, along with a classification of each time into a specific period of the day such as 'Off-peak', 'Mid-peak', or 'On-peak'. This table is key for time series analysis and enables efficient filtering and aggregation based on time attributes in data analysis workflows.
 
 **Source**: Derived from `meter_usage` DataFrame  
-**Location**: `./data/model/dim_datetimes` 
+**Location**: `./data/modeled/dim_datetimes` 
 
 **Schema**:
 
@@ -174,7 +174,7 @@ A detailed dimensional table that contains the breakdown of timestamps into indi
 A centralized dimensional table that aggregates meter-specific information, like service points, meter IDs, and location details. It merges dimensions from various curated sources into a single table, enabling easier categorization and making the data more accessible for analysis.
 
 **Source**: Derived from the `meter_usage` and `locations` DataFrames  
-**Location**: `./data/model/dim_meters` 
+**Location**: `./data/modeled/dim_meters` 
 
 **Schema**:
 
@@ -195,7 +195,7 @@ A centralized dimensional table that aggregates meter-specific information, like
 A concise dimensional table that stores information about energy suppliers and their associated average supply rates. This table assists with financial analysis and comparisons between supplier costs.
 
 **Source**: Derived from the `cmp_bills` DataFrame  
-**Location**: `./data/model/dim_suppliers` 
+**Location**: `./data/modeled/dim_suppliers` 
 
 **Schema**:
 
@@ -211,7 +211,7 @@ The `fct_electric_brew` table serves as the primary fact table, capturing detail
 
 **Source**: Synthesized from `meter_usage`, `cmp_bills`, `dim_meters`, `dim_datetimes`, and `dim_suppliers` DataFrames through a series of complex transformations that involve data expansion, merging, mapping of usage metrics, and summarization of costs.
 
-**Location**: `./data/model/fct_electric_brew`
+**Location**: `./data/modeled/fct_electric_brew`
 
 **Schema**:
 
@@ -402,7 +402,7 @@ Generates a datetime dimension table, which is a key component in time series an
 
 **Returns**
 
-A `.parquet` file saved in the specified `model` directory containing the datetime dimension table.
+A `.parquet` file saved in the specified `modeled` directory containing the datetime dimension table.
 
 **Example Output**
 
@@ -433,7 +433,7 @@ Creates a meters dimension table, which centralizes the account information, lin
 
 **Returns**
 
-A `.parquet` file saved in the specified `model` directory containing the accounts dimension table.
+A `.parquet` file saved in the specified `modeled` directory containing the accounts dimension table.
 
 **Example Output**
 
@@ -459,7 +459,7 @@ Creates a suppliers dimension table, which encapsulates the supplier information
 
 **Returns**
 
-A `.parquet` file saved in the specified `model` directory containing the suppliers dimension table.
+A `.parquet` file saved in the specified `modeled` directory containing the suppliers dimension table.
 
 **Example Output**
 
@@ -481,11 +481,11 @@ This function constructs the `fct_electric_brew` fact table, which is central to
 3. Cumulative and usage-based metrics such as `allocated_service_charge`, `delivered_kwh_left`, and `delivered_kwh_used` are calculated to provide insights into the usage patterns and remaining delivery capacities.
 4. The `total_cost_of_delivery` is computed by summing the delivery and supply rates, along with the allocated service charge, to determine the total cost associated with the electric delivery for each usage entry.
 5. A unique identifier `id` is assigned to each row, providing a primary key for database integrity and indexation.
-6. The final DataFrame is saved as a `.parquet` file in the specified `model` directory with `snappy` compression and partitioned by `account_number` to optimize storage and query performance.
+6. The final DataFrame is saved as a `.parquet` file in the specified `modeled` directory with `snappy` compression and partitioned by `account_number` to optimize storage and query performance.
 
 **Returns**
 
-A `.parquet` file saved in the specified `model` directory containing the suppliers dimension table.
+A `.parquet` file saved in the specified `modeled` directory containing the suppliers dimension table.
 
 **Example Output**
 
@@ -507,7 +507,7 @@ A `.parquet` file saved in the specified `model` directory containing the suppli
 
 This function initializes and populates the `electric_brew` SQLite database for the Electric Brew project. It creates several tables with predefined schemas, including primary keys and foreign key relationships, to store electric consumption and billing data.
 
-Each curated or modeling DataFrame, outlined above in [DataFrames](#dataframes), has a corresponding table in this database.
+Each `/curated/` or `/modeled/` DataFrame, outlined above in [DataFrames](#dataframes), has a corresponding table in this database.
 
 #### Key Constraints
 
