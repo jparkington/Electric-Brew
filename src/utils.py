@@ -130,10 +130,10 @@ cmp_bills   = read_data("cmp/curated/bills")
 locations   = read_data("cmp/curated/locations")
 
 # Model
-dim_datetimes     = read_data("model/dim_datetimes")
-dim_meters        = read_data("model/dim_meters")
-dim_suppliers     = read_data("model/dim_suppliers")
-fct_electric_brew = read_data("model/fct_electric_brew")
+dim_datetimes     = read_data("modeled/dim_datetimes")
+dim_meters        = read_data("modeled/dim_meters")
+dim_suppliers     = read_data("modeled/dim_suppliers")
+fct_electric_brew = read_data("modeled/fct_electric_brew")
 
 
 '''
@@ -360,7 +360,7 @@ Functions:
     - create_dim_accounts  : Extracts account, location, and meter dimensions and saves as Parquet.
 '''
 
-def create_dim_datetimes(model : str = "./data/model/dim_datetimes"):
+def create_dim_datetimes(model : str = "./data/modeled/dim_datetimes"):
     '''
     This function creates a datetime dimension table from the `meter_usage` DataFrame.
     It extracts unique timestamps, generates various time components, and saves the result as a .parquet file.
@@ -415,7 +415,7 @@ def create_dim_datetimes(model : str = "./data/model/dim_datetimes"):
     except Exception as e:
         lg.error(f"Error creating datetime dimension table: {e}")
 
-def create_dim_meters(model : str = "./data/model/dim_meters"):
+def create_dim_meters(model : str = "./data/modeled/dim_meters"):
     '''
     This function creates a meters dimension table by joining data from the `meter_usage` and `locations` DataFrames.
     It extracts account numbers, service points, meter IDs, streets, and labels, and saves the result as a .parquet file.
@@ -450,7 +450,7 @@ def create_dim_meters(model : str = "./data/model/dim_meters"):
     except Exception as e:
         lg.error(f"Error creating meters dimension table: {e}")
 
-def create_dim_suppliers(model : str = "./data/model/dim_suppliers"):
+def create_dim_suppliers(model : str = "./data/modeled/dim_suppliers"):
     '''
     This function creates a suppliers dimension table from the `cmp_bills` DataFrame.
     It extracts the supplier name and calculates the average supply rate, then saves the result as a .parquet file.
@@ -482,7 +482,7 @@ def create_dim_suppliers(model : str = "./data/model/dim_suppliers"):
     except Exception as e:
         lg.error(f"Error creating suppliers dimension table: {e}")
 
-def create_fct_eletric_brew(model         : str  = "./data/model/fct_electric_brew",
+def create_fct_eletric_brew(model         : str  = "./data/modeled/fct_electric_brew",
                             partition_col : list = ['account_number']):
     
     '''
