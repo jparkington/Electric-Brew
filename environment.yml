@@ -8,13 +8,15 @@ channels:
   - conda-forge
 
 dependencies:
-  - cycler       # Color cycling in `plt_params` using cycler()
-  - make         # Build automation using Makefile
-  - matplotlib   # Plotting with plt.hist(), plt.plot(), plt.savefig(), etc.
-  - numpy        # Numerical operations like sqrt() and linspace()
-  - pandas       # Data manipulation and analysis using DataFrames
-  - pdfplumber   # Parsing PDF files and extracting text from them
-  - pyarrow      # Curating data into `.parquet` structures with compression and logical partitioning
-  - scipy        # Scientific computing, specifically norm.pdf() and norm.fit() in scipy.stats
-  - seaborn      # Advanced plotting of linear regressions
-  - tabulate     # Clean Markdown-friendly table outputs of DataFrames
+  - cycler          # Color cycling in `plt_params` using cycler()
+  - make            # Build automation using Makefile
+  - matplotlib      # Plotting with plt.hist(), plt.plot(), plt.savefig(), etc.
+  - numpy           # Numerical operations like sqrt() and linspace()
+  - pandas          # Data manipulation and analysis using DataFrames
+  - pdfplumber      # Parsing PDF files and extracting text from them
+  - pyarrow         # Curating data into `.parquet` structures with compression and logical partitioning
+  - scipy           # Scientific computing, specifically norm.pdf() and norm.fit() in scipy.stats
+  - seaborn         # Advanced plotting of linear regressions
+  - sqlalchemy      # SQL toolkit and ORM for Python
+  - sqlite          # SQLite database engine for Python
+  - tabulate        # Clean Markdown-friendly table outputs of DataFrames

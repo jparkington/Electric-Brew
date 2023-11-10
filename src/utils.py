@@ -1,8 +1,10 @@
 from cycler            import cycler
 from glob              import glob
 from matplotlib.pyplot import rcParams
-from seaborn           import color_palette
 from re                import search, DOTALL
+from seaborn           import color_palette
+from sqlalchemy        import *
+from sqlalchemy.exc    import SQLAlchemyError
 
 import os
 import logging         as lg
@@ -81,6 +83,7 @@ def read_data(file_path: str) -> pd.DataFrame:
     3. Navigate to the project root directory by going up one level with `..`.
     4. Append 'data' to the project root directory to reach the /data/ directory.
     5. Join this with the user-provided `file_path` to construct the full path to the .parquet file.
+    6. Conditionally set the first column to an index if it's named `id`
     
     Parameters:
         file_path (str) : Relative path to the .parquet file, starting from the /data/ directory.
@@ -93,8 +96,15 @@ def read_data(file_path: str) -> pd.DataFrame:
     src_directory     = os.path.dirname(current_file_path)  # Get the directory of the file at runtime
     project_root      = os.path.join(src_directory, '..')   # Go up one directory to get to the project root
     data_directory    = os.path.join(project_root, 'data')  # Join with 'data' to get to the data directory
-    
-    return pq.read_table(os.path.abspath(os.path.join(data_directory, file_path))).to_pandas()
+    full_file_path    = os.path.abspath(os.path.join(data_directory, file_path))
+
+    df = pq.read_table(full_file_path).to_pandas()
+
+    # Check if the first column is 'id' and set it as the index
+    if df.columns[0] == 'id':
+        df.set_index('id', inplace = True)
+
+    return df
 
 '''
 =========================================
@@ -467,10 +477,10 @@ def create_dim_suppliers(model : str = "./data/model/dim_suppliers"):
                             compression    = 'snappy', 
                             use_dictionary = True)
 
-        print(f"Suppliers dimension table saved as .parquet file in {model}.")
+        lg.info(f"Suppliers dimension table saved as .parquet file in {model}.")
 
     except Exception as e:
-        print(f"Error creating suppliers dimension table: {e}")
+        lg.error(f"Error creating suppliers dimension table: {e}")
 
 def create_fct_eletric_brew(model         : str  = "./data/model/fct_electric_brew",
                             partition_col : list = ['account_number']):
@@ -566,3 +576,119 @@ def create_fct_eletric_brew(model         : str  = "./data/model/fct_electric_br
 
     except Exception as e:
         lg.error(f"Error while creating the final fact table: {e}")
+
+def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
+                            dfs : dict = {'meter_usage'       : meter_usage,
+                                          'locations'         : locations,
+                                          'cmp_bills'         : cmp_bills,
+                                          'dim_datetimes'     : dim_datetimes,
+                                          'dim_meters'        : dim_meters,
+                                          'dim_suppliers'     : dim_suppliers,
+                                          'fct_electric_brew' : fct_electric_brew}):
+    '''
+    This function nitializes and populates a SQLite database for the Electric Brew project. It creates tables out of
+    each of the curated and model dataframes, as found in the "DATAFRAMES" section above.
+    
+    SQLite requires a predefined schema for creation, particularly to respect primary and froeign key constraints, so 
+    this function outlines each schema and inserts data from the corresponding DataFrames.
+
+    Methodology:
+        1. Establish a connection to the SQLite database.
+        2. Define the schema for each table, including primary keys and foreign key relationships.
+        3. Create the tables in the database.
+        4. Insert data from DataFrames into the respective tables, ensuring correct primary and foreign keys.
+
+    Parameters:
+        db (str)   : Path for the SQLite database file location or creation.
+        dfs (dict) : Dictionary mapping table names to corresponding Pandas DataFrames for insertion.
+    '''
+    # Step 1: Establish a connection to the SQLite database
+    engine   = create_engine(f'sqlite:///{db}')
+    metadata = MetaData()
+
+    # Step 2: Define schema for each table
+    Table('meter_usage', metadata,
+          Column('service_point_id',          BigInteger),
+          Column('meter_id',                  String),
+          Column('interval_end_datetime',     DateTime),
+          Column('meter_channel',             Integer),
+          Column('kwh',                       Float),
+          Column('account_number',            String))
+
+    Table('locations', metadata,
+          Column('street',                    String),
+          Column('label',                     String),
+          Column('account_number',            String))
+
+    Table('cmp_bills', metadata,
+          Column('supplier',                  String),
+          Column('amount_due',                Float),
+          Column('service_charge',            Float),
+          Column('delivery_rate',             Float),
+          Column('supply_rate',               Float),
+          Column('interval_start',            DateTime),
+          Column('interval_end',              DateTime),
+          Column('kwh_delivered',             Float),
+          Column('total_kwh',                 BigInteger),
+          Column('pdf_file_name',             String),
+          Column('account_number',            String))
+
+    Table('dim_datetimes', metadata,
+          Column('id',                        BigInteger, primary_key = True),
+          Column('timestamp',                 DateTime),
+          Column('increment',                 Integer),
+          Column('hour',                      Integer),
+          Column('date',                      DateTime),
+          Column('week',                      Integer),
+          Column('week_in_year',              Integer),
+          Column('month',                     Integer),
+          Column('month_name',                String),
+          Column('quarter',                   Integer),
+          Column('year',                      Integer),
+          Column('period',                    String))
+
+    Table('dim_meters', metadata,
+          Column('id',                        BigInteger, primary_key = True),
+          Column('meter_id',                  String),
+          Column('service_point_id',          BigInteger),
+          Column('account_number',            String),
+          Column('street',                    String),
+          Column('label',                     String))
+
+    Table('dim_suppliers', metadata,
+          Column('id',                        BigInteger, primary_key = True),
+          Column('supplier',                  String),
+          Column('avg_supply_rate',           Float))
+
+    Table('fct_electric_brew', metadata,
+          Column('id',                        BigInteger, primary_key = True),
+          Column('dim_datetimes_id',          BigInteger, ForeignKey('dim_datetimes.id')),
+          Column('dim_meters_id',             BigInteger, ForeignKey('dim_meters.id')),
+          Column('dim_suppliers_id',          BigInteger, ForeignKey('dim_suppliers.id')),
+          Column('kwh',                       Float),
+          Column('service_charge',            Float),
+          Column('delivery_rate',             Float),
+          Column('supply_rate',               Float),
+          Column('allocated_service_charge',  Float),
+          Column('delivered_kwh_left',        Float),
+          Column('delivered_kwh_used',        Float),
+          Column('total_cost_of_delivery',    Float),
+          Column('account_number',            String))
+
+    try:
+        # Step 3: Create the tables in the database
+        metadata.create_all(engine)
+        lg.info(f"Database and tables created at {db}")
+
+        # Step 4: Insert data into the tables
+        with engine.connect() as connection:
+            for table_name, df in dfs.items():
+                df.to_sql(table_name, 
+                          con       = connection, 
+                          if_exists = 'append', 
+                          index     = 'id' in df.index.names)
+
+        lg.info("Data inserted into tables.")
+
+    except SQLAlchemyError as e:
+        lg.error(f"Error creating database and tables: {e}")
