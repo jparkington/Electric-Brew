@@ -1,8 +1,10 @@
 from cycler            import cycler
 from glob              import glob
 from matplotlib.pyplot import rcParams
-from seaborn           import color_palette
 from re                import search, DOTALL
+from seaborn           import color_palette
+from sqlalchemy        import *
+from sqlalchemy.exc    import SQLAlchemyError
 
 import os
 import logging         as lg
@@ -475,10 +477,10 @@ def create_dim_suppliers(model : str = "./data/model/dim_suppliers"):
                             compression    = 'snappy', 
                             use_dictionary = True)
 
-        print(f"Suppliers dimension table saved as .parquet file in {model}.")
+        lg.info(f"Suppliers dimension table saved as .parquet file in {model}.")
 
     except Exception as e:
-        print(f"Error creating suppliers dimension table: {e}")
+        lg.error(f"Error creating suppliers dimension table: {e}")
 
 def create_fct_eletric_brew(model         : str  = "./data/model/fct_electric_brew",
                             partition_col : list = ['account_number']):
