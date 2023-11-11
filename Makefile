@@ -16,7 +16,7 @@ create-env:
 # Update Conda environment from environment.yml file
 update-env: set-pythonpath
 	@echo "Updating Conda environment..."
-	@conda env update --file environment.yml || echo "Failed to update environment."
+	@conda env update -f environment.yml || echo "Failed to update environment."
 
 # Remove Conda environment
 remove-env:

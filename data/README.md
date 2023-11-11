@@ -3,6 +3,10 @@
 
 Within this directory, we have structured and optimized our collected data using the Parquet format. This README provides a brief rationale for our data storage decisions and offers a few code examples to help you navigate the data efficiently.
 
+The **Data Lineage** diagram below offers a high-level view of how we have curated and managed the data throughout this project. It captures our multi-layered transformation process, encompassing bronze (raw data ingestion), silver (data processing), gold (data aggregation and enrichment), and finally, the presentation layer (data ready for end-user consumption). 
+
+![Data Lineage for Electric Brew](../fig/lineage/dag.drawio.svg)
+
 ## Why Parquet?
 
 - **Compression**: With Parquet's efficient columnar storage design, we not only save on storage space but also achieve faster read times.
