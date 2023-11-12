@@ -5,6 +5,10 @@ import pdfplumber as pl
 import re
 import pandas as pd
 import os
+import pyarrow         as pa
+import pyarrow.parquet as pq
+import logging         as lg
+
 
 ##################################################################################
 ################################### Open PDF #####################################
@@ -245,7 +249,8 @@ def export_csv_and_parquet_files(df: pd.DataFrame, account_numbers: list) -> Non
             
     except Exception as csv_error:
             print(f"Error exporting CSV for account {i}: {csv_error}")
-    
+
+'''   
     try:
         folder_path = 'data/ampion/curated/parquet_files'
         for i in account_numbers:
@@ -255,4 +260,52 @@ def export_csv_and_parquet_files(df: pd.DataFrame, account_numbers: list) -> Non
             account_df.to_parquet(file_path, index=False)
     except Exception as parquet_error:
             print(f"Error exporting Parquet for account {i}: {parquet_error}")
+'''
+def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter-usage", 
+                       curated       : str  = "./data/cmp/curated/meter-usage",
+                       partition_col : list = ['account_number'],
+                       schema        : list = ["account_number", "service_point_id", "meter_id", 
+                                               "interval_end_datetime", "meter_channel", "kwh"]):
+    '''
+    This function reads all CSVs in the specified `raw` directory, adds the defined `schema`, and then saves
+    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
+    
+    Methodology:
+        1. Read all CSVs in the `raw` directory without headers and assign the defined column names.
+        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
+        
+    Parameters:
+        raw           (str)  : Path to the directory containing raw `meter-usage` CSV files.
+        curated       (str)  : Directory where the partitioned .parquet files should be saved.
+        partition_col (list) : Column name(s) to use for partitioning the parquet files.
+        schema        (list) : Column names(s) to apply to the resulting DataFrame as headers.
+    '''
+    
+    try:
+        # Step 1: Read all CSVs in the `raw` directory and add headers
+        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
+        if not raw_files:
+            lg.warning(f"No CSV files found in {raw}. Exiting function.")
+            return
+    
+        concat_df = pd.concat([pd.read_csv(file, 
+                                           header  = None, 
+                                           usecols = range(len(schema)),
+                                           names   = schema) for file in raw_files])
+        
+        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
+        if not os.path.exists(curated):
+            lg.warning(f"Directory {curated} does not exist. It will now be created.")
+            os.makedirs(curated)
 
+        pq.write_to_dataset(pa.Table.from_pandas(concat_df, 
+                                                 preserve_index = False), 
+                            root_path      = curated, 
+                            partition_cols = partition_col, 
+                            compression    = 'snappy', 
+                            use_dictionary = True)
+        
+        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+
+    except Exception as e:
+        lg.error(f"Error while curating meter usage data: {e}")
