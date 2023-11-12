@@ -47,6 +47,8 @@ eda2:
 	@echo "Generating 'Scatter Plot of kWh Usage Over Time Colored by Location'."
 	@conda run -n $(ENV_NAME) python -B src/eda/eda_2_kwh_by_location.py
 
+
+
 # Create a chain of commands to set up the Conda environment properly
 setup: create-env set-pythonpath
 	@echo "Environment setup complete."
