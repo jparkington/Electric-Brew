@@ -20,10 +20,11 @@ The `/src/` directory contains a `utils` module full of scripts that support the
   - [`fct_electric_brew`](#fct_electric_brew)
 - [Curation](#curation)
   - [`curate_meter_usage`](#curate_meter_usage)
-  - [`curate_cmp_bills`](#curate_cmp_bills)
-  - [`scrape_cmp_bills`](#scrape_cmp_bills)
     - [**Regular Expressions**](#regular-expressions)
     - [**Manual Interventions**](#manual-interventions)
+  - [`scrape_ampion_bills`](#scrape_ampion_bills)
+    - [**Regular Expressions**](#regular-expressions-1)
+    - [**Manual Interventions**](#manual-interventions-1)
 - [Modeling](#modeling)
   - [`create_dim_datetimes`](#create_dim_datetimes)
   - [`create_dim_meters`](#create_dim_meters)
@@ -248,6 +249,8 @@ This section comprises functions that transform raw data files into structured a
 
 ### `curate_meter_usage`
 
+Note: the documentation for this section will be reworked, since the paradigm for each `curate_` function is essentially the same, except for the addition of `schema` in this first one.
+
 Processes all CSV files from the provided directory, integrates the specified schema, and subsequently consolidates the data into a partitioned `.parquet` file in the designated output directory. This conversion and curation process is optimized with `snappy` compression for efficiency.
 
 **Signature** 
@@ -267,27 +270,6 @@ def curate_meter_usage(raw           : str,
 - **`partition_col`**: Columns by which the .parquet files will be partitioned.
 
 - **`schema`**: Columns that will be used as headers in the resulting DataFrame.
-
-### `curate_cmp_bills`
-
-Processes all CSV files from the provided directory (*likely one file only with this workflow*) and consolidates the data into a partitioned `.parquet` file in the designated output directory. This conversion and curation process is optimized with `snappy` compression for efficiency.
-
-**Signature** 
-```python
-def curate_cmp_bills(raw           : str, 
-                     curated       : str, 
-                     partition_col : list):
-```
-
-**Parameters**
-
-- **`raw`**: Path to the directory containing raw `cmp/bills` CSV files.
-
-- **`curated`** : Directory where the consolidated `.parquet` files will be saved.
-
-- **`partition_col`**: Columns by which the .parquet files will be partitioned.
- 
-### `scrape_cmp_bills`
  
 This function automates the extraction of specific fields from a collection of PDF bills stored in a directory. It is designed to capture around 90% of the values from these bills. However, due to variations in the format and content of individual documents, manual review and intervention is required for complete accuracy.
 
@@ -312,8 +294,7 @@ The `scrape_cmp_bills` function uses various regular expressions (RegEx) to iden
     - `\s*`: Matches zero or more whitespace characters.
     - `([\d-]+)`: Captures one or more digits or dashes.
     
-    **Purpose**  
-    Captures the account number that follows the literal text "Account Number", allowing for possible whitespace and dashes.
+    **Purpose**: Captures the account number that follows the literal text "Account Number", allowing for possible whitespace and dashes.
 
 2. **Amount Due**: `r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"`
     - `Amount Due Date Due`: Literal text that the RegEx searches for.
@@ -323,8 +304,7 @@ The `scrape_cmp_bills` function uses various regular expressions (RegEx) to iden
     - `\$\s*`: Captures the dollar sign and any following whitespace.
     - `([\d,]+\.\d{2})`: Captures one or more digits or commas, followed by a decimal and exactly two digits.
 
-    **Purpose**  
-    Finds the amount due that follows the literal text "Amount Due Date Due", capturing the date and any uppercase letters or whitespace, accounting for optional whitespace, and ensures the amount has two decimal places.
+    **Purpose**: Finds the amount due that follows the literal text "Amount Due Date Due", capturing the date and any uppercase letters or whitespace, accounting for optional whitespace, and ensures the amount has two decimal places.
 
 3. **Service Charge**: `r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})"`
     - `Service Charge`: Literal text that the RegEx starts with.
@@ -332,8 +312,7 @@ The `scrape_cmp_bills` function uses various regular expressions (RegEx) to iden
     - `@\$\s*`: Captures the '@$' symbol followed by any number of whitespace characters.
     - `([+-]?\d+\.\d{2})`: Captures a number that may be positive or negative, followed by a decimal and exactly two digits.
     
-    **Purpose**  
-    Captures the service charge value found after the term "Service Charge", accounting for both positive and negative values and ensuring two decimal places.
+    **Purpose**: Captures the service charge value found after the term "Service Charge", accounting for both positive and negative values and ensuring two decimal places.
 
 4. **Delivery Service Rate**: `r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"`
     - `Delivery Service`: Literal text to start the RegEx.
@@ -341,8 +320,7 @@ The `scrape_cmp_bills` function uses various regular expressions (RegEx) to iden
     - `\d+,?\d+ KWH`: Captures one or more digits, optionally a comma, and more digits followed by ' KWH'.
     - `@\$(\d+\.\d+)`: Captures the '@$' symbol followed by one or more digits, a decimal point, and more digits.
     
-    **Purpose**  
-    Extracts the rate per kilowatt-hour (kWh) for delivery service, following the term "Delivery Service".
+    **Purpose**: Extracts the rate per kilowatt-hour (kWh) for delivery service, following the term "Delivery Service".
 
 5. **Meter Details**: `r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges"`
     - `Delivery Charges.*?`: Starts with the literal text and lazily matches any number of any characters.
@@ -351,8 +329,7 @@ The `scrape_cmp_bills` function uses various regular expressions (RegEx) to iden
     - `(\d{1,4},?\d{0,3}) KWH`: Captures one or more digits, optionally a comma, and more digits followed by ' KWH'.
     - `.*?Total Current Delivery Charges`: Lazily matches any number of any characters until it finds the text 'Total Current Delivery Charges'.
 
-    **Purpose**  
-    Captures multiple details (interval start, interval end, and kilowatt-hours (kWh) delivered) within the section starting with "Delivery Charges".
+    **Purpose**: Captures multiple details (interval start, interval end, and kilowatt-hours (kWh) delivered) within the section starting with "Delivery Charges".
 
 #### **Manual Interventions**
 
@@ -382,7 +359,75 @@ After the automated scraping process is completed by `scrape_cmp_bills`, several
     - **Action**: Manually add the `supplier` and `supply_rate`.
     - **Example**: See [`30010320353/701001868909_bill.pdf`](../data/cmp/raw/bills/30010320353/701001868909_bill.pdf).
 
+6. **Record Total kWh**:  
+    - **Scenario**: This columns in each bill's **Meter Details** might be located in different places.
+    - **Action**: Manually add `total_kwh` for each new bill.
+
 After these manual interventions are performed, the curated CSV file is ready for conversion into Parquet format for further data processing.
+
+### `scrape_ampion_bills`
+ 
+This function automates the extraction of specific fields from a collection of PDF bills stored in a directory. In this instance, the design of the regular expression captures all patterns successfully. In addition, there are some conditional measures to respond to the location of visible elements like the "Your Price" banner. A manual intervention is performed for "Miscellaneous Charges" that do not fit the structure of the bills.
+
+**Signature** 
+```python
+def scrape_cmp_bills(raw    : str, 
+                     output : str):
+```
+
+**Parameters**
+
+- **`raw`**: Path to the directory containing the raw PDF utility bills that need to be processed.
+
+- **`output`**: Path where the extracted data will be saved as CSV files.
+
+#### **Regular Expressions**
+
+The `scrape_ampion_bills` function employs various regular expressions (RegEx) to identify and extract specific pieces of information from the text content within the PDF utility bills. Below, each RegEx is broken down to explain its components and what it aims to capture:
+
+1. **Invoice Number**: `r"Invoice:\s(\d+)"`
+   - `Invoice:`: Literal text that the RegEx searches for.
+   - `\s`: Matches a single whitespace character.
+   - `(\d+)`: Captures one or more digits.
+   
+   **Purpose**: Extracts the invoice number immediately following the literal text "Invoice:".
+
+2. **Abbreviated Account Number**: `r'\*{5}(\d+)'`
+   - `\*{5}`: Matches exactly five asterisk characters.
+   - `(\d+)`: Captures one or more digits.
+   
+   **Purpose**: Captures the account number that follows five asterisks, typically representing obfuscated digits in an account number.
+
+3. **Kilowatt-Hour (kWh) Values**: `r'(\d{1,4}(?:,\d{3})*?) kWh'`
+   - `(\d{1,4}(?:,\d{3})*?)`: Captures a numeric value, allowing for comma-separated thousands. The `?` makes the match lazy.
+   - `kWh`: Literal text indicating the unit of energy.
+   
+   **Purpose**: Extracts energy usage values in kilowatt-hours from the bill.
+
+4. **Prices**: `r'allocated\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})'`
+   - `allocated`: Literal text indicating the start of the relevant section.
+   - `\s+`: Matches one or more whitespace characters.
+   - `\$\s*`: Captures the dollar sign followed by optional whitespace.
+   - `(\d+(?:,\d{3})*\.\d{2})`: Captures a monetary value, potentially with comma-separated thousands and exactly two decimal places.
+   
+   **Purpose**: Extracts different price values (allocated prices) from the bill.
+
+5. **Date Ranges**: `r'(\d{2}\.\d{2}\.\d{4})\s*–\s*(\d{2}\.\d{2}\.\d{4})'`
+   - `(\d{2}\.\d{2}\.\d{4})`: Captures a date in the format DD.MM.YYYY.
+   - `\s*–\s*`: Matches a dash surrounded by optional whitespace.
+   - Another `(\d{2}\.\d{2}\.\d{4})`: Captures a second date in the same format.
+   
+   **Purpose**: Extracts the start and end dates of the billing period.
+
+#### **Manual Interventions**
+
+After the automated scraping process is completed by `scrape_ampion_bills`, one additional intervention must be taken in order for data completeness.
+
+1. **Add Miscellaneous Adjustments to `misc_adjustments.csv`**:  
+    - **Initial State**: Some bills have an additional non-standard section that explains in text why the bill has an additional charge for a given account. 
+    - **Action**: Manually add a row to `misc_adjustments.csv` that replicates the existing schema from the other CSVs in the directory.
+    - **Example**: See [`202310.pdf`](../data/ampion/raw/bills/pdf/202310.pdf).
+
 
 ## Modeling
 

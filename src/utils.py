@@ -1,7 +1,8 @@
 from cycler            import cycler
+from datetime          import datetime
 from glob              import glob
 from matplotlib.pyplot import rcParams
-from re                import search, DOTALL
+from re                import findall, search, DOTALL
 from seaborn           import color_palette
 from sqlalchemy        import *
 from sqlalchemy.exc    import SQLAlchemyError
@@ -125,9 +126,10 @@ DataFrames:
 '''
 
 # Curated sources
-meter_usage = read_data("cmp/curated/meter-usage")
-cmp_bills   = read_data("cmp/curated/bills")
-locations   = read_data("cmp/curated/locations")
+meter_usage  = read_data("cmp/curated/meter-usage")
+locations    = read_data("cmp/curated/locations")
+cmp_bills    = read_data("cmp/curated/bills")
+ampion_bills = read_data("ampion/curated/bills")
 
 # Model
 dim_datetimes     = read_data("modeled/dim_datetimes")
@@ -283,6 +285,48 @@ def curate_cmp_bills(raw           : str  = "./data/cmp/raw/bills",
     except Exception as e:
         lg.error(f"Error while curating cmp bills data: {e}")
 
+def curate_ampion_bills(raw           : str  = "./data/ampion/raw/bills/csv", 
+                        curated       : str  = "./data/ampion/curated/bills",
+                        partition_col : list = ['account_number']):
+    '''
+    This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
+    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
+    
+    Methodology:
+        1. Read all CSVs in the `raw` directory using the existing headers.
+        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
+        
+    Parameters:
+        raw           (str)  : Path to the directory containing raw `bills` CSV files.
+        curated       (str)  : Directory where the partitioned .parquet files should be saved.
+        partition_col (list) : Column name(s) to use for partitioning the parquet files.
+    '''
+
+    try:
+        # Step 1: Read all CSVs in the `raw` directory using existing headers
+        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
+        if not raw_files:
+            lg.warning(f"No CSV files found in {raw}. Exiting function.")
+            return
+    
+        concat_df = pd.concat([pd.read_csv(file) for file in raw_files])
+        
+        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
+        if not os.path.exists(curated):
+            lg.warning(f"Directory {curated} does not exist. It will now be created.")
+            os.makedirs(curated)
+
+        pq.write_to_dataset(pa.Table.from_pandas(concat_df), 
+                            root_path      = curated, 
+                            partition_cols = partition_col, 
+                            compression    = 'snappy', 
+                            use_dictionary = True)
+        
+        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+
+    except Exception as e:
+        lg.error(f"Error while curating cmp bills data: {e}")
+
 def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
                      output : str = "./data/cmp/raw/bills"):
     '''
@@ -344,6 +388,70 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
     
     except Exception as e:
         return f"Error while curating bill data: {e}"
+    
+def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills", 
+                        output : str = "./data/ampion/raw/bills/csv"):
+    '''
+    This function reads all PDFs in the specified `raw` directory, extracts specific information from the 
+    Ampion bills using regular expressions, and then saves the data as CSV files in the `output` directory.
+
+    Methodology:
+        1. Iterate through each PDF in the `raw` directory.
+        2. Open each PDF and extract text using pdfplumber.
+        3. Use regular expressions to find specific data fields in the extracted text.
+        4. Map abbreviated account numbers to full account numbers.
+        5. Create a list of dictionaries containing the scraped data.
+        6. Write the data to CSV files in the `output` directory.
+
+    Parameters:
+        raw    (str): Path to the directory containing raw Ampion bill PDF files.
+        output (str): Directory where the scraped data CSV files should be saved.
+    '''
+
+    try:
+        # Step 1: Iterate through each PDF in the `raw` directory
+        for pdf_path in glob(f"{raw}/**/*.pdf", recursive = True):
+
+            # Step 2: Open each PDF and extract text using pdfplumber
+            pdf_name = int(os.path.basename(pdf_path).replace('.pdf', ''))
+            with pl.open(pdf_path) as pdf:
+                pdf_text = " ".join(page.extract_text() for page in pdf.pages)
+
+            # Step 3: Use regular expressions to find specific data fields in the extracted text
+            r_invoice     = r"Invoice:\s(\d+)"
+            r_abbr_number = r'\*{5}(\d+)'
+            r_kwh_values  = r'(\d{1,4}(?:,\d{3})*?) kWh'
+            r_prices      = r'allocated\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})'
+            r_dates       = r'(\d{2}\.\d{2}\.\d{4})\s*–\s*(\d{2}\.\d{2}\.\d{4})'
+
+            invoice_number = search(r_invoice,      pdf_text).group(1)
+            abbr_numbers   = findall(r_abbr_number, pdf_text)
+            kwh_values     = findall(r_kwh_values,  pdf_text)
+            prices         = findall(r_prices,      pdf_text)
+            dates          = findall(r_dates,       pdf_text)
+
+            # Step 4: Map abbreviated account numbers to full account numbers from `locations`
+            account_mapping = {str(acc)[-8:]: acc for acc in locations['account_number']}
+            full_numbers    = [account_mapping.get(acc, acc) for acc in abbr_numbers]
+
+            # Step 5: Create a list of dictionaries containing the scraped data to pass to `pandas`
+            records = [{'invoice_number' : invoice_number,
+                        'account_number' : full_numbers[i],
+                        'interval_start' : datetime.strptime(dates[i][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
+                        'interval_end'   : datetime.strptime(dates[i][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
+                        'kwh'            : int(kwh_values[i].replace(',', '')),
+                        'bill_credits'   : prices[i][0],
+                        'price'          : prices[i][1] if pdf_name < 202300 else prices[i][2]} for i in range(len(abbr_numbers))]
+
+            if not os.path.exists(output):
+                os.makedirs(output)
+
+            # Step 6: Write the data to CSV files in the `output` directory
+            pd.DataFrame(records).to_csv(os.path.join(output, f"{os.path.basename(pdf_path).replace('.pdf', '.csv')}"), 
+                                         index = False)
+
+    except Exception as e:
+        print(f"Error while processing and exporting data: {e}")
 
 
 '''
