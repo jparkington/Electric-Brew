@@ -1,5 +1,5 @@
 <!-- omit in toc -->
-# Explortatory Data Analysis  
+# Exploratory Data Analysis  
 
 <!-- omit in toc -->
 ## Table of Contents
