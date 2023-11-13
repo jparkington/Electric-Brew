@@ -1,3 +1,3 @@
 from utils import *
 
-print(ampion_bills)
+create_electric_brew_db()

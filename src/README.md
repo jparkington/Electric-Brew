@@ -14,6 +14,7 @@ The `/src/` directory contains a `utils` module full of scripts that support the
   - [`meter_usage`](#meter_usage)
   - [`locations`](#locations)
   - [`cmp_bills`](#cmp_bills)
+  - [`ampion_bills`](#ampion_bills)
   - [`dim_datetimes`](#dim_datetimes)
   - [`dim_accounts`](#dim_accounts)
   - [`dim_suppliers`](#dim_suppliers)
@@ -135,7 +136,32 @@ A consolidated view of billing information from various suppliers for Central Ma
   
   - `pdf_file_name` (**str**): The name of the PDF file from which the billing information was extracted. Useful for tracking the source of data.
   
-  - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account. Used for all billing and service interactions.
+  - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account, facilitating billing and service interactions.
+
+### `ampion_bills`
+
+A consolidated view of billing data from Ampion, structured to provide easy access to detailed information about energy usage and pricing for each account, based on which tier Austin Street was opted into at the time of the bill. This DataFrame is crucial for tracking the full cost of delivery over time.
+
+**Source**: Ampion  
+**Location**: `./data/ampion/curated/bills`  
+**Partitioning**: `account_number`  
+
+**Schema**:
+
+- `invoice_number` (**str**): The unique identifier for each invoice, representing a specific billing period.
+
+- `interval_start` (**str**): The start date of the billing cycle, formatted as YYYY-MM-DD.
+
+- `interval_end` (**str**): The end date of the billing cycle, formatted as YYYY-MM-DD.
+  
+- `kwh` (**int**): The total amount of electricity supplied by Ampion during the billing cycle, measured in kilowatt-hours (kWh).
+  
+- `bill_credits` (**float**): The total monetary value of renewable energy credits allocated to the account, reflecting the benefits of participating in renewable energy programs.
+  
+- `price` (**float**): The adjusted price charged for energy supply and consumption, after applying renewable energy bill credits, representing the final cost to the customer.
+  
+- `account_number` (**str**): A unique identifier originally assigned by CMP for each customer's account, facilitating billing and service interactions.
+  
 
 ### `dim_datetimes`
 
