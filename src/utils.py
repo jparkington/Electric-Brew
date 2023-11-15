@@ -744,6 +744,7 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
     
     Table('ampion_bills', metadata,
           Column('invoice_number',            String),
+          Column('supplier',                  String),
           Column('interval_start',            DateTime),
           Column('interval_end',              DateTime),
           Column('kwh',                       Integer),

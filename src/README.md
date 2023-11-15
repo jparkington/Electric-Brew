@@ -150,6 +150,8 @@ A consolidated view of billing data from Ampion, structured to provide easy acce
 
 - `invoice_number` (**str**): The unique identifier for each invoice, representing a specific billing period.
 
+- `supplier` (**str**): The name of the energy supplier, which can be used as a foreign key to join with transactional data related to billing and consumption.
+
 - `interval_start` (**str**): The start date of the billing cycle, formatted as YYYY-MM-DD.
 
 - `interval_end` (**str**): The end date of the billing cycle, formatted as YYYY-MM-DD.
@@ -397,8 +399,8 @@ This function automates the extraction of specific fields from a collection of P
 
 **Signature** 
 ```python
-def scrape_cmp_bills(raw    : str, 
-                     output : str):
+def scrape_ampion_bills(raw    : str, 
+                        output : str):
 ```
 
 **Parameters**

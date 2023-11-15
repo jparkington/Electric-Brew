@@ -1,6 +1,5 @@
 from utils import *
 
-curate_ampion_bills()
 # exploded_ampion = ampion_bills.assign(date = lambda df: 
 #                         df.apply(lambda row: pd.date_range(start = row['interval_start'], 
 #                                                            end   = row['interval_end'])
