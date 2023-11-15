@@ -51,9 +51,9 @@ Note that each plot is then saved as a PNG file in the `.fig` directory after be
 
 The primary source of exploration is a compilation of CMP energy usage data for the 7 meters associated with Austin Street Brewery Company. The are 5 columns and 500,279 rows. There is no missing data.
 
-The data being analyzed has been extracted directly from the consumer-facing portal at *cmpco.com*. It has been structured and optimized using the Parquet format. This [README](data/model/README.md) provides a brief rationale for our data storage decisions and describes some of the retrieval paradigms used with `pandas` and `pyarrow`. 
+The data being analyzed has been extracted directly from the consumer-facing portal at *cmpco.com*. It has been structured and optimized using the Parquet format. This [README](../data/README.md) provides a brief rationale for our data storage decisions and describes some of the retrieval paradigms used with `pandas` and `pyarrow`. 
 
-The location for this source's Parquet directory can be found [here](data/cmp/curated/meter-usage). To facilitate smooth development and execution as reproducibility, all commands are run out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** for this environment is set to point directly to the `src` directory within this project's folder structure. This allows all scripts to easily import the `utils` module and its included DataFrames and functions from any script within the `src` directory, including `meter_usage`.
+The location for this source's Parquet directory can be found [here](../data/cmp/curated/meter-usage/). To facilitate smooth development and execution as reproducibility, all commands are run out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** for this environment is set to point directly to the `src` directory within this project's folder structure. This allows all scripts to easily import the `utils` module and its included DataFrames and functions from any script within the `src` directory, including `meter_usage`.
 
 **Schema** 
 
@@ -111,19 +111,19 @@ This section examines the energy consumption patterns over time, focusing on the
 
 This plot presents a series of boxplots, each representing the distribution of normalized kilowatt-hour (kWh) usage by meter ID for different years. It aims to provide insights into the variability, central tendency, and outliers in the energy consumption recorded by each meter ID annually.
 
-![Distribution of kWh by Meter ID & Year](fig/eda/distribution_of_kwh.png)
+![Distribution of kWh by Meter ID & Year](../fig/eda/distribution_of_kwh.png)
 
 ### kWh Usage Over Time by Meter ID
 
 Rather than group by year, this scatter plot illustrates the kilowatt-hour (kWh) usage over time, with each meter ID represented by a unique color. The plot aims to highlight trends, outliers, and patterns in energy consumption for each meter ID throughout the observed time frame.
 
-![kWh Usage Over Time Colored by Meter ID](fig/eda/kwh_over_time_by_meter.png)
+![kWh Usage Over Time Colored by Meter ID](../fig/eda/kwh_over_time_by_meter.png)
 
 ### kWh Usage at Each Location
 
 After analyzing the kWh usage over time by Meter ID, the next logical step is to examine how this usage is distributed across the brewery's 2 locations. This new dimension offers insights into whether specific locations are more energy-efficient or if they encounter different challenges in terms of energy management.
 
-![kWh Usage at Each Location](fig/eda/kwh_by_location.png)
+![kWh Usage at Each Location](../fig/eda/kwh_by_location.png)
 
 ### Key Takeaways
 
@@ -139,8 +139,8 @@ After analyzing the kWh usage over time by Meter ID, the next logical step is to
 
 This section focuses on analyzing energy usage based on time-of-day categorization into three distinct periods: Off-peak, Mid-peak, and On-peak. The goal is to understand how energy consumption varies throughout the day and identify potential opportunities for optimizing energy costs in accessible buckets for the business.
 
-![Total kWh Usage by Period](fig/eda/kwh_by_period.png)
-![Average kWh Usage per Hour by Period](fig/eda/avg_kwh_by_period.png)
+![Total kWh Usage by Period](../fig/eda/kwh_by_period.png)
+![Average kWh Usage per Hour by Period](../fig/eda/avg_kwh_by_period.png)
 
 ### Key Takeaways
 
@@ -162,9 +162,9 @@ This section delves into the analysis of mean and max energy usage by individual
 
 - `max_mean_diff` (**float**): Calculates the percent difference between `max_usage` and `mean_usage`. A high percent difference suggests spikes in energy usage that are not merely statistical outliers but have systemic implications. This uniform distribution of spikes across meters and years implies the need for a more in-depth analysis to better utilize space and grid.  
 
-![Max Usage Per 15-Minute Interval](fig/eda/max_usage.png)
-![Mean Usage Per 15-Minute Interval](fig/eda/mean_usage.png)
-![Percent Difference Between Mean & Max](fig/eda/max_mean_diff.png)
+![Max Usage Per 15-Minute Interval](../fig/eda/max_usage.png)
+![Mean Usage Per 15-Minute Interval](../fig/eda/mean_usage.png)
+![Percent Difference Between Mean & Max](../fig/eda/max_mean_diff.png)
 
 ### Key Takeaways
 
@@ -180,8 +180,8 @@ Defining an energy spike as an interval where power usage exceeds $3 \sigma$ fro
 
 The subsequent visualizations aim to spotlight the frequency and temporal distribution of these energy spikes across individual meters.
 
-![Count of Energy Spikes](fig/eda/count_of_spikes.png)
-![Energy Spikes by Meter ID & Year](fig/eda/spikes_by_year.png)
+![Count of Energy Spikes](../fig/eda/count_of_spikes.png)
+![Energy Spikes by Meter ID & Year](../fig/eda/spikes_by_year.png)
 
 ### Key Takeaways
 
