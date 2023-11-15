@@ -437,6 +437,7 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills",
             # Step 5: Create a list of dictionaries containing the scraped data to pass to `pandas`
             records = [{'invoice_number' : invoice_number,
                         'account_number' : full_numbers[i],
+                        'supplier'       : "Ampion",
                         'interval_start' : datetime.strptime(dates[i][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
                         'interval_end'   : datetime.strptime(dates[i][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
                         'kwh'            : int(kwh_values[i].replace(',', '')),
@@ -618,20 +619,20 @@ def create_fct_eletric_brew(model         : str  = "./data/modeled/fct_electric_
     
     try:
         # Step 1: Expand 'cmp_bills' data to daily granularity
-        exploded_bills = cmp_bills.assign(date = lambda df: 
-                                  df.apply(lambda row: pd.date_range(start = row['interval_start'], 
-                                                                     end   = row['interval_end'])
-                                                         .to_list(), axis = 1)) \
-                                                         .explode('date')
+        exploded_cmp = cmp_bills.assign(date = lambda df: 
+                              df.apply(lambda row: pd.date_range(start = row['interval_start'], 
+                                                                 end   = row['interval_end'])
+                                                     .to_list(), axis = 1)) \
+                                                     .explode('date')
 
         # Step 2: Merge and curate intermediary DataFrame
         int_df = meter_usage.drop('account_number', axis = 1) \
                             .assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
                                                                           format = '%m/%d/%Y %I:%M:%S %p')) \
-                            .merge(dim_meters,     on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
-                            .merge(dim_datetimes,  on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
-                            .merge(exploded_bills, on = ['account_number', 'date'], how = 'left') \
-                            .merge(dim_suppliers,  on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'}) \
+                            .merge(dim_meters,    on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
+                            .merge(dim_datetimes, on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
+                            .merge(exploded_cmp,  on = ['account_number', 'date'], how = 'left') \
+                            .merge(dim_suppliers, on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'}) \
                             .sort_values(by = ['pdf_file_name', 'timestamp']) \
                             .fillna({'kwh_delivered'  : 0,
                                      'service_charge' : 0,
