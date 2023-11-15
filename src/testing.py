@@ -12,7 +12,7 @@ from utils import *
 #                                                 .to_list(), axis = 1)) \
 #                                                 .explode('date')
 
-# # Step 2: Merge and curate intermediary DataFrame
+# Step 2: Merge and curate intermediary DataFrame
 # int_df = meter_usage.drop('account_number', axis = 1) \
 #                     .assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
 #                                                                   format = '%m/%d/%Y %I:%M:%S %p')) \
@@ -61,5 +61,3 @@ from utils import *
 
 # # Step 5: Create a unique identifier `id` for each row
 # fct_df.insert(0, 'id', range(1, len(fct_df) + 1))
-
-# print(exploded_ampion)

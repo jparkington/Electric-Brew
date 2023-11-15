@@ -561,11 +561,11 @@ def create_dim_meters(model : str = "./data/modeled/dim_meters"):
 
 def create_dim_suppliers(model : str = "./data/modeled/dim_suppliers"):
     '''
-    This function creates a suppliers dimension table from the `cmp_bills` DataFrame.
+    This function creates a suppliers dimension table from boht of the `bills` DataFrames.
     It extracts the supplier name and calculates the average supply rate, then saves the result as a .parquet file.
 
     Methodology:
-        1. Group `cmp_bills` by `supplier` and calculate the average `supply_rate`.
+        1. Group both `cmp_bills` and `ampion_bills` by `supplier` and calculate the average `supply_rate`.
         2. Assign a unique identifier `id` for each row.
         3. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
     
@@ -575,7 +575,11 @@ def create_dim_suppliers(model : str = "./data/modeled/dim_suppliers"):
 
     try:
         # Step 1: Group by `supplier` and calculate average `supply_rate`
-        df = cmp_bills.groupby('supplier', as_index = False).agg(avg_supply_rate = ('supply_rate', 'mean'))
+        df1 = cmp_bills.groupby('supplier', as_index=False).agg(avg_supply_rate=('supply_rate', 'mean'))
+        df2 = ampion_bills.groupby('supplier').apply(lambda x: (x['price'] / x['kwh']).mean()).reset_index()
+        df2.columns = ['supplier', 'avg_supply_rate']
+
+        df = pd.concat([df1, df2])
         
         # Step 2: Assign unique identifier `id`
         df.insert(0, 'id', range(1, len(df) + 1))
@@ -690,6 +694,7 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
                             dfs : dict = {'meter_usage'       : meter_usage,
                                           'locations'         : locations,
                                           'cmp_bills'         : cmp_bills,
+                                          'ampion_bills'      : ampion_bills,
                                           'dim_datetimes'     : dim_datetimes,
                                           'dim_meters'        : dim_meters,
                                           'dim_suppliers'     : dim_suppliers,
