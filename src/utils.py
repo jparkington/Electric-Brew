@@ -437,6 +437,7 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills",
             # Step 5: Create a list of dictionaries containing the scraped data to pass to `pandas`
             records = [{'invoice_number' : invoice_number,
                         'account_number' : full_numbers[i],
+                        'supplier'       : "Ampion",
                         'interval_start' : datetime.strptime(dates[i][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
                         'interval_end'   : datetime.strptime(dates[i][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
                         'kwh'            : int(kwh_values[i].replace(',', '')),
@@ -560,11 +561,11 @@ def create_dim_meters(model : str = "./data/modeled/dim_meters"):
 
 def create_dim_suppliers(model : str = "./data/modeled/dim_suppliers"):
     '''
-    This function creates a suppliers dimension table from the `cmp_bills` DataFrame.
+    This function creates a suppliers dimension table from boht of the `bills` DataFrames.
     It extracts the supplier name and calculates the average supply rate, then saves the result as a .parquet file.
 
     Methodology:
-        1. Group `cmp_bills` by `supplier` and calculate the average `supply_rate`.
+        1. Group both `cmp_bills` and `ampion_bills` by `supplier` and calculate the average `supply_rate`.
         2. Assign a unique identifier `id` for each row.
         3. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
     
@@ -574,7 +575,11 @@ def create_dim_suppliers(model : str = "./data/modeled/dim_suppliers"):
 
     try:
         # Step 1: Group by `supplier` and calculate average `supply_rate`
-        df = cmp_bills.groupby('supplier', as_index = False).agg(avg_supply_rate = ('supply_rate', 'mean'))
+        df1 = cmp_bills.groupby('supplier', as_index=False).agg(avg_supply_rate=('supply_rate', 'mean'))
+        df2 = ampion_bills.groupby('supplier').apply(lambda x: (x['price'] / x['kwh']).mean()).reset_index()
+        df2.columns = ['supplier', 'avg_supply_rate']
+
+        df = pd.concat([df1, df2])
         
         # Step 2: Assign unique identifier `id`
         df.insert(0, 'id', range(1, len(df) + 1))
@@ -618,20 +623,20 @@ def create_fct_eletric_brew(model         : str  = "./data/modeled/fct_electric_
     
     try:
         # Step 1: Expand 'cmp_bills' data to daily granularity
-        exploded_bills = cmp_bills.assign(date = lambda df: 
-                                  df.apply(lambda row: pd.date_range(start = row['interval_start'], 
-                                                                     end   = row['interval_end'])
-                                                         .to_list(), axis = 1)) \
-                                                         .explode('date')
+        exploded_cmp = cmp_bills.assign(date = lambda df: 
+                              df.apply(lambda row: pd.date_range(start = row['interval_start'], 
+                                                                 end   = row['interval_end'])
+                                                     .to_list(), axis = 1)) \
+                                                     .explode('date')
 
         # Step 2: Merge and curate intermediary DataFrame
         int_df = meter_usage.drop('account_number', axis = 1) \
                             .assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
                                                                           format = '%m/%d/%Y %I:%M:%S %p')) \
-                            .merge(dim_meters,     on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
-                            .merge(dim_datetimes,  on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
-                            .merge(exploded_bills, on = ['account_number', 'date'], how = 'left') \
-                            .merge(dim_suppliers,  on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'}) \
+                            .merge(dim_meters,    on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
+                            .merge(dim_datetimes, on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
+                            .merge(exploded_cmp,  on = ['account_number', 'date'], how = 'left') \
+                            .merge(dim_suppliers, on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'}) \
                             .sort_values(by = ['pdf_file_name', 'timestamp']) \
                             .fillna({'kwh_delivered'  : 0,
                                      'service_charge' : 0,
@@ -689,6 +694,7 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
                             dfs : dict = {'meter_usage'       : meter_usage,
                                           'locations'         : locations,
                                           'cmp_bills'         : cmp_bills,
+                                          'ampion_bills'      : ampion_bills,
                                           'dim_datetimes'     : dim_datetimes,
                                           'dim_meters'        : dim_meters,
                                           'dim_suppliers'     : dim_suppliers,
@@ -743,6 +749,7 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
     
     Table('ampion_bills', metadata,
           Column('invoice_number',            String),
+          Column('supplier',                  String),
           Column('interval_start',            DateTime),
           Column('interval_end',              DateTime),
           Column('kwh',                       Integer),
