@@ -1,16 +1,19 @@
 from utils import *
 
-exploded_ampion = ampion_bills.assign(date = lambda df: 
-                        df.apply(lambda row: pd.date_range(start = row['interval_start'], 
-                                                           end   = row['interval_end'])
-                                                .to_list(), axis = 1)) \
-                                                .explode('date')
+# exploded_ampion = ampion_bills.assign(date = lambda df: 
+#                         df.apply(lambda row: pd.date_range(start = row['interval_start'], 
+#                                                            end   = row['interval_end'])
+#                                                 .to_list(), axis = 1)) \
+#                                                 .explode('date')
 
-exploded_cmp = cmp_bills.assign(date = lambda df: 
-                        df.apply(lambda row: pd.date_range(start = row['interval_start'], 
-                                                           end   = row['interval_end'])
-                                                .to_list(), axis = 1)) \
-                                                .explode('date')
+# exploded_cmp = cmp_bills.assign(date = lambda df: 
+#                         df.apply(lambda row: pd.date_range(start = row['interval_start'], 
+#                                                            end   = row['interval_end'])
+#                                                 .to_list(), axis = 1)) \
+#                                                 .explode('date')
+
+# print(ampion_bills)
+
 
 '''
 - Employ a groupby strategy for both resulting in the same dimension column names and with facts filled with 0s in place of nulls
@@ -68,4 +71,4 @@ exploded_cmp = cmp_bills.assign(date = lambda df:
 # # Step 5: Create a unique identifier `id` for each row
 # fct_df.insert(0, 'id', range(1, len(fct_df) + 1))
 
-print(exploded_cmp, '\n', exploded_ampion)
+# print(exploded_cmp, '\n', exploded_ampion)
