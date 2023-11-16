@@ -14,6 +14,7 @@ import pandas          as pd
 import pdfplumber      as pl
 import pyarrow         as pa
 import pyarrow.parquet as pq
+import sqlite3         as sq
 
 # Set up a logging configuration
 lg.basicConfig(level  = lg.INFO, 
@@ -100,10 +101,6 @@ def read_data(file_path: str) -> pd.DataFrame:
     full_file_path    = os.path.abspath(os.path.join(data_directory, file_path))
 
     df = pq.read_table(full_file_path).to_pandas()
-
-    # Check if the first column is 'id' and set it as the index
-    if df.columns[0] == 'id':
-        df.set_index('id', inplace = True)
 
     return df
 
@@ -374,8 +371,8 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
                             'kwh_delivered'  : meter_details.group(3).replace(",", "") if meter_details else "NULL",
                             'delivery_rate'  : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
                             'supply_rate'    : "", # To be manually overwritten
-                            'interval_start' : meter_details.group(1) if meter_details else "NULL",
-                            'interval_end'   : meter_details.group(2) if meter_details else "NULL",
+                            'interval_start' : datetime.strptime(meter_details.group(1), "%m.%d.%Y").strftime("%Y-%m-%d") if meter_details else "NULL",
+                            'interval_end'   : datetime.strptime(meter_details.group(2), "%m.%d.%Y").strftime("%Y-%m-%d") if meter_details else "NULL",
                             'total_kwh'      : "", # To be manually overwritten
                             'pdf_file_name'  : os.path.basename(pdf_path)})
 
@@ -575,7 +572,7 @@ def create_dim_suppliers(model : str = "./data/modeled/dim_suppliers"):
 
     try:
         # Step 1: Group by `supplier` and calculate average `supply_rate`
-        df1 = cmp_bills.groupby('supplier', as_index=False).agg(avg_supply_rate=('supply_rate', 'mean'))
+        df1 = cmp_bills.groupby('supplier', as_index = False).agg(avg_supply_rate = ('supply_rate', 'mean'))
         df2 = ampion_bills.groupby('supplier').apply(lambda x: (x['price'] / x['kwh']).mean()).reset_index()
         df2.columns = ['supplier', 'avg_supply_rate']
 
