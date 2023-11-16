@@ -26,6 +26,7 @@ int_df = meter_usage.drop('account_number', axis = 1) \
                     .merge(dim_meters,      on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
                     .merge(dim_datetimes,   on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
                     .merge(exploded_cmp,    on = ['account_number', 'date'], how = 'left') \
+                    .merge(exploded_ampion, on = ['account_number', 'date'], how = 'left') \
                     .merge(dim_suppliers,   on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'}) \
                     .sort_values(by = ['pdf_file_name', 'timestamp']) \
                     .fillna({'kwh_delivered'      : 0,
@@ -35,9 +36,8 @@ int_df = meter_usage.drop('account_number', axis = 1) \
                              'ampion_kwh'         : 0,
                              'ampion_supply_rate' : 0})
 
-print(int_df)
+print(int_df.columns)
 
-# # Steps 3 & 4: Calculate metrics and total cost of delivery
 # fct_df = (
 #     int_df.assign(
 #         total_recorded_kwh       = int_df.groupby(['pdf_file_name', 'kwh_delivered'])['kwh'].transform('sum'),

@@ -102,10 +102,6 @@ def read_data(file_path: str) -> pd.DataFrame:
 
     df = pq.read_table(full_file_path).to_pandas()
 
-    # Check if the first column is 'id' and set it as the index
-    if df.columns[0] == 'id':
-        df.set_index('id', inplace = True)
-
     return df
 
 '''
