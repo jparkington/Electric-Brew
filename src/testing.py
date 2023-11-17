@@ -28,7 +28,7 @@ int_df = meter_usage.drop('account_number', axis = 1) \
                     .merge(dim_datetimes,   on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
                     .merge(exploded_cmp,    on = ['account_number', 'date'], how = 'left') \
                     .merge(exploded_ampion, on = ['account_number', 'date'], how = 'left') \
-                    .merge(dim_suppliers,   on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'})
+                #     .merge(dim_suppliers,   on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'})
 
 # Do the .fillna differently
                 #     .fillna({'kwh_delivered'      : 0,
