@@ -6,9 +6,7 @@ from utils import *
 - Ids from both exploded cmp and ampion will need to be coalesced and then renamed
 '''
 
-exploded_bills = (dim_bills.assign(date=[pd.date_range(start, end, inclusive='both').tolist() 
-                                         for start, end in zip(dim_bills['interval_start'], dim_bills['interval_end'])])
-                            .explode('date'))
+exploded_bills = dim_bills.explode('billing_interval')
 
 
 int_df = meter_usage.drop('account_number', axis = 1) \
