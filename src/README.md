@@ -254,7 +254,7 @@ A comprehensive dimensional table that combines detailed billing information fro
 
 The `fct_electric_brew` table serves as the primary fact table, capturing detailed records of electricity usage and the associated costs for each of Austin Street's accounts within specified billing intervals. It provides a comprehensive view of electric consumption, delivery charges, and financial metrics that are necessary for profitability analysis and peak hour usage. It is constructed by integrating and transforming data from various sources, including meter readings, billing details, and rate schedules.
 
-**Source**: Synthesized from `meter_usage`, `cmp_bills`, `ampion_bills`, `dim_meters`, `dim_datetimes`, and `dim_suppliers` DataFrames through a series of complex transformations that involve data expansion, merging, mapping of usage metrics, and summarization of costs.
+**Source**: Synthesized from `meter_usage`, `cmp_bills`, `ampion_bills`, `dim_meters`, `dim_datetimes`, and `dim_bills` DataFrames through a series of complex transformations that involve data expansion, merging, mapping of usage metrics, and summarization of costs.
 
 **Location**: `./data/modeled/fct_electric_brew`
 
@@ -266,7 +266,7 @@ The `fct_electric_brew` table serves as the primary fact table, capturing detail
   
   - `dim_meters_id` (**int**): A reference key to the `dim_meters` table, indicating the meter through which the electricity usage data was recorded.
   
-  - `dim_suppliers_id` (**int**): A reference key to the `dim_suppliers` table, denoting the supplier of the electricity.
+  - `dim_bills_id` (**int**): A reference key to the `dim_bills` table, denoting which source the information about the billing interval came from.
   
   - `account_number` (**str**): The identifier for the customer's account, used to correlate the record with a specific location and set of meters in the dataset.
   
@@ -559,7 +559,7 @@ This function constructs the `fct_electric_brew` fact table, which is central to
 **Methodology**
 
 1. The billing data in both `cmp_bills` and `ampion_bills` is expanded to a daily granularity to align with the usage data from `meter_usage`, ensuring that daily charges can be accurately associated with the usage data.
-2. An intermediary DataFrame is curated by merging cleaned and transformed `meter_usage` data with dimension tables (`dim_meters`, `dim_datetimes`, and `dim_suppliers`), along with the expanded billing data. This provides a comprehensive view of the usage and billing information.
+2. An intermediary DataFrame is curated by merging cleaned and transformed `meter_usage` data with dimension tables (`dim_meters`, `dim_datetimes`, and an exploded version of `dim_bills`). This provides a comprehensive view of the usage and billing information.
 3. Cumulative and usage-based metrics such as `allocated_service_charge`, `delivered_kwh_left`, and `delivered_kwh_used` are calculated to provide insights into the usage patterns and remaining delivery capacities.
 4. The `total_cost_of_delivery` is computed by summing the delivery and supply rates, along with the allocated service charge, to determine the total cost associated with the electric delivery for each usage entry.
 5. A unique identifier `id` is assigned to each row, providing a primary key for database integrity and indexation.
@@ -567,11 +567,11 @@ This function constructs the `fct_electric_brew` fact table, which is central to
 
 **Returns**
 
-A `.parquet` file saved in the specified `modeled` directory containing the suppliers dimension table.
+A `.parquet` file saved in the specified `modeled` directory containing the central fact table.
 
 **Example Output**
 
-| id     | dim_datetimes_id | dim_meters_id | dim_suppliers_id | kwh   | cost    | account_number |
+| id     | dim_datetimes_id | dim_meters_id | dim_bills_id | kwh   | cost    | account_number |
 |--------|------------------|---------------|------------------|-------|---------|----------------|
 | 42149  | 42141            | 1             | 2.0              | 0.653 | 0.003094 | 30010320353    |
 | 42150  | 42142            | 1             | 2.0              | 0.511 | 0.002421 | 30010320353    |
@@ -607,7 +607,7 @@ Each `/curated/` or `/modeled/` DataFrame, outlined above in [DataFrames](#dataf
    - **Foreign Keys**:
      - `dim_datetimes_id` references `dim_datetimes(id)`
      - `dim_meters_id` references `dim_meters(id)`
-     - `dim_suppliers_id` references `dim_suppliers(id)`
+     - `dim_bills_id` references `dim_bills(id)`
 
 **Methodology**
 

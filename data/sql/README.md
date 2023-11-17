@@ -49,13 +49,15 @@ Processed, but unaggregated source tables:
 
 - `cmp_bills`: Aggregates billing information from various suppliers.
 
+- `ampion_bills`: Aggregates billing information and delivery volume from Ampion, Austin Street's solar provider.
+
 Tables modeled into a star schema:
 
 - `dim_datetimes`: Breaks down timestamps into individual components.
 
 - `dim_meters`: Aggregates meter-specific information.
 
-- `dim_suppliers`: Contains information about energy suppliers.
+- `dim_bills`: Contains detailed information about billing intervals and their rates and charges.
 
 - `fct_electric_brew`: Captures detailed records of electricity usage and associated costs.
 
