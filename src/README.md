@@ -17,7 +17,7 @@ The `/src/` directory contains a `utils` module full of scripts that support the
   - [`ampion_bills`](#ampion_bills)
   - [`dim_datetimes`](#dim_datetimes)
   - [`dim_accounts`](#dim_accounts)
-  - [`dim_suppliers`](#dim_suppliers)
+  - [`dim_bills`](#dim_bills)
   - [`fct_electric_brew`](#fct_electric_brew)
 - [Curation](#curation)
   - [`curate_meter_usage`](#curate_meter_usage)
@@ -29,7 +29,7 @@ The `/src/` directory contains a `utils` module full of scripts that support the
 - [Modeling](#modeling)
   - [`create_dim_datetimes`](#create_dim_datetimes)
   - [`create_dim_meters`](#create_dim_meters)
-  - [`create_dim_suppliers`](#create_dim_suppliers)
+  - [`create_dim_bills`](#create_dim_bills)
   - [`create_fct_electric_brew`](#create_fct_electric_brew)
   - [`create_electric_brew_db`](#create_electric_brew_db)
     - [Key Constraints](#key-constraints)
@@ -118,6 +118,8 @@ A consolidated view of billing information from various suppliers for Central Ma
 
 **Schema**:
 
+  - `invoice_number` (**str**): The unique identifier for each invoice, representing a specific billing period. Useful for tracking the source of data.
+  - 
   - `supplier` (**str**): The electricity supplier for the billing period. This is often a third-party energy supplier, though some billing periods use "Banked Generation" and credits from prebious supplier purchases.
   
   - `amount_due` (**float**): The total monetary amount due for the billing period. This includes all charges, fees, and taxes.
@@ -134,8 +136,6 @@ A consolidated view of billing information from various suppliers for Central Ma
   
   - `kwh_delivered` (**int**): The total amount of electricity consumed during the billing cycle, measured in kilowatt-hours.
   
-  - `pdf_file_name` (**str**): The name of the PDF file from which the billing information was extracted. Useful for tracking the source of data.
-  
   - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account, facilitating billing and service interactions.
 
 ### `ampion_bills`
@@ -148,7 +148,7 @@ A consolidated view of billing data from Ampion, structured to provide easy acce
 
 **Schema**:
 
-- `invoice_number` (**str**): The unique identifier for each invoice, representing a specific billing period.
+- `invoice_number` (**str**): The unique identifier for each invoice, representing a specific billing period. Useful for tracking the source of data.
 
 - `supplier` (**str**): The name of the energy supplier, which can be used as a foreign key to join with transactional data related to billing and consumption.
 
@@ -174,7 +174,7 @@ A detailed dimensional table that contains the breakdown of timestamps into indi
 
 **Schema**:
 
-  - `id` (**int**): A unique identifier starting at 1 for each row in the table, serving as a surrogate key.
+  - `id` (**int**): A unique identifier starting at 1 for each row in the table, serving as a primary key.
   
   - `timestamp` (**datetime**): The exact date and time the measurement was taken, precise up to minutes.
 
@@ -219,26 +219,42 @@ A centralized dimensional table that aggregates meter-specific information, like
   
   - `label` (**str**): A descriptive label for the location, often used for easier identification or categorization of the service area.
 
-### `dim_suppliers`
+### `dim_bills`
 
-A concise dimensional table that stores information about energy suppliers and their associated average supply rates. This table assists with financial analysis and comparisons between supplier costs.
+A comprehensive dimensional table that combines detailed billing information from both Central Maine Power (CMP) and Ampion. This table is pivotal for analyzing overall energy consumption, costs, and understanding the nuances of billing from different energy suppliers. It merges the structured data from CMP's diverse suppliers with the nuanced billing details of Ampion, including renewable energy credits and adjusted pricing.
 
-**Source**: Derived from the `cmp_bills` DataFrame  
-**Location**: `./data/modeled/dim_suppliers` 
+**Source**: Derived from `cmp_bills` and `ampion_bills` DataFrames  
+**Location**: `./data/modeled/dim_bills`  
 
 **Schema**:
 
-  - `id` (**int**): A unique identifier assigned sequentially starting at 1 for each supplier, serving as a primary key.
-  
-  - `supplier` (**str**): The name of the energy supplier, which can be used as a foreign key to join with transactional data related to billing and consumption.
-  
-  - `avg_supply_rate` (**float**): The average rate at which the supplier charges for energy, vital for cost analysis and supplier comparison.
+  - `id` (**int**): A unique identifier starting at 1 for each row in the table, serving as a primary key.
+
+  - `invoice_number` (**str**): The unique identifier for each invoice, encapsulating data for specific billing periods from both CMP and Ampion, crucial for tracking and analysis.
+
+  - `account_number` (**str**): The identifier assigned by CMP, used consistently across both CMP and Ampion, enabling seamless integration and comparison of billing data.
+
+  - `interval_start` (**str**): The start date of the billing cycle, formatted as YYYY-MM-DD.
+
+  - `interval_end` (**str**): The end date of the billing cycle, formatted as YYYY-MM-DD.
+
+  - `supplier` (**str**): The name of the energy supplier, reflecting either CMP's third-party suppliers or Ampion's renewable energy provision, essential for supplier-based comparisons and analysis.
+
+  - `kwh_delivered` (**float**): The total kilowatt-hours of energy delivered, combining CMP's electricity consumption metrics with Ampion's supplied and delivered kWh.
+
+  - `service_charge` (**float**): The service charge applied, derived from CMP's volume-based fees, indicative of the fixed costs associated with energy delivery.
+
+  - `delivery_rate` (**float**): The rate charged per kilowatt-hour for the delivery of electricity, a crucial metric for understanding delivery cost structures across CMP suppliers.
+
+  - `supply_rate` (**float**): The rate charged per kilowatt-hour for the energy supply, incorporating both CMP's supplier rates and Ampion's adjusted pricing, vital for cost analysis.
+
+  - `source` (**str**): The origin of the billing data ('CMP' or 'Ampion').
 
 ### `fct_electric_brew`
 
 The `fct_electric_brew` table serves as the primary fact table, capturing detailed records of electricity usage and the associated costs for each of Austin Street's accounts within specified billing intervals. It provides a comprehensive view of electric consumption, delivery charges, and financial metrics that are necessary for profitability analysis and peak hour usage. It is constructed by integrating and transforming data from various sources, including meter readings, billing details, and rate schedules.
 
-**Source**: Synthesized from `meter_usage`, `cmp_bills`, `dim_meters`, `dim_datetimes`, and `dim_suppliers` DataFrames through a series of complex transformations that involve data expansion, merging, mapping of usage metrics, and summarization of costs.
+**Source**: Synthesized from `meter_usage`, `cmp_bills`, `ampion_bills`, `dim_meters`, `dim_datetimes`, and `dim_suppliers` DataFrames through a series of complex transformations that involve data expansion, merging, mapping of usage metrics, and summarization of costs.
 
 **Location**: `./data/modeled/fct_electric_brew`
 
@@ -256,19 +272,7 @@ The `fct_electric_brew` table serves as the primary fact table, capturing detail
   
   - `kwh` (**float**): The quantity of electricity in kilowatt-hours that has been consumed in the specified time frame.
   
-  - `service_charge` (**float**): The flat rate charged to the account for service availability, not dependent on the consumption volume.
-  
-  - `delivery_rate` (**float**): The price per kilowatt-hour for the delivery of electricity, specific to the account's supplier and service plan.
-  
-  - `supply_rate` (**float**): The cost per kilowatt-hour charged by the electricity supplier.
-  
-  - `allocated_service_charge` (**float**): The portion of the service charge that is allocated to the account based on its proportion of total consumption.
-  
-  - `delivered_kwh_left` (**float**): The remaining kilowatt-hours left for consumption from the initially delivered quantity, calculated as a reverse cumulative sum and adjusted to not fall below zero.
-  
-  - `delivered_kwh_used` (**float**): The actual kilowatt-hours used from the delivered amount, determined by the minimum of the current consumption and the remaining delivered kilowatt-hours.
-  
-  - `total_cost_of_delivery` (**float**): The total cost associated with delivering electricity to the account, calculated as the sum of the product of the used kilowatt-hours and the sum of delivery and supply rates, plus the allocated service charge.
+  - `cost` (**float**): The total cost associated with delivering electricity to the account, calculated as the sum of the product of the used kilowatt-hours and the sum of delivery and supply rates, plus the allocated service charge.
 
 
 ## Curation
@@ -519,29 +523,34 @@ A `.parquet` file saved in the specified `modeled` directory containing the acco
 | 8  | L108607371 | 2300588897       | 35012790198    | 1 INDUSTRIAL WAY U10 | Industrial Way |
 
 
-### `create_dim_suppliers`
+### `create_dim_bills`
 
-Creates a suppliers dimension table, which encapsulates the supplier information and the average supply rates offered. This table is essential for understanding the opportunities Austin Street can move away from in banking more solar credit as their own supply.
+Creates a bills dimension table, which consolidates the billing information from both `cmp_bills` and `ampion_bills` DataFrames. This table is instrumental for analyzing the combined billing data across various dimensions such as invoice number, account number, and supplier, including delivered kWh, service charges, delivery rates, and supply rates.
 
 **Methodology**
 
-1. Read the `cmp_bills` DataFrame.
-2. Group by `supplier` and calculate the average `supply_rate`.
-3. Assign a unique identifier `id` to each supplier entry.
-4. Persist the resulting dataframe as a `.parquet` file with `snappy` compression.
+1. Group `cmp_bills` and `ampion_bills` by common dimensions ('invoice_number', 'account_number', 'interval_start', 'interval_end', 'supplier') and aggregate necessary metrics.
+2. Concatenate the results from both DataFrames and assign a source identifier for each row.
+3. Create a unique identifier `id` for each row.
+4. Persist the combined DataFrame as a `.parquet` file with `snappy` compression.
 
 **Returns**
 
-A `.parquet` file saved in the specified `modeled` directory containing the suppliers dimension table.
+A `.parquet` file saved in the specified `modeled` directory containing the combined bills dimension table.
 
 **Example Output**
 
-| id    | supplier             | avg_supply_rate |
-|-------|----------------------|-----------------|
-| 1     | Constellation        | 0.11780         |
-| 2     | Mega Energy of Maine | 0.06840         |
-| 3     | Standard Offer       | 0.17631         |
-| 4     | Town Square Energy   | 0.06840         |
+| id  | invoice_number      | account_number | interval_start | interval_end | supplier              | kwh_delivered | service_charge | delivery_rate | supply_rate | source |
+|-----|---------------------|----------------|----------------|--------------|-----------------------|---------------|----------------|---------------|-------------|--------|
+| 1   | 700000396769        | 30010320353    | 2021-12-21     | 2022-01-19   | Mega Energy of Maine  | 4522.0        | 21.47          | 0.077711      | 0.068400    | CMP    |
+| 2   | 700000447767        | 30010320361    | 2022-05-18     | 2022-06-10   | Mega Energy of Maine  | 470.0         | 21.47          | 0.077711      | 0.068400    | CMP    |
+| 3   | 700000447768        | 30010320353    | 2022-05-18     | 2022-06-10   | Mega Energy of Maine  | 914.0         | 21.47          | 0.077711      | 0.068400    | CMP    |
+| ... | ...                 | ...            | ...            | ...          | ...                   | ...           | ...            | ...           | ...         | ...    |
+| 161 | 2023100000830629    | 30010601281    | 2023-07-13     | 2023-08-10   | Ampion                | 1968.0        | 0.00           | 0.000000      | 0.205066    | Ampion |
+| 162 | 2023100000830629    | 30010894035    | 2023-07-13     | 2023-08-10   | Ampion                | 3633.0        | 0.00           | 0.000000      | 0.205070    | Ampion |
+| 163 | 2023100000830629    | 35012787137    | 2023-07-13     | 2023-08-10   | Ampion                | 722.0         | 0.00           | 0.000000      | 0.205069    | Ampion |
+| ... | ...                 | ...            | ...            | ...          | ...                   | ...           | ...            | ...           | ...         | ...    |
+
 
 ### `create_fct_electric_brew`
 

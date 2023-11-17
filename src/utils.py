@@ -14,9 +14,7 @@ import pandas          as pd
 import pdfplumber      as pl
 import pyarrow         as pa
 import pyarrow.parquet as pq
-import sqlite3         as sq
 
-# Set up a logging configuration
 lg.basicConfig(level  = lg.INFO, 
                format = '%(asctime)s | %(levelname)s | %(message)s')
 
@@ -118,7 +116,7 @@ DataFrames:
     - locations         : Adds manual CSV entries describing each of the accounts Austin St. uses to the model.
     - dim_datetimes     : Breaks down timestamps into individual date and time components, with categorization of periods.
     - dim_meters        : Abstracts the account numbers, service points, meter IDs, and streets dimensions into one table.
-    - dim_suppliers     : Extracts the supplier name and calculates the average supply rate as a reference dimension.
+    - dim_bills         : Unions common dimensions and numerics from the `cmp_bills` and `ampion_bills` DataFrames
     - fct_electric_brew : Houses all the model's facts about usage, billing, and the cost of delivery.
 '''
 
@@ -131,7 +129,7 @@ ampion_bills = read_data("ampion/curated/bills")
 # Model
 dim_datetimes     = read_data("modeled/dim_datetimes")
 dim_meters        = read_data("modeled/dim_meters")
-dim_suppliers     = read_data("modeled/dim_suppliers")
+dim_bills         = read_data("modeled/dim_bills")
 fct_electric_brew = read_data("modeled/fct_electric_brew")
 
 
@@ -364,17 +362,17 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
                                     pdf_text, 
                                     DOTALL)
             
-            records.append({'account_number' : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
-                            'supplier'       : "", # To be manually overwritten
+            records.append({'invoice_number' : os.path.basename(pdf_path).split('_')[0],
+                            'account_number' : extract_field(r"Account Number\s*([\d-]+)", {"-": ""}),
+                            'supplier'       : "",
                             'amount_due'     : extract_field(r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"),
                             'service_charge' : extract_field(r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})", {"$": "", "+": ""}),
                             'kwh_delivered'  : meter_details.group(3).replace(",", "") if meter_details else "NULL",
                             'delivery_rate'  : extract_field(r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"),
-                            'supply_rate'    : "", # To be manually overwritten
+                            'supply_rate'    : "",
                             'interval_start' : datetime.strptime(meter_details.group(1), "%m.%d.%Y").strftime("%Y-%m-%d") if meter_details else "NULL",
                             'interval_end'   : datetime.strptime(meter_details.group(2), "%m.%d.%Y").strftime("%Y-%m-%d") if meter_details else "NULL",
-                            'total_kwh'      : "", # To be manually overwritten
-                            'pdf_file_name'  : os.path.basename(pdf_path)})
+                            'total_kwh'      : ""})
 
         df = pd.DataFrame(records)
         
@@ -556,125 +554,145 @@ def create_dim_meters(model : str = "./data/modeled/dim_meters"):
     except Exception as e:
         lg.error(f"Error creating meters dimension table: {e}")
 
-def create_dim_suppliers(model : str = "./data/modeled/dim_suppliers"):
+def create_dim_bills(model: str = "./data/modeled/dim_bills"):
     '''
-    This function creates a suppliers dimension table from boht of the `bills` DataFrames.
-    It extracts the supplier name and calculates the average supply rate, then saves the result as a .parquet file.
+    This function creates a bills dimension table from both the `cmp_bills` and `ampion_bills` DataFrames.
+    It groups by common dimensions, aggregates relevant metrics, and concatenates the results from both DataFrames.
 
     Methodology:
-        1. Group both `cmp_bills` and `ampion_bills` by `supplier` and calculate the average `supply_rate`.
-        2. Assign a unique identifier `id` for each row.
-        3. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
+        1. Group `cmp_bills` and `ampion_bills` by common dimensions and aggregate metrics.
+        2. Concatenate the results and assign a source identifier for each row.
+        3. Create a unique identifier `id` for each row.
+        4. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
     
     Parameters:
-        model (str) : Directory where the .parquet file should be saved.
+        model (str): Directory where the .parquet file should be saved.
     '''
 
     try:
-        # Step 1: Group by `supplier` and calculate average `supply_rate`
-        df1 = cmp_bills.groupby('supplier', as_index = False).agg(avg_supply_rate = ('supply_rate', 'mean'))
-        df2 = ampion_bills.groupby('supplier').apply(lambda x: (x['price'] / x['kwh']).mean()).reset_index()
-        df2.columns = ['supplier', 'avg_supply_rate']
+        # Step 1: Define common dimensions, standardize against them, and aggregate numerics
+        common_dims = ['invoice_number', 'account_number', 'interval_start', 'interval_end', 'supplier']
 
-        df = pd.concat([df1, df2])
-        
-        # Step 2: Assign unique identifier `id`
+        # Standardize `cmp_bills`
+        df1 = cmp_bills.groupby(common_dims, observed=True) \
+                       .agg(kwh_delivered  = ('kwh_delivered',  'sum'),
+                            service_charge = ('service_charge', 'sum'), 
+                            delivery_rate  = ('delivery_rate',  'mean'),
+                            supply_rate    = ('supply_rate',    'mean')) \
+                       .reset_index()
+        df1['source'] = "CMP"
+
+        # Standardize `ampion_bills`
+        df2 = ampion_bills.groupby(common_dims, observed=True) \
+                          .agg(kwh_delivered  = ('kwh', 'sum'), 
+                               price          = ('price', 'sum')) \
+                          .reset_index()
+        df2['service_charge'] = 0
+        df2['delivery_rate']  = 0
+        df2['supply_rate']    = df2['price'] / df2['kwh_delivered']
+        df2['source']         = "Ampion"
+        df2.drop(columns=['price'], inplace = True)
+
+        # Step 2: Concatenate standardize dataframes
+        df = pd.concat([df1, df2], ignore_index = True)
+
+        # Step 3: Create a unique identifier `id` for each row
         df.insert(0, 'id', range(1, len(df) + 1))
 
-        # Step 3: Save the DataFrame as a .parquet file
+        # Step 4: Save the resulting DataFrame as a .parquet file
         pq.write_to_dataset(pa.Table.from_pandas(df), 
                             root_path      = model, 
                             compression    = 'snappy', 
                             use_dictionary = True)
 
-        lg.info(f"Suppliers dimension table saved as .parquet file in {model}.")
+        lg.info(f"Bills dimension table saved as .parquet file in {model}.")
 
     except Exception as e:
-        lg.error(f"Error creating suppliers dimension table: {e}")
+        lg.error(f"Error creating bills dimension table: {e}")
 
-def create_fct_eletric_brew(model         : str  = "./data/modeled/fct_electric_brew",
-                            partition_col : list = ['account_number']):
+# def create_fct_eletric_brew(model         : str  = "./data/modeled/fct_electric_brew",
+#                             partition_col : list = ['account_number']):
     
-    '''
-    This function generates the central fact table which records the electric usage and associated charges for each
-    account per time interval. This table is the cornerstone of our analytics model, enabling detailed insights into 
-    usage patterns, billing calculations, and the financial implications of electric delivery.
+#     '''
+#     This function generates the central fact table which records the electric usage and associated charges for each
+#     account per time interval. This table is the cornerstone of our analytics model, enabling detailed insights into 
+#     usage patterns, billing calculations, and the financial implications of electric delivery.
 
-    The final result integrates data from meter readings, customer billing, and rate information, applying business
-    rules to calculate the cost of electric delivery and usage. The calculated fields include allocated service charges
-    based on usage, the cost of electric delivery, and the used kilowatt-hours (kWh). These metrics are critical for 
-    understanding electric consumption and financials at a granular level.
+#     The final result integrates data from meter readings, customer billing, and rate information, applying business
+#     rules to calculate the cost of electric delivery and usage. The calculated fields include allocated service charges
+#     based on usage, the cost of electric delivery, and the used kilowatt-hours (kWh). These metrics are critical for 
+#     understanding electric consumption and financials at a granular level.
 
-    Methodology:
-        1. Expand 'cmp_bills' to create a daily granularity level based on the billing interval.
-        2. Curate an intermediary DataFrame by merging meter usage data with dimension tables and billing data.
-        3. Calculate cumulative and usage-based metrics such as 'allocated_service_charge', 'delivered_kwh_left', and 'delivered_kwh_used'.
-        4. Determine the 'total_cost_of_delivery' by summing up the delivery and supply rates along with an allocated service charge.
-        5. Assign a unique identifier 'id' for each row.
-        6. Save the resulting DataFrame as a .parquet file in the specified 'model' directory with snappy compression.
+#     Methodology:
+#         1. Expand 'cmp_bills' to create a daily granularity level based on the billing interval.
+#         2. Curate an intermediary DataFrame by merging meter usage data with dimension tables and billing data.
+#         3. Calculate cumulative and usage-based metrics such as 'allocated_service_charge', 'delivered_kwh_left', and 'delivered_kwh_used'.
+#         4. Determine the 'total_cost_of_delivery' by summing up the delivery and supply rates along with an allocated service charge.
+#         5. Assign a unique identifier 'id' for each row.
+#         6. Save the resulting DataFrame as a .parquet file in the specified 'model' directory with snappy compression.
 
-    Parameters:
-        model (str): Directory where the .parquet file should be saved.
-        partition_col (list): List of column names to partition the .parquet file upon.
-    '''
+#     Parameters:
+#         model (str): Directory where the .parquet file should be saved.
+#         partition_col (list): List of column names to partition the .parquet file upon.
+#     '''
     
-    try:
-        # Step 1: Expand 'cmp_bills' data to daily granularity
-        exploded_cmp = cmp_bills.assign(date = lambda df: 
-                              df.apply(lambda row: pd.date_range(start = row['interval_start'], 
-                                                                 end   = row['interval_end'])
-                                                     .to_list(), axis = 1)) \
-                                                     .explode('date')
+#     try:
+#         # Step 1: Expand 'cmp_bills' data to daily granularity
+#         exploded_cmp = cmp_bills.assign(date = lambda df: 
+#                               df.apply(lambda row: pd.date_range(start = row['interval_start'], 
+#                                                                  end   = row['interval_end'])
+#                                                      .to_list(), axis = 1)) \
+#                                                      .explode('date')
 
-        # Step 2: Merge and curate intermediary DataFrame
-        int_df = meter_usage.drop('account_number', axis = 1) \
-                            .assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
-                                                                          format = '%m/%d/%Y %I:%M:%S %p')) \
-                            .merge(dim_meters,    on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
-                            .merge(dim_datetimes, on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
-                            .merge(exploded_cmp,  on = ['account_number', 'date'], how = 'left') \
-                            .merge(dim_suppliers, on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'}) \
-                            .sort_values(by = ['pdf_file_name', 'timestamp']) \
-                            .fillna({'kwh_delivered'  : 0,
-                                     'service_charge' : 0,
-                                     'delivery_rate'  : 0, 
-                                     'supply_rate'    : 0})
+#         # Step 2: Merge and curate intermediary DataFrame
+#         int_df = meter_usage.drop('account_number', axis = 1) \
+#                             .assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
+#                                                                           format = '%m/%d/%Y %I:%M:%S %p')) \
+#                             .merge(dim_meters,    on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
+#                             .merge(dim_datetimes, on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
+#                             .merge(exploded_cmp,  on = ['account_number', 'date'], how = 'left') \
+#                             .merge(dim_suppliers, on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'}) \
+#                             .sort_values(by = ['invoice_number', 'timestamp']) \
+#                             .fillna({'kwh_delivered'  : 0,
+#                                      'service_charge' : 0,
+#                                      'delivery_rate'  : 0, 
+#                                      'supply_rate'    : 0})
 
-        # Steps 3 & 4: Calculate metrics and total cost of delivery
-        fct_df = (
-            int_df.assign(
-                total_recorded_kwh       = int_df.groupby(['pdf_file_name', 'kwh_delivered'])['kwh'].transform('sum'),
-                allocated_service_charge = lambda x: x['service_charge'] * x['kwh'] / x['total_recorded_kwh'],
-                delivered_kwh_left       = int_df.groupby(['pdf_file_name', 'kwh_delivered'], group_keys = False)
-                                                 .apply(lambda g: (g['kwh_delivered'].iloc[0] - g['kwh'].iloc[::-1].cumsum())
-                                                 .clip(lower = 0)),
-                delivered_kwh_used       = lambda x: np.minimum(x['kwh'], x['delivered_kwh_left']).clip(lower = 0),
-                total_cost_of_delivery   = lambda x: x['delivered_kwh_used'] * (x['delivery_rate'] + x['supply_rate']) +
-                                                     x['allocated_service_charge'])) \
-                .sort_values(by = ['dim_meters_id', 'dim_datetimes_id']) \
-                [[
-                    'dim_datetimes_id',
-                    'dim_meters_id',
-                    'dim_suppliers_id',
-                    'account_number',
-                    'kwh',
-                    'total_cost_of_delivery'
-                ]]
+#         # Steps 3 & 4: Calculate metrics and total cost of delivery
+#         fct_df = (
+#             int_df.assign(
+#                 total_recorded_kwh       = int_df.groupby(['invoice_number', 'kwh_delivered'])['kwh'].transform('sum'),
+#                 allocated_service_charge = lambda x: x['service_charge'] * x['kwh'] / x['total_recorded_kwh'],
+#                 delivered_kwh_left       = int_df.groupby(['invoice_number', 'kwh_delivered'], group_keys = False)
+#                                                  .apply(lambda g: (g['kwh_delivered'].iloc[0] - g['kwh'].iloc[::-1].cumsum())
+#                                                  .clip(lower = 0)),
+#                 delivered_kwh_used       = lambda x: np.minimum(x['kwh'], x['delivered_kwh_left']).clip(lower = 0),
+#                 total_cost_of_delivery   = lambda x: x['delivered_kwh_used'] * (x['delivery_rate'] + x['supply_rate']) +
+#                                                      x['allocated_service_charge'])) \
+#                 .sort_values(by = ['dim_meters_id', 'dim_datetimes_id']) \
+#                 [[
+#                     'dim_datetimes_id',
+#                     'dim_meters_id',
+#                     'dim_suppliers_id',
+#                     'account_number',
+#                     'kwh',
+#                     'total_cost_of_delivery'
+#                 ]]
         
-        # Step 5: Create a unique identifier `id` for each row
-        fct_df.insert(0, 'id', range(1, len(fct_df) + 1))
+#         # Step 5: Create a unique identifier `id` for each row
+#         fct_df.insert(0, 'id', range(1, len(fct_df) + 1))
 
-        # Step 6: Save the resulting DataFrame as a .parquet file
-        pq.write_to_dataset(pa.Table.from_pandas(fct_df), 
-                            root_path      = model, 
-                            partition_cols = partition_col, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
+#         # Step 6: Save the resulting DataFrame as a .parquet file
+#         pq.write_to_dataset(pa.Table.from_pandas(fct_df), 
+#                             root_path      = model, 
+#                             partition_cols = partition_col, 
+#                             compression    = 'snappy', 
+#                             use_dictionary = True)
 
-        lg.info(f"Final fact table saved as .parquet file in {model}.")
+#         lg.info(f"Final fact table saved as .parquet file in {model}.")
 
-    except Exception as e:
-        lg.error(f"Error while creating the final fact table: {e}")
+#     except Exception as e:
+#         lg.error(f"Error while creating the final fact table: {e}")
 
 def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
                             dfs : dict = {'meter_usage'       : meter_usage,
@@ -683,8 +701,9 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
                                           'ampion_bills'      : ampion_bills,
                                           'dim_datetimes'     : dim_datetimes,
                                           'dim_meters'        : dim_meters,
-                                          'dim_suppliers'     : dim_suppliers,
-                                          'fct_electric_brew' : fct_electric_brew}):
+                                          'dim_bills'         : dim_bills,
+                                        #   'fct_electric_brew' : fct_electric_brew
+                                          }):
     '''
     This function nitializes and populates a SQLite database for the Electric Brew project. It creates tables out of
     each of the curated and model dataframes, as found in the "DATAFRAMES" section above.
@@ -721,6 +740,7 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
           Column('account_number',        String))
 
     Table('cmp_bills', metadata,
+          Column('invoice_number',        String),
           Column('supplier',              String),
           Column('amount_due',            Float),
           Column('service_charge',        Float),
@@ -730,7 +750,6 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
           Column('interval_end',          DateTime),
           Column('kwh_delivered',         Float),
           Column('total_kwh',             BigInteger),
-          Column('pdf_file_name',         String),
           Column('account_number',        String))
     
     Table('ampion_bills', metadata,
@@ -764,17 +783,25 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
           Column('account_number',        String),
           Column('street',                String),
           Column('label',                 String))
-
-    Table('dim_suppliers', metadata,
+    
+    Table('dim_bills', metadata,
           Column('id',                    BigInteger, primary_key = True),
+          Column('invoice_number',        String),
+          Column('account_number',        String),
+          Column('interval_start',        DateTime),
+          Column('interval_end',          DateTime),
           Column('supplier',              String),
-          Column('avg_supply_rate',       Float))
+          Column('kwh_delivered',         Float),
+          Column('service_charge',        Float),
+          Column('delivery_rate',         Float),
+          Column('supply_rate',           Float),
+          Column('source',                String))
 
     Table('fct_electric_brew', metadata,
           Column('id',                    BigInteger, primary_key = True),
           Column('dim_datetimes_id',      BigInteger, ForeignKey('dim_datetimes.id')),
           Column('dim_meters_id',         BigInteger, ForeignKey('dim_meters.id')),
-          Column('dim_suppliers_id',      BigInteger, ForeignKey('dim_suppliers.id')),
+          Column('dim_bills_id',          BigInteger, ForeignKey('dim_bills.id')),
           Column('kwh',                   Float),
           Column('cost',                  Float),
           Column('account_number',        String))
