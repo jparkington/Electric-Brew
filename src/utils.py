@@ -130,7 +130,7 @@ ampion_bills = read_data("ampion/curated/bills")
 dim_datetimes     = read_data("modeled/dim_datetimes")
 dim_meters        = read_data("modeled/dim_meters")
 dim_bills         = read_data("modeled/dim_bills")
-fct_electric_brew = None #read_data("modeled/fct_electric_brew")
+fct_electric_brew = read_data("modeled/fct_electric_brew")
 
 
 '''
@@ -802,7 +802,10 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
           Column('dim_meters_id',         BigInteger, ForeignKey('dim_meters.id')),
           Column('dim_bills_id',          BigInteger, ForeignKey('dim_bills.id')),
           Column('kwh',                   Float),
-          Column('cost',                  Float),
+          Column('delivery_cost',         Float),
+          Column('service_cost',          Float),
+          Column('supply_cost',           Float),
+          Column('total_cost',            Float),
           Column('account_number',        String))
 
     try:
@@ -816,7 +819,7 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
                 df.to_sql(table_name, 
                           con       = connection, 
                           if_exists = 'append', 
-                          index     = 'id' in df.columns)
+                          index     = False)
 
         lg.info("Data inserted into tables.")
 
