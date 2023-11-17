@@ -6,18 +6,30 @@ from utils import *
 - Ids from both exploded cmp and ampion will need to be coalesced and then renamed
 '''
 
-exploded_bills = dim_bills.explode('billing_interval')
+# exploded = {s: df for s, df in dim_bills.explode('billing_interval').groupby('source')}
 
 
-int_df = meter_usage.drop('account_number', axis = 1) \
-                    .assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
-                                                                  format = '%m/%d/%Y %I:%M:%S %p')) \
-                    .merge(dim_meters,      on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
-                    .merge(dim_datetimes,   on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
-                #     .merge(exploded_cmp,    on = ['account_number', 'date'], how = 'left') \
-                #     .merge(exploded_ampion, on = ['account_number', 'date'], how = 'left') \
+# int_df = meter_usage.drop('account_number', axis = 1) \
+#                     .assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
+#                                                                   format = '%m/%d/%Y %I:%M:%S %p')) \
+#                     .merge(dim_meters,      on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
+#                     .merge(dim_datetimes,   on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
+#                 #     .merge(exploded_bills,    on = ['account_number', 'date'], how = 'left') \
+#                 #     .merge(exploded_ampion, on = ['account_number', 'date'], how = 'left') \
 
-print(exploded_bills)
+# # print(exploded['CMP'])
+
+# common_dims = ['invoice_number', 'account_number', 'interval_start', 'interval_end', 'supplier']
+
+# # Standardize `cmp_bills`
+# df1 = cmp_bills.groupby(common_dims, observed=True) \
+#                 .agg(kwh_delivered  = ('kwh_delivered',  'sum'),
+#                         service_charge = ('service_charge', 'sum'), 
+#                         delivery_rate  = ('delivery_rate',  'mean'),
+#                         supply_rate    = ('supply_rate',    'mean')) \
+#                 .reset_index()
+
+# print(df1, '\n', cmp_bills)
 
 # Do the .fillna differently
                 #     .fillna({'kwh_delivered'      : 0,

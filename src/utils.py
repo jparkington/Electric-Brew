@@ -575,7 +575,7 @@ def create_dim_bills(model: str = "./data/modeled/dim_bills"):
         common_dims = ['invoice_number', 'account_number', 'interval_start', 'interval_end', 'supplier']
 
         # Standardize `cmp_bills`
-        df1 = cmp_bills.groupby(common_dims, observed=True) \
+        df1 = cmp_bills.groupby(common_dims, observed = True) \
                        .agg(kwh_delivered  = ('kwh_delivered',  'sum'),
                             service_charge = ('service_charge', 'sum'), 
                             delivery_rate  = ('delivery_rate',  'mean'),
@@ -584,7 +584,7 @@ def create_dim_bills(model: str = "./data/modeled/dim_bills"):
         df1['source'] = "CMP"
 
         # Standardize `ampion_bills`
-        df2 = ampion_bills.groupby(common_dims, observed=True) \
+        df2 = ampion_bills.groupby(common_dims, observed = True) \
                           .agg(kwh_delivered  = ('kwh', 'sum'), 
                                price          = ('price', 'sum')) \
                           .reset_index()
