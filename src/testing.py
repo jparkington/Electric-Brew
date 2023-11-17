@@ -1,7 +1,7 @@
 from utils import *
 
 '''
-- Might need to confirm that interval_start and interval_end lines up with existing values from `cmp_bills` and then use those `total_kwh` values
+- Waterfall `ampion_kwh` in the opposite direction (e.g. if there is a match for Ampion, and there are rows without kwh mapped to CMP, use Ampion)
 - Fill `dim_suppliers_id` with Ampion record id for all rows that receive `ampion_supply_rate`'''
 
 exploded_ampion = ampion_bills.groupby(['invoice_number', 'account_number', 'interval_start', 'interval_end'], observed = True) \
@@ -36,39 +36,39 @@ int_df = meter_usage.drop('account_number', axis = 1) \
                              'ampion_kwh'         : 0,
                              'ampion_supply_rate' : 0})
 
-print(int_df.columns)
+# Decompose the .assign and use key assignment
+fct_df = (
+    int_df.assign(
+        total_recorded_kwh       = int_df.groupby(['pdf_file_name', 'kwh_delivered'])['kwh'].transform('sum'),
+        allocated_service_charge = lambda x: x['service_charge'] * x['kwh'] / x['total_recorded_kwh'],
+        delivered_kwh_left       = int_df.groupby(['pdf_file_name', 'kwh_delivered'], group_keys = False)
+                                            .apply(lambda g: (g['kwh_delivered'].iloc[0] - g['kwh'].iloc[::-1].cumsum())
+                                            .clip(lower = 0)),
+        delivered_kwh_used       = lambda x: np.minimum(x['kwh'], x['delivered_kwh_left']).clip(lower = 0),
+        total_cost_of_delivery   = lambda x: x['delivered_kwh_used'] * (x['delivery_rate'] + x['supply_rate']) +
+                                                x['allocated_service_charge']))
+        # .sort_values(by = ['dim_meters_id', 'dim_datetimes_id']) \
+        # [[
+        #     # Relational and partition keys
+        #     'dim_datetimes_id',
+        #     'dim_meters_id',
+        #     'dim_suppliers_id',
+        #     'account_number',
 
-# fct_df = (
-#     int_df.assign(
-#         total_recorded_kwh       = int_df.groupby(['pdf_file_name', 'kwh_delivered'])['kwh'].transform('sum'),
-#         allocated_service_charge = lambda x: x['service_charge'] * x['kwh'] / x['total_recorded_kwh'],
-#         delivered_kwh_left       = int_df.groupby(['pdf_file_name', 'kwh_delivered'], group_keys = False)
-#                                             .apply(lambda g: (g['kwh_delivered'].iloc[0] - g['kwh'].iloc[::-1].cumsum())
-#                                             .clip(lower = 0)),
-#         delivered_kwh_used       = lambda x: np.minimum(x['kwh'], x['delivered_kwh_left']).clip(lower = 0),
-#         total_cost_of_delivery   = lambda x: x['delivered_kwh_used'] * (x['delivery_rate'] + x['supply_rate']) +
-#                                                 x['allocated_service_charge'])) \
-#         .sort_values(by = ['dim_meters_id', 'dim_datetimes_id']) \
-#         [[
-#             # Relational and partition keys
-#             'dim_datetimes_id',
-#             'dim_meters_id',
-#             'dim_suppliers_id',
-#             'account_number',
+        #     # Established facts from `meter_usage` and `cmp_bills`
+        #     'kwh',
+        #     'service_charge',
+        #     'delivery_rate',
+        #     'supply_rate',
 
-#             # Established facts from `meter_usage` and `cmp_bills`
-#             'kwh',
-#             'service_charge',
-#             'delivery_rate',
-#             'supply_rate',
+        #     # Newly curated facts
+        #     'allocated_service_charge',
+        #     'delivered_kwh_left',
+        #     'delivered_kwh_used',
+        #     'total_cost_of_delivery'
+        # ]]
 
-#             # Newly curated facts
-#             'allocated_service_charge',
-#             'delivered_kwh_left',
-#             'delivered_kwh_used',
-#             'total_cost_of_delivery'
-#         ]]
-
+print(fct_df)
 # # Step 5: Create a unique identifier `id` for each row
 # fct_df.insert(0, 'id', range(1, len(fct_df) + 1))
 

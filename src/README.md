@@ -549,7 +549,7 @@ This function constructs the `fct_electric_brew` fact table, which is central to
 
 **Methodology**
 
-1. The billing data in `cmp_bills` is expanded to a daily granularity to align with the usage data from `meter_usage`, ensuring that daily charges can be accurately associated with the usage data.
+1. The billing data in both `cmp_bills` and `ampion_bills` is expanded to a daily granularity to align with the usage data from `meter_usage`, ensuring that daily charges can be accurately associated with the usage data.
 2. An intermediary DataFrame is curated by merging cleaned and transformed `meter_usage` data with dimension tables (`dim_meters`, `dim_datetimes`, and `dim_suppliers`), along with the expanded billing data. This provides a comprehensive view of the usage and billing information.
 3. Cumulative and usage-based metrics such as `allocated_service_charge`, `delivered_kwh_left`, and `delivered_kwh_used` are calculated to provide insights into the usage patterns and remaining delivery capacities.
 4. The `total_cost_of_delivery` is computed by summing the delivery and supply rates, along with the allocated service charge, to determine the total cost associated with the electric delivery for each usage entry.
@@ -562,19 +562,19 @@ A `.parquet` file saved in the specified `modeled` directory containing the supp
 
 **Example Output**
 
-| id     | dim_datetimes_id | dim_meters_id | dim_suppliers_id | kwh   | service_charge | delivery_rate | supply_rate | allocated_service_charge | delivered_kwh_left | delivered_kwh_used | total_cost_of_delivery | account_number |
-|--------|------------------|---------------|------------------|-------|----------------|---------------|-------------|--------------------------|--------------------|--------------------|------------------------|----------------|
-| 42149  | 42141           | 1             | 2.0              | 0.653 | 21.47          | 0.077711      | 0.06840     | 0.003094                 | 0.000              | 0.000              | 0.003094               | 30010320353    |
-| 42150  | 42142           | 1             | 2.0              | 0.511 | 21.47          | 0.077711      | 0.06840     | 0.002421                 | 0.000              | 0.000              | 0.002421               | 30010320353    |
-| 42151  | 42143           | 1             | 2.0              | 0.745 | 21.47          | 0.077711      | 0.06840     | 0.003530                 | 0.000              | 0.000              | 0.003530               | 30010320353    |
-| 42152  | 42144           | 1             | 2.0              | 0.517 | 21.47          | 0.077711      | 0.06840     | 0.002450                 | 0.000              | 0.000              | 0.002450               | 30010320353    |
-| 42153  | 42145           | 1             | 2.0              | 0.731 | 21.47          | 0.077711      | 0.06840     | 0.003464                 | 0.000              | 0.000              | 0.003464               | 30010320353    |
-| ...    | ...              | ...           | ...              | ...   | ...            | ...           | ...         | ...                      | ...                | ...                | ...                    | ...            |
-| 498356 | 96737           | 8             | 3.0              | 4.318 | 14.42          | 0.074948      | 0.17631     | 0.048654                 | 842.164            | 4.318              | 1.133586               | 35012790198    |
-| 498357 | 96741           | 8             | 3.0              | 4.403 | 14.42          | 0.074948      | 0.17631     | 0.049612                 | 846.482            | 4.403              | 1.155901               | 35012790198    |
-| 498358 | 96745           | 8             | 3.0              | 3.965 | 14.42          | 0.074948      | 0.17631     | 0.044677                 | 850.885            | 3.965              | 1.040915               | 35012790198    |
-| 498359 | 96749           | 8             | 3.0              | 4.156 | 14.42          | 0.074948      | 0.17631     | 0.046829                 | 854.850            | 4.156              | 1.091057               | 35012790198    |
-| 498360 | 96753           | 8             | 3.0              | 3.994 | 14.42          | 0.074948      | 0.17631     | 0.045003                 | 859.006            | 3.994              | 1.048528               | 35012790198    |
+| id     | dim_datetimes_id | dim_meters_id | dim_suppliers_id | kwh   | cost    | account_number |
+|--------|------------------|---------------|------------------|-------|---------|----------------|
+| 42149  | 42141            | 1             | 2.0              | 0.653 | 0.003094 | 30010320353    |
+| 42150  | 42142            | 1             | 2.0              | 0.511 | 0.002421 | 30010320353    |
+| 42151  | 42143            | 1             | 2.0              | 0.745 | 0.003530 | 30010320353    |
+| 42152  | 42144            | 1             | 2.0              | 0.517 | 0.002450 | 30010320353    |
+| 42153  | 42145            | 1             | 2.0              | 0.731 | 0.003464 | 30010320353    |
+| ...    | ...              | ...           | ...              | ...   | ...     | ...            |
+| 498356 | 96737            | 8             | 3.0              | 4.318 | 1.133586 | 35012790198    |
+| 498357 | 96741            | 8             | 3.0              | 4.403 | 1.155901 | 35012790198    |
+| 498358 | 96745            | 8             | 3.0              | 3.965 | 1.040915 | 35012790198    |
+| 498359 | 96749            | 8             | 3.0              | 4.156 | 1.091057 | 35012790198    |
+| 498360 | 96753            | 8             | 3.0              | 3.994 | 1.048528 | 35012790198    |
 
 ### `create_electric_brew_db`
 
