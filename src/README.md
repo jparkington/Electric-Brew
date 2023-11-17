@@ -234,10 +234,6 @@ A comprehensive dimensional table that combines detailed billing information fro
 
   - `account_number` (**str**): The identifier assigned by CMP, used consistently across both CMP and Ampion, enabling seamless integration and comparison of billing data.
 
-  - `interval_start` (**str**): The start date of the billing cycle, formatted as YYYY-MM-DD.
-
-  - `interval_end` (**str**): The end date of the billing cycle, formatted as YYYY-MM-DD.
-
   - `supplier` (**str**): The name of the energy supplier, reflecting either CMP's third-party suppliers or Ampion's renewable energy provision, essential for supplier-based comparisons and analysis.
 
   - `kwh_delivered` (**float**): The total kilowatt-hours of energy delivered, combining CMP's electricity consumption metrics with Ampion's supplied and delivered kWh.
@@ -249,6 +245,8 @@ A comprehensive dimensional table that combines detailed billing information fro
   - `supply_rate` (**float**): The rate charged per kilowatt-hour for the energy supply, incorporating both CMP's supplier rates and Ampion's adjusted pricing, vital for cost analysis.
 
   - `source` (**str**): The origin of the billing data ('CMP' or 'Ampion').
+
+  - `billing_interval` (**list[date]**): A list of dates representing the entire billing cycle, from the start to the end date, providing a detailed view of the billing period for each record.
 
 ### `fct_electric_brew`
 
@@ -525,14 +523,15 @@ A `.parquet` file saved in the specified `modeled` directory containing the acco
 
 ### `create_dim_bills`
 
-Creates a bills dimension table, which consolidates the billing information from both `cmp_bills` and `ampion_bills` DataFrames. This table is instrumental for analyzing the combined billing data across various dimensions such as invoice number, account number, and supplier, including delivered kWh, service charges, delivery rates, and supply rates.
+Creates a bills dimension table, which consolidates billing information from both `cmp_bills` and `ampion_bills` DataFrames into a comprehensive view. This table is instrumental for analyzing combined billing data across various dimensions, such as invoice number, account number, and supplier, and includes metrics like delivered kWh, service charges, delivery rates, and supply rates.
 
 **Methodology**
 
-1. Group `cmp_bills` and `ampion_bills` by common dimensions ('invoice_number', 'account_number', 'interval_start', 'interval_end', 'supplier') and aggregate necessary metrics.
+1. Group `cmp_bills` and `ampion_bills` by common dimensions (`invoice_number`, `account_number`, `interval_start`, `interval_end`, `supplier`) and aggregate necessary metrics.
 2. Concatenate the results from both DataFrames and assign a source identifier for each row.
-3. Create a unique identifier `id` for each row.
-4. Persist the combined DataFrame as a `.parquet` file with `snappy` compression.
+3. Replace the `interval_start`, `interval_end` fields with a `billing_interval`` field, representing the inclusive range of dates for each billing period.
+4. Create a unique identifier `id` for each row.
+5. Persist the combined DataFrame as a `.parquet` file with `snappy` compression.
 
 **Returns**
 
@@ -540,17 +539,18 @@ A `.parquet` file saved in the specified `modeled` directory containing the comb
 
 **Example Output**
 
-| id  | invoice_number      | account_number | interval_start | interval_end | supplier              | kwh_delivered | service_charge | delivery_rate | supply_rate | source |
-|-----|---------------------|----------------|----------------|--------------|-----------------------|---------------|----------------|---------------|-------------|--------|
-| 1   | 700000396769        | 30010320353    | 2021-12-21     | 2022-01-19   | Mega Energy of Maine  | 4522.0        | 21.47          | 0.077711      | 0.068400    | CMP    |
-| 2   | 700000447767        | 30010320361    | 2022-05-18     | 2022-06-10   | Mega Energy of Maine  | 470.0         | 21.47          | 0.077711      | 0.068400    | CMP    |
-| 3   | 700000447768        | 30010320353    | 2022-05-18     | 2022-06-10   | Mega Energy of Maine  | 914.0         | 21.47          | 0.077711      | 0.068400    | CMP    |
-| ... | ...                 | ...            | ...            | ...          | ...                   | ...           | ...            | ...           | ...         | ...    |
-| 161 | 2023100000830629    | 30010601281    | 2023-07-13     | 2023-08-10   | Ampion                | 1968.0        | 0.00           | 0.000000      | 0.205066    | Ampion |
-| 162 | 2023100000830629    | 30010894035    | 2023-07-13     | 2023-08-10   | Ampion                | 3633.0        | 0.00           | 0.000000      | 0.205070    | Ampion |
-| 163 | 2023100000830629    | 35012787137    | 2023-07-13     | 2023-08-10   | Ampion                | 722.0         | 0.00           | 0.000000      | 0.205069    | Ampion |
-| ... | ...                 | ...            | ...            | ...          | ...                   | ...           | ...            | ...           | ...         | ...    |
+| id  | invoice_number      | account_number | supplier              | kwh_delivered | service_charge | delivery_rate | supply_rate | source | billing_interval                                  |
+|-----|---------------------|----------------|-----------------------|---------------|----------------|---------------|-------------|--------|---------------------------------------------------|
+| 1   | 700000396769        | 30010320353    | Mega Energy of Maine  | 4522.0        | 21.47          | 0.077711      | 0.068400    | CMP    | [2021-12-21, 2021-12-22, ..., 2022-01-19]         |
+| 2   | 700000447767        | 30010320361    | Mega Energy of Maine  | 470.0         | 21.47          | 0.077711      | 0.068400    | CMP    | [2022-05-18, 2022-05-19, ..., 2022-06-10]         |
+| 3   | 700000447768        | 30010320353    | Mega Energy of Maine  | 914.0         | 21.47          | 0.077711      | 0.068400    | CMP    | [2022-05-18, 2022-05-19, ..., 2022-06-10]         |
+| ... | ...                 | ...            | ...                   | ...           | ...            | ...           | ...         | ...    | ...                                               |
+| 161 | 2023100000830629    | 30010601281    | Ampion                | 1968.0        | 0.00           | 0.000000      | 0.205066    | Ampion | [2023-07-13, 2023-07-14, ..., 2023-08-13]         |
+| 162 | 2023100000830629    | 30010894035    | Ampion                | 3633.0        | 0.00           | 0.000000      | 0.205070    | Ampion | [2023-07-13, 2023-07-14, ..., 2023-08-13]         |
+| 163 | 2023100000830629    | 35012787137    | Ampion                | 722.0         | 0.00           | 0.000000      | 0.205069    | Ampion | [2023-07-13, 2023-07-14, ..., 2023-08-13]         |
+| ... | ...                 | ...            | ...                   | ...           | ...            | ...           | ...         | ...    | ...                                               |
 
+**Note**: The 'billing_interval' column is a list of dates, covering the entire duration of the billing period, which provides a detailed view of the billing timeline for each record.
 
 ### `create_fct_electric_brew`
 

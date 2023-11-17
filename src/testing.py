@@ -2,33 +2,24 @@ from utils import *
 
 '''
 - Waterfall `ampion_kwh` as a continuation of `cmp_kwh`
-- Calculate delivery_cost, service_cost, supply_cost, and total_cost
+- Facts: Calculate delivery_cost, service_cost, supply_cost, and total_cost
+- Ids from both exploded cmp and ampion will need to be coalesced and then renamed
 '''
 
-exploded_ampion = ampion_bills.groupby(['invoice_number', 'account_number', 'interval_start', 'interval_end'], observed = True) \
-                              .agg(ampion_kwh = ('kwh', 'sum'), ampion_price = ('price', 'sum')) \
-                              .reset_index() \
-                              .assign(ampion_supply_rate = lambda df: df['ampion_price'] / df['ampion_kwh'],
-                                      date = lambda df: df.apply(
-                                             lambda row: pd.date_range(start = row['interval_start'], 
-                                                                       end   = row['interval_end'])
-                                                           .to_list(), axis = 1)) \
-                              .explode('date')
+exploded_bills = (dim_bills.assign(date=[pd.date_range(start, end, inclusive='both').tolist() 
+                                         for start, end in zip(dim_bills['interval_start'], dim_bills['interval_end'])])
+                            .explode('date'))
 
-exploded_cmp = cmp_bills.assign(date = lambda df: df.apply(
-                                       lambda row: pd.date_range(start = row['interval_start'], 
-                                                                 end   = row['interval_end'])
-                                                     .to_list(), axis = 1)) \
-                        .explode('date')
 
 int_df = meter_usage.drop('account_number', axis = 1) \
                     .assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], 
                                                                   format = '%m/%d/%Y %I:%M:%S %p')) \
                     .merge(dim_meters,      on = 'meter_id',  how = 'left').rename(columns = {'id' : 'dim_meters_id'}) \
                     .merge(dim_datetimes,   on = 'timestamp', how = 'left').rename(columns = {'id' : 'dim_datetimes_id'}) \
-                    .merge(exploded_cmp,    on = ['account_number', 'date'], how = 'left') \
-                    .merge(exploded_ampion, on = ['account_number', 'date'], how = 'left') \
-                #     .merge(dim_suppliers,   on = 'supplier',  how = 'left').rename(columns = {'id' : 'dim_suppliers_id'})
+                #     .merge(exploded_cmp,    on = ['account_number', 'date'], how = 'left') \
+                #     .merge(exploded_ampion, on = ['account_number', 'date'], how = 'left') \
+
+print(exploded_bills)
 
 # Do the .fillna differently
                 #     .fillna({'kwh_delivered'      : 0,

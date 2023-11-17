@@ -562,8 +562,9 @@ def create_dim_bills(model: str = "./data/modeled/dim_bills"):
     Methodology:
         1. Group `cmp_bills` and `ampion_bills` by common dimensions and aggregate metrics.
         2. Concatenate the results and assign a source identifier for each row.
-        3. Create a unique identifier `id` for each row.
-        4. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
+        3. Replace `interval_start` and `interval_end` with `billing_interval`
+        4. Create a unique identifier `id` for each row.
+        5. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
     
     Parameters:
         model (str): Directory where the .parquet file should be saved.
@@ -591,15 +592,20 @@ def create_dim_bills(model: str = "./data/modeled/dim_bills"):
         df2['delivery_rate']  = 0
         df2['supply_rate']    = df2['price'] / df2['kwh_delivered']
         df2['source']         = "Ampion"
-        df2.drop(columns=['price'], inplace = True)
+        df2.drop(columns = ['price'], inplace = True)
 
         # Step 2: Concatenate standardize dataframes
         df = pd.concat([df1, df2], ignore_index = True)
 
-        # Step 3: Create a unique identifier `id` for each row
+        # Step 3: Replace `interval_start` and `interval_end` with `billing_interval`
+        df['billing_interval'] = [pd.date_range(s, e, inclusive = 'both').date.tolist() 
+                                  for s, e in zip(df['interval_start'], df['interval_end'])]
+        df.drop(columns = ['interval_start', 'interval_end'], inplace = True)
+
+        # Step 4: Create a unique identifier `id` for each row
         df.insert(0, 'id', range(1, len(df) + 1))
 
-        # Step 4: Save the resulting DataFrame as a .parquet file
+        # Step 5: Save the resulting DataFrame as a .parquet file
         pq.write_to_dataset(pa.Table.from_pandas(df), 
                             root_path      = model, 
                             compression    = 'snappy', 
@@ -788,14 +794,13 @@ def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
           Column('id',                    BigInteger, primary_key = True),
           Column('invoice_number',        String),
           Column('account_number',        String),
-          Column('interval_start',        DateTime),
-          Column('interval_end',          DateTime),
           Column('supplier',              String),
           Column('kwh_delivered',         Float),
           Column('service_charge',        Float),
           Column('delivery_rate',         Float),
           Column('supply_rate',           Float),
-          Column('source',                String))
+          Column('source',                String),
+          Column('billing_interval',      JSON))
 
     Table('fct_electric_brew', metadata,
           Column('id',                    BigInteger, primary_key = True),
