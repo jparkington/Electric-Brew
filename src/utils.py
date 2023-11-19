@@ -190,7 +190,7 @@ Contains utility functions that scrape and restructure data from raw sources int
 
 Functions:
     - load_data_files : Load data files from the specified directory. Supports CSV and PDF file types.
-    - scrape_cmp_bills : Scrapes billing data from PDFs into a CSV file.
+    - write_results   : Write curated data to a specified Parquet directory.
 '''
 
 def load_data_files(path : str, 
@@ -200,22 +200,24 @@ def load_data_files(path : str,
     Load data files from the specified directory. Supports CSV and PDF file types.
 
     Methodology:
-        1. Determine the file type (CSV or PDF) and prepare to load files accordingly.
+        1. Determine the file type (CSV, PDF, Parquet) and prepare to load files accordingly.
         2. For CSV files:
            a. Load each file, optionally applying specified column names.
            b. Concatenate all CSV data into a single DataFrame.
         3. For PDF files:
            a. Extract text content from each page of each PDF file.
            b. Create a DataFrame with content and page number for each extracted page.
+        4. For Parquet files:
+           a. Directly read the Parquet dataset from the specified directory.
 
     Parameters:
-        path (str): Path to the directory containing the files.
-        type (str): Type of the files to load (CSV, PDF). Defaults to 'CSV'.
-        cols (Optional[List[str]]): List of column names to be used as headers for CSV files. Defaults to None.
+        path (str)       : Path to the directory containing the files.
+        type (str)       : Type of the files to load (CSV, PDF, Parquet). Defaults to 'CSV'.
+        cols (List[str]) : List of column names to be used as headers for CSV files. Defaults to None.
 
     Returns:
-        Union[pd.DataFrame, str]: Loaded data as a DataFrame. For CSV files, it concatenates all data;
-                                   for PDF files, each row represents a page's content and page number.
+        pd.DataFrame : Loaded data as a DataFrame. For CSV and Parquet files, it concatenates all data;
+                       for PDF files, each row represents a page's content and page number.
     '''
     type  = type.lower()
     files = glob.glob(os.path.join(path, "**", f"*.{type}"), recursive = True)
@@ -241,12 +243,56 @@ def load_data_files(path : str,
                      if page.extract_text()]
             
             return pd.DataFrame(pages)
+        
+        elif type == 'parquet':
+
+            lg.info(f"Loading Parquet dataset from {path}.")
+
+            return pq.read_table(path).to_pandas()
 
         else:
             raise ValueError(f"Unsupported file type: {type}")
 
     except Exception as e:
         lg.error(f"Error loading files from {path}: {e}")
+
+def write_results(data           : pd.DataFrame, 
+                  destination    : str, 
+                  add_id         : bool = True, 
+                  partition_by   : str  = None,
+                  compression    : str  = 'snappy',
+                  use_dictionary : bool = True):
+    '''
+    Write curated data to a specified Parquet directory with an optional primary key, optional partitioning,
+    and snappy compression.
+
+    Methodology:
+        1. Optionally add a unique identifier to the data.
+        2. Write the DataFrame to a Parquet file, handling partitioning if required.
+
+    Parameters:
+        data           (pd.DataFrame) : The DataFrame to be written.
+        destination    (str)          : Path to the destination directory.
+        add_id         (bool)         : Whether to add a unique identifier to the data. Defaults to True.
+        partition_by   (str)          : Column to partition by. Defaults to None.
+        compression    (str)          : Compression method for Parquet files. Defaults to 'snappy'.
+        use_dictionary (bool)         : Whether to enable dictionary encoding. Defaults to True.
+    '''
+    
+    if add_id:
+        data['id'] = range(1, len(data) + 1)
+
+    try:
+        pq.write_to_dataset(pa.Table.from_pandas(data), 
+                            root_path      = destination, 
+                            partition_cols = [partition_by] if partition_by else None,
+                            compression    = compression,
+                            use_dictionary = use_dictionary)
+
+        lg.info(f"Data written in Parquet to {destination}.")
+
+    except Exception as e:
+        lg.error(f"Error writing data to {destination}: {e}")
 
 def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter_usage", 
                        curated       : str  = "./data/cmp/curated/meter_usage",
@@ -344,7 +390,7 @@ def curate_cmp_bills(raw           : str  = "./data/cmp/raw/bills",
 
     try:
         # Step 1: Read all CSVs in the `raw` directory using existing headers
-        concat_df = load_data_files(path = raw)
+        concat_df = load_data_files(path = raw, type = 'parquet')
         
         # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
         if not os.path.exists(curated):
@@ -381,7 +427,7 @@ def curate_ampion_bills(raw           : str  = "./data/ampion/raw/bills/csv",
 
     try:
         # Step 1: Read all CSVs in the `raw` directory using existing headers
-        concat_df = load_data_files(path = raw)
+        concat_df = load_data_files(path = raw, type = 'parquet')
         
         # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
         if not os.path.exists(curated):
@@ -529,11 +575,13 @@ data visualization. The aim is to create a structured, denormalized data model t
 intuitive querying.
 
 Functions:
-    - create_dim_datetimes : Generates a datetime dimension table from `meter_usage` timestamps and saves as Parquet.
-    - create_dim_accounts  : Extracts account, location, and meter dimensions and saves as Parquet.
+    - model_dim_datetimes     : Generates a datetime dimension table from `meter_usage` timestamps.
+    - model_dim_meters        : Extracts account numbers, service points, streets, and labels.
+    - model_dim_bills         : Groups by common dimensions and aggregates relevant metrics across all billing sources.
+    - model_fct_electric_brew : Generates a central fact table of all electric usage records and their associated charges.
 '''
 
-def create_dim_datetimes(model : str = "./data/modeled/dim_datetimes"):
+def model_dim_datetimes(model : str = "./data/modeled/dim_datetimes"):
     '''
     This function creates a datetime dimension table from the `meter_usage` DataFrame.
     It extracts unique timestamps, generates various time components, and saves the result as a .parquet file.
@@ -588,7 +636,7 @@ def create_dim_datetimes(model : str = "./data/modeled/dim_datetimes"):
     except Exception as e:
         lg.error(f"Error creating datetime dimension table: {e}")
 
-def create_dim_meters(model : str = "./data/modeled/dim_meters"):
+def model_dim_meters(model : str = "./data/modeled/dim_meters"):
     '''
     This function creates a meters dimension table by joining data from the `meter_usage` and `locations` DataFrames.
     It extracts account numbers, service points, meter IDs, streets, and labels, and saves the result as a .parquet file.
@@ -623,7 +671,7 @@ def create_dim_meters(model : str = "./data/modeled/dim_meters"):
     except Exception as e:
         lg.error(f"Error creating meters dimension table: {e}")
 
-def create_dim_bills(model: str = "./data/modeled/dim_bills"):
+def model_dim_bills(model: str = "./data/modeled/dim_bills"):
     '''
     This function creates a bills dimension table from both the `cmp_bills` and `ampion_bills` DataFrames.
     It groups by common dimensions, aggregates relevant metrics, and concatenates the results from both DataFrames.
@@ -685,8 +733,8 @@ def create_dim_bills(model: str = "./data/modeled/dim_bills"):
     except Exception as e:
         lg.error(f"Error creating bills dimension table: {e}")
 
-def create_fct_electric_brew(model         : str  = "./data/modeled/fct_electric_brew",
-                             partition_col : list = ['account_number']):
+def model_fct_electric_brew(model         : str  = "./data/modeled/fct_electric_brew",
+                            partition_col : list = ['account_number']):
     
     '''
     This function generates a central fact table recording electric usage and associated charges for each account per time interval.

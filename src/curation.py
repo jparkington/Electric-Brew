@@ -13,37 +13,51 @@ The remaining "logic" should just be the regex strings for each scraper
 # load_data_files("path/to/csv_files", "CSV", ["col1", "col2"])
 # load_data_files("path/to/pdf_files", "PDF")
 
+# Example usage
+# write_results(data_df, "path/to/destination", "CSV")
+# write_results(data_df, "path/to/destination", "Parquet", partition_col="some_column")
+
+# Add a condition to read parquet for the previous function
 
 
-
-from typing import Optional
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import logging as lg
 
-def write_results(data: pd.DataFrame, 
-                       destination_path: str, 
-                       file_type: str = 'Parquet', 
-                       add_id: bool = True, 
-                       partition_col: Optional[str] = None):
+def write_results(data           : pd.DataFrame, 
+                  destination    : str, 
+                  add_id         : bool = True, 
+                  partition_by   : str  = None,
+                  compression    : str  = 'snappy',
+                  use_dictionary : bool = True):
     """
-    Write processed data to a file in the specified format.
+    Write processed data to a Parquet file.
 
-    Args:
-        data (pd.DataFrame): The DataFrame to be written.
-        destination_path (str): Path to the destination directory.
-        file_type (str, optional): The type of file to write (CSV, Parquet). Defaults to 'Parquet'.
-        add_id (bool, optional): Whether to add a unique identifier to the data. Defaults to True.
-        partition_col (str, optional): Column to partition by. Defaults to None.
+    Methodology:
+        1. Optionally add a unique identifier to the data.
+        2. Write the DataFrame to a Parquet file, handling partitioning if required.
+
+    Parameters:
+        data           (pd.DataFrame) : The DataFrame to be written.
+        destination    (str)          : Path to the destination directory.
+        add_id         (bool)         : Whether to add a unique identifier to the data. Defaults to True.
+        partition_by   (str)          : Column to partition by. Defaults to None.
+        compression    (str)          : Compression method for Parquet files. Defaults to 'snappy'.
+        use_dictionary (bool)         : Whether to enable dictionary encoding. Defaults to True.
     """
+    
     if add_id:
         data['id'] = range(1, len(data) + 1)
 
-    if file_type.upper() == 'PARQUET':
-        if partition_col:
-            pq.write_to_dataset(pa.Table.from_pandas(data), root_path=destination_path, partition_cols=[partition_col])
-        else:
-            data.to_parquet(os.path.join(destination_path, 'output.parquet'), index=False)
-    elif file_type.upper() == 'CSV':
-        data.to_csv(os.path.join(destination_path, 'output.csv'), index=False)
-    # Add more conditions here for different file types
+    try:
+        pq.write_to_dataset(pa.Table.from_pandas(data), 
+                            root_path      = destination, 
+                            partition_cols = [partition_by] if partition_by else None,
+                            compression    = compression,
+                            use_dictionary = use_dictionary)
+
+        lg.info(f"Data written in Parquet to {destination}.")
+
+    except Exception as e:
+        lg.error(f"Error writing data to {destination}: {e}")

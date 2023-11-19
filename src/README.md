@@ -28,10 +28,10 @@ The `/src/` directory contains a `utils` module full of scripts that support the
     - [**Regular Expressions**](#regular-expressions-1)
     - [**Manual Interventions**](#manual-interventions-1)
 - [Modeling](#modeling)
-  - [`create_dim_datetimes`](#create_dim_datetimes)
-  - [`create_dim_meters`](#create_dim_meters)
-  - [`create_dim_bills`](#create_dim_bills)
-  - [`create_fct_electric_brew`](#create_fct_electric_brew)
+  - [`model_dim_datetimes`](#model_dim_datetimes)
+  - [`model_dim_meters`](#model_dim_meters)
+  - [`model_dim_bills`](#model_dim_bills)
+  - [`model_fct_electric_brew`](#model_fct_electric_brew)
 
 
 ## Runtime
@@ -496,7 +496,7 @@ After the automated scraping process is completed by `scrape_ampion_bills`, one 
 
 This section comprises functions that transform DataFrames into a structured, denormalized data model optimized for analytical queries and data visualization. It includes the generation of dimensional tables and the enhancement of timestamp data to facilitate intuitive querying.
 
-### `create_dim_datetimes`
+### `model_dim_datetimes`
 
 Generates a datetime dimension table, which is a key component in time series analysis and reporting. It enriches the dataset by breaking down timestamps into more granular and useful components, facilitating more sophisticated temporal queries and analyses.
 
@@ -528,7 +528,7 @@ A `.parquet` file saved in the specified `modeled` directory containing the date
 | 104435  | 2023-09-30 23:30:00 | 30        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
 | 104436  | 2023-09-30 23:45:00 | 45        | 23   | 2023-09-30 | 39   | 39           | 9     | September  | 3       | 2023 | On-peak: 5PM to 9PM                   |
 
-### `create_dim_meters`
+### `model_dim_meters`
 
 Creates a meters dimension table, which centralizes the account information, linking service points, meter IDs, and location details. This table simplifies the complexity of account management and enables more efficient meter-related queries and analyses. This table originally was curated for accounts, but through the discovery process, we learned that it's possible for a given account to have multiple meters and service points.
 
@@ -554,7 +554,7 @@ A `.parquet` file saved in the specified `modeled` directory containing the acco
 | 8  | L108607371 | 2300588897       | 35012790198    | 1 INDUSTRIAL WAY U10 | Industrial Way |
 
 
-### `create_dim_bills`
+### `model_dim_bills`
 
 Creates a bills dimension table, which consolidates billing information from both `cmp_bills` and `ampion_bills` DataFrames into a comprehensive view. This table is instrumental for analyzing combined billing data across various dimensions, such as invoice number, account number, and supplier, and includes metrics like delivered kWh, service charges, delivery rates, and supply rates.
 
@@ -585,7 +585,7 @@ A `.parquet` file saved in the specified `modeled` directory containing the comb
 
 **Note**: The 'billing_interval' column is a list of dates, covering the entire duration of the billing period, which provides a detailed view of the billing timeline for each record.
 
-### `create_fct_electric_brew`
+### `model_fct_electric_brew`
 
 This function constructs the `fct_electric_brew` fact table, a cornerstone of the analytics model for Austin Street Brewery's electricity consumption and cost analysis. This table integrates and transforms data from various sources, capturing detailed electric usage and associated charges for each customer account at specific time intervals.
 
