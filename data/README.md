@@ -19,7 +19,7 @@ The **Data Lineage** diagram below offers a high-level view of how we have curat
 
 For the simplest retrieval of data from either the `/curated/` or `/modeled/` directories, take a look at our documentation on the [**DataFrames**](../src/README.md#dataframes) available to you by simply importing `utils` into a script somewhere in the `/src/` directory.
 
-We also have an exploratory SQLite database, `electric_brew.db`. Its ERD can be found [**here**](./sql/README.md).
+We also have an exploratory DuckDB database, `electric_brew.db`. Its ERD can be found [**here**](./sql/README.md).
 
 Otherwise, here are a couple of examples to help you get started with the Parquet format, if you haven't used it before.
 
@@ -32,7 +32,7 @@ If you'd like to load the entire dataset into a dataframe, with all of its parti
 ```python
 import pyarrow.parquet as pq
 
-path = 'data/cmp/curated/meter-usage'
+path = 'data/cmp/curated/meter_usage'
 complete_dataset_df = pq.read_table(path).to_pandas()
 ```
 
@@ -45,7 +45,7 @@ For the more standard way of retrieving partition directory, you can mirror the 
 ```python
 import pyarrow.parquet as pq
 
-path = 'data/cmp/curated/meter-usage/account_number=30010320353'
+path = 'data/cmp/curated/meter_usage/account_number=30010320353'
 specific_partition_df = pq.read_table(path).to_pandas()
 ```
 

@@ -10,6 +10,7 @@ The `/src/` directory contains a `utils` module full of scripts that support the
 - [Runtime](#runtime)
   - [`set_plot_params`](#set_plot_params)
   - [`read_data`](#read_data)
+  - [`connect_to_db`](#connect_to_db)
 - [DataFrames](#dataframes)
   - [`meter_usage`](#meter_usage)
   - [`locations`](#locations)
@@ -31,8 +32,6 @@ The `/src/` directory contains a `utils` module full of scripts that support the
   - [`create_dim_meters`](#create_dim_meters)
   - [`create_dim_bills`](#create_dim_bills)
   - [`create_fct_electric_brew`](#create_fct_electric_brew)
-  - [`create_electric_brew_db`](#create_electric_brew_db)
-    - [Key Constraints](#key-constraints)
 
 
 ## Runtime
@@ -65,6 +64,35 @@ def read_data(file_path : str) -> pd.DataFrame:
 **Returns**  
 A DataFrame containing the data read from the supplied Parquet file path.
 
+### `connect_to_db`
+
+**Purpose**  
+Establishes a connection to the `electric_brew` DuckDB database and creates SQL views based on Parquet files for the Electric Brew project. It facilitates direct querying of Parquet files, ensuring real-time data reflection in the views and simplifying data access across the project.
+
+**Signature** 
+```python
+def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_brew.db'),
+                  vws : dict = {'meter_usage'       : 'cmp/curated/meter_usage',
+                                'locations'         : 'cmp/curated/locations',
+                                'cmp_bills'         : 'cmp/curated/bills',
+                                'ampion_bills'      : 'ampion/curated/bills',
+                                'dim_datetimes'     : 'modeled/dim_datetimes',
+                                'dim_meters'        : 'modeled/dim_meters',
+                                'dim_bills'         : 'modeled/dim_bills',
+                                'fct_electric_brew' : 'modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
+```
+
+**Methodology**
+
+1. **Database Connection**: Establishes or opens a connection to the specified DuckDB database.
+2. **View Creation**: Iterates through a mapping of view names to Parquet file paths, creating a SQL view for each. If a view exists, it proceeds without interruption.
+
+**Returns**  
+The function returns a `duckdb.DuckDBPyConnection` object, representing the connected DuckDB database instance.
+
+The database itself is accessible in any `/src/` script via the `electric_brew` variable. This standardized access point ensures uniformity and convenience in database interactions throughout the project.
+
+A comprehensive Entity-Relationship Diagram (ERD) of the database can be found in the `sql` directory's [README](../data/sql/README.md). This ERD provides a visual representation of the tables, their schemas, and the relationships between each.
 
 ## DataFrames
 
@@ -75,7 +103,7 @@ This section initializes commonly used DataFrames at the start, making them read
 A repository for meter-level electrical consumption data from Central Maine Power (CMP) in 15-minute intervals. Used in analyses of electricity usage patterns, billing, and location-related insights. The DataFrame is partitioned by `account_number`, enabling quick data retrieval for individual accounts. 
 
 **Source**: Central Maine Power (CMP)  
-**Location**: `./data/cmp/curated/meter-usage`  
+**Location**: `./data/cmp/curated/meter_usage`  
 **Partitioning**: `account_number`  
 
 **Schema**:
@@ -298,7 +326,7 @@ def curate_meter_usage(raw           : str,
 
 **Parameters**
 
-- **`raw`**: Path to the directory containing raw `meter-usage` CSV files.
+- **`raw`**: Path to the directory containing raw `meter_usage` CSV files.
 
 - **`curated`** : Directory where the consolidated `.parquet` files will be saved.
 
@@ -591,40 +619,3 @@ A `.parquet` file saved in the specified `modeled` directory containing the `fct
 | 500278 | 34353            | 8             | 153.0        | 1.186 | 0.092165      | 0.024701     | 0.000000    | 0.116866   | 35012790198    |
 | 500279 | 34357            | 8             | 153.0        | 1.150 | 0.089368      | 0.023951     | 0.000000    | 0.113319   | 35012790198    |
 | 500280 | 34361            | 8             | 153.0        | 1.120 | 0.087036      | 0.023326     | 0.000000    | 0.110363   | 35012790198    |
-
-
-### `create_electric_brew_db`
-
-This function initializes and populates the `electric_brew` SQLite database for the Electric Brew project. It creates several tables with predefined schemas, including primary keys and foreign key relationships, to store electric consumption and billing data.
-
-Each `/curated/` or `/modeled/` DataFrame, outlined above in [DataFrames](#dataframes), has a corresponding table in this database.
-
-#### Key Constraints
-
-1. `dim_datetimes`
-   - **Primary Key**: `id`
-
-2. `dim_meters`
-   - **Primary Key**: `id`
-
-3. `dim_suppliers`
-   - **Primary Key**: `id`
-
-4. `fct_electric_brew`
-   - **Primary Key**: `id`
-   - **Foreign Keys**:
-     - `dim_datetimes_id` references `dim_datetimes(id)`
-     - `dim_meters_id` references `dim_meters(id)`
-     - `dim_bills_id` references `dim_bills(id)`
-
-**Methodology**
-
-The database is created and populated by:
-1. Establishing a connection to the specified SQLite database file.
-2. Defining tables with their respective columns, types, and constraints.
-3. Creating all tables in the database.
-4. Inserting data from provided Pandas DataFrames into the corresponding tables.
-
-**ERD Location**
-
-A comprehensive Entity-Relationship Diagram (ERD) of the database can be found in the `sql` directory's [README](../data/sql/README.md). This ERD provides a visual representation of the tables, their relationships, and constraints.

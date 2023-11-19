@@ -4,10 +4,9 @@ from glob              import glob
 from matplotlib.pyplot import rcParams
 from re                import findall, search, DOTALL
 from seaborn           import color_palette
-from sqlalchemy        import *
-from sqlalchemy.exc    import SQLAlchemyError
 
 import os
+import duckdb          as dd
 import logging         as lg
 import numpy           as np
 import pandas          as pd
@@ -102,6 +101,54 @@ def read_data(file_path: str) -> pd.DataFrame:
 
     return df
 
+def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_brew.db'),
+                  vws : dict = {'meter_usage'       : 'cmp/curated/meter_usage',
+                                'locations'         : 'cmp/curated/locations',
+                                'cmp_bills'         : 'cmp/curated/bills',
+                                'ampion_bills'      : 'ampion/curated/bills',
+                                'dim_datetimes'     : 'modeled/dim_datetimes',
+                                'dim_meters'        : 'modeled/dim_meters',
+                                'dim_bills'         : 'modeled/dim_bills',
+                                'fct_electric_brew' : 'modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
+    '''
+    This function creates views in a DuckDB database for the Electric Brew project by reading data from 
+    parquet files. It leverages DuckDB's ability to directly query Parquet files, which simplifies the 
+    data loading process compared to a traditional SQL database approach.
+
+    These views will automatically change as the udnerlying Parquet data changes. If the view already exists
+    at runtime, this function will continue past the view creation step.
+
+    Methodology:
+        1. Establish a connection to the DuckDB database, or create it if it doesn't exist.
+        2. Loop through the provided view names and corresponding Parquet file paths.
+        3. For each view, create a SQL view in the database that reads data directly from parquet files.
+
+    Parameters:
+        db  : Path and connection to the DuckDB database.
+        vws : Dictionary mapping view names to corresponding Parquet file paths.
+
+    Returns:
+        duckdb.DuckDBPyConnection: The connected DuckDB database instance.
+    '''
+
+    for k, v in vws.items():
+        try:
+            # Create SQL view for each parquet file
+            db.execute(f"CREATE VIEW {k} AS SELECT * FROM read_parquet('./data/{v}/**/*.parquet')")
+            lg.info(f"Created view '{k}' from parquet files at '{v}'.")
+
+        except dd.duckdb.CatalogException:
+            # This error occurs if the view already exists
+            continue
+
+        except Exception as e:
+            lg.error(f"Error occurred while creating view '{k}': {e}")
+            raise e
+
+    return db
+
+electric_brew = connect_to_db()
+
 '''
 =========================================
 ============== DATAFRAMES ===============
@@ -121,7 +168,7 @@ DataFrames:
 '''
 
 # Curated sources
-meter_usage  = read_data("cmp/curated/meter-usage")
+meter_usage  = read_data("cmp/curated/meter_usage")
 locations    = read_data("cmp/curated/locations")
 cmp_bills    = read_data("cmp/curated/bills")
 ampion_bills = read_data("ampion/curated/bills")
@@ -148,8 +195,8 @@ Functions:
 
 '''
 
-def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter-usage", 
-                       curated       : str  = "./data/cmp/curated/meter-usage",
+def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter_usage", 
+                       curated       : str  = "./data/cmp/curated/meter_usage",
                        partition_col : list = ['account_number'],
                        schema        : list = ["account_number", "service_point_id", "meter_id", 
                                                "interval_end_datetime", "meter_channel", "kwh"]):
@@ -162,7 +209,7 @@ def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter-usage",
         2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
         
     Parameters:
-        raw           (str)  : Path to the directory containing raw `meter-usage` CSV files.
+        raw           (str)  : Path to the directory containing raw `meter_usage` CSV files.
         curated       (str)  : Directory where the partitioned .parquet files should be saved.
         partition_col (list) : Column name(s) to use for partitioning the parquet files.
         schema        (list) : Column names(s) to apply to the resulting DataFrame as headers.
@@ -694,134 +741,3 @@ def create_fct_electric_brew(model         : str  = "./data/modeled/fct_electric
 
     except Exception as e:
         lg.error(f"Error while creating the final fact table: {e}")
-
-def create_electric_brew_db(db  : str  = "./data/sql/electric_brew.db",
-                            dfs : dict = {'meter_usage'       : meter_usage,
-                                          'locations'         : locations,
-                                          'cmp_bills'         : cmp_bills,
-                                          'ampion_bills'      : ampion_bills,
-                                          'dim_datetimes'     : dim_datetimes,
-                                          'dim_meters'        : dim_meters,
-                                          'dim_bills'         : dim_bills,
-                                          'fct_electric_brew' : fct_electric_brew}):
-    '''
-    This function nitializes and populates a SQLite database for the Electric Brew project. It creates tables out of
-    each of the curated and model dataframes, as found in the "DATAFRAMES" section above.
-    
-    SQLite requires a predefined schema for creation, particularly to respect primary and froeign key constraints, so 
-    this function outlines each schema and inserts data from the corresponding DataFrames.
-
-    Methodology:
-        1. Establish a connection to the SQLite database.
-        2. Define the schema for each table, including primary keys and foreign key relationships.
-        3. Create the tables in the database.
-        4. Insert data from DataFrames into the respective tables, ensuring correct primary and foreign keys.
-
-    Parameters:
-        db (str)   : Path for the SQLite database file location or creation.
-        dfs (dict) : Dictionary mapping table names to corresponding Pandas DataFrames for insertion.
-    '''
-    # Step 1: Establish a connection to the SQLite database
-    engine   = create_engine(f'sqlite:///{db}')
-    metadata = MetaData()
-
-    # Step 2: Define schema for each table
-    Table('meter_usage', metadata,
-          Column('service_point_id',      BigInteger),
-          Column('meter_id',              String),
-          Column('interval_end_datetime', DateTime),
-          Column('meter_channel',         Integer),
-          Column('kwh',                   Float),
-          Column('account_number',        String))
-
-    Table('locations', metadata,
-          Column('street',                String),
-          Column('label',                 String),
-          Column('account_number',        String))
-
-    Table('cmp_bills', metadata,
-          Column('invoice_number',        String),
-          Column('supplier',              String),
-          Column('amount_due',            Float),
-          Column('service_charge',        Float),
-          Column('delivery_rate',         Float),
-          Column('supply_rate',           Float),
-          Column('interval_start',        DateTime),
-          Column('interval_end',          DateTime),
-          Column('kwh_delivered',         Float),
-          Column('total_kwh',             BigInteger),
-          Column('account_number',        String))
-    
-    Table('ampion_bills', metadata,
-          Column('invoice_number',        String),
-          Column('supplier',              String),
-          Column('interval_start',        DateTime),
-          Column('interval_end',          DateTime),
-          Column('kwh',                   Integer),
-          Column('bill_credits',          Float),
-          Column('price',                 Float),
-          Column('account_number',        String))
-
-    Table('dim_datetimes', metadata,
-          Column('id',                    BigInteger, primary_key = True),
-          Column('timestamp',             DateTime),
-          Column('increment',             Integer),
-          Column('hour',                  Integer),
-          Column('date',                  DateTime),
-          Column('week',                  Integer),
-          Column('week_in_year',          Integer),
-          Column('month',                 Integer),
-          Column('month_name',            String),
-          Column('quarter',               Integer),
-          Column('year',                  Integer),
-          Column('period',                String))
-
-    Table('dim_meters', metadata,
-          Column('id',                    BigInteger, primary_key = True),
-          Column('meter_id',              String),
-          Column('service_point_id',      BigInteger),
-          Column('account_number',        String),
-          Column('street',                String),
-          Column('label',                 String))
-    
-    Table('dim_bills', metadata,
-          Column('id',                    BigInteger, primary_key = True),
-          Column('invoice_number',        String),
-          Column('account_number',        String),
-          Column('supplier',              String),
-          Column('kwh_delivered',         Float),
-          Column('service_charge',        Float),
-          Column('delivery_rate',         Float),
-          Column('supply_rate',           Float),
-          Column('source',                String),
-          Column('billing_interval',      JSON))
-
-    Table('fct_electric_brew', metadata,
-          Column('id',                    BigInteger, primary_key = True),
-          Column('dim_datetimes_id',      BigInteger, ForeignKey('dim_datetimes.id')),
-          Column('dim_meters_id',         BigInteger, ForeignKey('dim_meters.id')),
-          Column('dim_bills_id',          BigInteger, ForeignKey('dim_bills.id')),
-          Column('kwh',                   Float),
-          Column('delivery_cost',         Float),
-          Column('service_cost',          Float),
-          Column('supply_cost',           Float),
-          Column('total_cost',            Float),
-          Column('account_number',        String))
-
-    try:
-        # Step 3: Create the tables in the database
-        metadata.create_all(engine)
-        lg.info(f"Database and tables created at {db}")
-
-        # Step 4: Insert data into the tables
-        with engine.connect() as connection:
-            for table_name, df in dfs.items():
-                df.to_sql(table_name, 
-                          con       = connection, 
-                          if_exists = 'append', 
-                          index     = False)
-
-        lg.info("Data inserted into tables.")
-
-    except SQLAlchemyError as e:
-        lg.error(f"Error creating database and tables: {e}")
