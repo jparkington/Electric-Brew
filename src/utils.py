@@ -29,48 +29,38 @@ executed. These include `rcParams` and specific paradigms for reading data into 
 Functions:
     - set_plot_params : Sets up custom plot parameters for matplotlib.
     - read_data       : Reads a .parquet file into a Pandas DataFrame.
+    - connect_to_db   : Connects to DuckDB and creates specified views within it if not already present.
 '''
 
-def set_plot_params() -> list:
+def setup_plot_params() -> List:
     '''
     This function sets up custom plot parameters for matplotlib plots.
     
     The function defines various parameters related to axes, figure, font, text, grid, and legend of the plot.
     These parameters are then used to update matplotlib's runtime configuration, ensuring all subsequent plots
     adhere to this custom style.
-
-    Returns:
-        colors (list) : A list of RGBA color tuples that make up the custom color palette.
     '''
 
-    colors = color_palette("Set2")
+    # Use seaborn's darkgrid style
+    set_style('darkgrid')
 
     rcParams.update({# Axes parameters                           # Tick parameters
-                    'axes.facecolor'     : '.1',                 'xtick.labelsize'    : 8,
-                    'axes.grid'          : True,                 'xtick.color'        : 'white',
-                    'axes.labelcolor'    : 'white',              'xtick.major.size'   : 0,
-                    'axes.spines.left'   : False,                'ytick.labelsize'    : 8,
-                    'axes.spines.right'  : False,                'ytick.color'        : 'white',
-                    'axes.spines.top'    : False,                'ytick.major.size'   : 0,
-                    'axes.labelsize'     : 8,
-                    'axes.labelweight'   : 'bold',               # Figure parameters
-                    'axes.titlesize'     : 12,                   'figure.facecolor'   : 'black',
-                    'axes.titleweight'   : 'bold',               'figure.figsize'     : (15, 10),
-                    'axes.labelpad'      : 15,                   'figure.autolayout'  : True,
-                    'axes.titlepad'      : 15,
+                     'xtick.labelsize'    : 8,                   'ytick.labelsize'    : 8,
+                     'axes.labelsize'     : 10,
+                     'axes.labelweight'   : 'bold',              # Figure parameters
+                     'axes.titlesize'     : 13,                  'figure.figsize'     : (15, 10),
+                     'axes.titleweight'   : 'bold',              'figure.autolayout'  : True,
+                     'axes.labelpad'      : 15,
+                     'axes.titlepad'      : 15,
 
-                    # Font and text parameters                   # Legend parameters
-                    'font.family'        : 'DejaVu Sans Mono',   'legend.facecolor'   : '0.3',
-                    'font.size'          : 8,                    'legend.edgecolor'   : '0.3',
-                    'font.style'         : 'normal',             'legend.borderpad'   : 0.75,
-                    'text.color'         : 'white',              'legend.framealpha'  : '0.5',
+                     # Font and text parameters                  # Legend parameters
+                     'font.family'        : 'DejaVu Sans Mono',  'legend.borderpad'   : 0.75,
+                     'font.size'          : 8,                   'legend.facecolor'   : '1',
+                     'font.style'         : 'normal',            
 
-                    # Grid parameters
-                    'grid.linestyle'     : ':',
-                    'grid.color'         : '0.3',
-                    'axes.prop_cycle'    : cycler(color = colors)})
-    
-    return colors
+                     # Grid parameters
+                     'grid.linestyle'     : ':',
+                     'axes.prop_cycle'    : cycler(color = color_palette("tab10"))})
 
 def read_data(file_path: str) -> pd.DataFrame:
     '''
@@ -116,7 +106,7 @@ def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_
     parquet files. It leverages DuckDB's ability to directly query Parquet files, which simplifies the 
     data loading process compared to a traditional SQL database approach.
 
-    These views will automatically change as the udnerlying Parquet data changes. If the view already exists
+    These views will automatically change as the underlying Parquet data changes. If the view already exists
     at runtime, this function will continue past the view creation step.
 
     Methodology:
@@ -159,9 +149,10 @@ Contains commonly used DataFrames initialized at the start for easier access acr
 These DataFrames are curated and optimized for efficient data operations.
 
 DataFrames:
-    - meter_usage       : Contains meter usage data from CMP.
-    - cmp_bills         : Contains billed delivery and supplier rates for various periods of activity.
+    - meter_usage       : Contains kWh readings from CMP in as frequent as 15-minute intervals.
     - locations         : Adds manual CSV entries describing each of the accounts Austin St. uses to the model.
+    - cmp_bills         : Contains billed delivery and supplier rates for various periods of activity.
+    - ampion_bills      : Contains pricing and kWhs supplied by Austin Street's solar provider.
     - dim_datetimes     : Breaks down timestamps into individual date and time components, with categorization of periods.
     - dim_meters        : Abstracts the account numbers, service points, meter IDs, and streets dimensions into one table.
     - dim_bills         : Unions common dimensions and numerics from the `cmp_bills` and `ampion_bills` DataFrames
@@ -186,11 +177,20 @@ fct_electric_brew = read_data("modeled/fct_electric_brew")
 =============== CURATION ================
 =========================================
 
-Contains utility functions that scrape and restructure data from raw sources into more structured formats.
+Contains utility functions that scrape and restructure data from raw sources into columnar, efficient formats.
+
+The first two utility functions are used in `curation.py` to process and generate the following DataFrames without 
+additional transformations needed:
+    - meter_usage
+    - locations
+    - cmp_bills
+    - ampion_bills
 
 Functions:
-    - load_data_files : Load data files from the specified directory. Supports CSV and PDF file types.
-    - write_results   : Write curated data to a specified Parquet directory.
+    - load_data_files     : Load data files from the specified directory. Supports CSV and PDF file types.
+    - write_results       : Write curated data to a specified Parquet directory.
+    - scrape_cmp_bills    : 
+    - scrape_ampion_bills :
 '''
 
 def load_data_files(path : str, 
@@ -257,7 +257,7 @@ def load_data_files(path : str,
         lg.error(f"Error loading files from {path}: {e}")
 
 def write_results(data           : pd.DataFrame, 
-                  destination    : str, 
+                  dest           : str, 
                   add_id         : bool = False, 
                   partition_by   : str  = 'account_number',
                   compression    : str  = 'snappy',
@@ -273,17 +273,17 @@ def write_results(data           : pd.DataFrame,
 
     Parameters:
         data           (pd.DataFrame) : The DataFrame to be written.
-        destination    (str)          : Path to the destination directory.
+        dest           (str)          : Path to the destination directory.
         add_id         (bool)         : Whether to add a unique identifier to the data. Defaults to True.
         partition_by   (str)          : Column to partition by. Defaults to None.
         compression    (str)          : Compression method for Parquet files. Defaults to 'snappy'.
         use_dictionary (bool)         : Whether to enable dictionary encoding. Defaults to True.
     '''
 
-    if not os.path.exists(destination):
+    if not os.path.exists(dest):
 
-        lg.info(f"Directory {destination} does not exist. It will now be created.")
-        os.makedirs(destination)
+        lg.info(f"Directory {dest} does not exist. It will now be created.")
+        os.makedirs(dest)
       
     if add_id:
 
@@ -291,120 +291,15 @@ def write_results(data           : pd.DataFrame,
 
     try:
         pq.write_to_dataset(pa.Table.from_pandas(data), 
-                            root_path      = destination, 
+                            root_path      = dest, 
                             partition_cols = [partition_by] if partition_by else None,
                             compression    = compression,
                             use_dictionary = use_dictionary)
 
-        lg.info(f"Data written in Parquet to {destination}.")
+        lg.info(f"Data written in Parquet to {dest}.")
 
     except Exception as e:
-        lg.error(f"Error writing data to {destination}: {e}")
-
-def curate_meter_usage(raw     : str  = "./data/cmp/raw/meter_usage", 
-                       curated : str  = "./data/cmp/curated/meter_usage",
-                       schema  : list = ["account_number", "service_point_id", "meter_id", 
-                                         "interval_end_datetime", "meter_channel", "kwh"]):
-    '''
-    This function reads all CSVs in the specified `raw` directory, adds the defined `schema`, and then saves
-    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
-    
-    Methodology:
-        1. Read all CSVs in the `raw` directory without headers and assign the defined column names.
-        2. Save the DataFrame as a .parquet file in the `curated` directory.
-        
-    Parameters:
-        raw     (str)  : Path to the directory containing raw `meter_usage` CSV files.
-        curated (str)  : Directory where the partitioned .parquet files should be saved.
-        schema  (list) : Column names(s) to apply to the resulting DataFrame as headers.
-    '''
-    
-    try:
-        # Step 1: Read all CSVs in the `raw` directory and add headers
-        concat_df = load_data_files(path = raw, cols = schema)
-        
-        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        write_results(data = concat_df, destination = curated)
-
-    except Exception as e:
-        lg.error(f"Error while curating meter usage data: {e}")
-
-def curate_locations(raw     : str  = "./data/cmp/raw/locations", 
-                     curated : str  = "./data/cmp/curated/locations"):
-    '''
-    This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
-    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
-    
-    Methodology:
-        1. Read all CSVs in the `raw` directory using the existing headers.
-        2. Save the DataFrame as a .parquet file in the `curated` directory.
-        
-    Parameters:
-        raw     (str)  : Path to the directory containing the raw `locations` CSV file.
-        curated (str)  : Directory where the partitioned .parquet files should be saved.
-    '''
-
-    try:
-        # Step 1: Read all CSVs in the `raw` directory using existing headers
-        concat_df = load_data_files(path = raw)
-        
-        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        write_results(data = concat_df, destination = curated)
-
-    except Exception as e:
-        lg.error(f"Error while curating cmp bills data: {e}")
-
-def curate_cmp_bills(raw     : str  = "./data/cmp/raw/bills", 
-                     curated : str  = "./data/cmp/curated/bills"):
-    '''
-    This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
-    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
-    
-    Methodology:
-        1. Read all CSVs in the `raw` directory using the existing headers.
-        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
-        
-    Parameters:
-        raw           (str)  : Path to the directory containing raw `bills` CSV files.
-        curated       (str)  : Directory where the partitioned .parquet files should be saved.
-        partition_col (list) : Column name(s) to use for partitioning the parquet files.
-    '''
-
-    try:
-        # Step 1: Read all CSVs in the `raw` directory using existing headers
-        concat_df = load_data_files(path = raw, type = 'parquet')
-        
-        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        write_results(data = concat_df, destination = curated)
-
-    except Exception as e:
-        lg.error(f"Error while curating cmp bills data: {e}")
-
-def curate_ampion_bills(raw     : str  = "./data/ampion/raw/bills/csv", 
-                        curated : str  = "./data/ampion/curated/bills"):
-    '''
-    This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
-    the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
-    
-    Methodology:
-        1. Read all CSVs in the `raw` directory using the existing headers.
-        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
-        
-    Parameters:
-        raw           (str)  : Path to the directory containing raw `bills` CSV files.
-        curated       (str)  : Directory where the partitioned .parquet files should be saved.
-        partition_col (list) : Column name(s) to use for partitioning the parquet files.
-    '''
-
-    try:
-        # Step 1: Read all CSVs in the `raw` directory using existing headers
-        concat_df = load_data_files(path = raw, type = 'parquet')
-        
-        # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        write_results(data = concat_df, destination = curated)
-
-    except Exception as e:
-        lg.error(f"Error while curating cmp bills data: {e}")
+        lg.error(f"Error writing data to {dest}: {e}")
 
 def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
                      output : str = "./data/cmp/raw/bills"):
@@ -455,7 +350,7 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
                             'interval_end'   : datetime.strptime(meter_details.group(2), "%m.%d.%Y").strftime("%Y-%m-%d") if meter_details else "NULL",
                             'total_kwh'      : ""})
 
-        write_results(data = pd.DataFrame(records), destination = output)
+        write_results(data = pd.DataFrame(records), dest = output)
     
     except Exception as e:
         return f"Error while curating bill data: {e}"
@@ -510,7 +405,7 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills",
                         'bill_credits'   : prices[i][0],
                         'price'          : prices[i][1] if pdf_name < 202300 else prices[i][2]} for i in range(len(abbr_numbers))]
 
-        write_results(data = pd.DataFrame(records), destination = output)
+        write_results(data = pd.DataFrame(records), dest = output)
 
     except Exception as e:
         print(f"Error while processing and exporting data: {e}")
@@ -574,7 +469,7 @@ def model_dim_datetimes(model: str = "./data/modeled/dim_datetimes"):
         
         # Step 4: Save the DataFrame as a .parquet file
         write_results(data         = df, 
-                      destination  = model,
+                      dest         = model,
                       add_id       = True,
                       partition_by = None)
 
@@ -603,7 +498,7 @@ def model_dim_meters(model: str = "./data/modeled/dim_meters"):
 
         # Step 2: Save the DataFrame as a .parquet file
         write_results(data         = df, 
-                      destination  = model,
+                      dest         = model,
                       add_id       = True,
                       partition_by = None)
 
@@ -659,7 +554,7 @@ def model_dim_bills(model: str = "./data/modeled/dim_bills"):
 
         # Step 4: Save the DataFrame as a .parquet file
         write_results(data         = df, 
-                      destination  = model,
+                      dest         = model,
                       add_id       = True,
                       partition_by = None)
 
@@ -728,9 +623,9 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
         df['total_cost']        = df['delivery_cost'] + df['service_cost'] + df['supply_cost']
 
         # Step 7: Save the DataFrame as a .parquet file
-        write_results(data         = df, 
-                      destination  = model,
-                      add_id       = True)
+        write_results(data   = df, 
+                      dest   = model,
+                      add_id = True)
 
     except Exception as e:
         lg.error(f"Error while creating the final fact table: {e}")
