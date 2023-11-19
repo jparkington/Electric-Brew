@@ -17,7 +17,6 @@ The remaining "logic" should just be the regex strings for each scraper
 # write_results(data_df, "path/to/destination", "CSV")
 # write_results(data_df, "path/to/destination", "Parquet", partition_col="some_column")
 
-# Add a condition to read parquet for the previous function
 
 
 import pandas as pd

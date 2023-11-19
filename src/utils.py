@@ -258,8 +258,8 @@ def load_data_files(path : str,
 
 def write_results(data           : pd.DataFrame, 
                   destination    : str, 
-                  add_id         : bool = True, 
-                  partition_by   : str  = None,
+                  add_id         : bool = False, 
+                  partition_by   : str  = 'account_number',
                   compression    : str  = 'snappy',
                   use_dictionary : bool = True):
     '''
@@ -267,8 +267,9 @@ def write_results(data           : pd.DataFrame,
     and snappy compression.
 
     Methodology:
-        1. Optionally add a unique identifier to the data.
-        2. Write the DataFrame to a Parquet file, handling partitioning if required.
+        1. Check if the destination directory exists, and create it if not.
+        2. Optionally add a unique identifier to the data.
+        3. Write the DataFrame to a Parquet directory, handling compression and partitioning if required.
 
     Parameters:
         data           (pd.DataFrame) : The DataFrame to be written.
@@ -278,8 +279,14 @@ def write_results(data           : pd.DataFrame,
         compression    (str)          : Compression method for Parquet files. Defaults to 'snappy'.
         use_dictionary (bool)         : Whether to enable dictionary encoding. Defaults to True.
     '''
-    
+
+    if not os.path.exists(destination):
+
+        lg.info(f"Directory {destination} does not exist. It will now be created.")
+        os.makedirs(destination)
+      
     if add_id:
+
         data['id'] = range(1, len(data) + 1)
 
     try:
@@ -294,24 +301,22 @@ def write_results(data           : pd.DataFrame,
     except Exception as e:
         lg.error(f"Error writing data to {destination}: {e}")
 
-def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter_usage", 
-                       curated       : str  = "./data/cmp/curated/meter_usage",
-                       partition_col : list = ['account_number'],
-                       schema        : list = ["account_number", "service_point_id", "meter_id", 
-                                               "interval_end_datetime", "meter_channel", "kwh"]):
+def curate_meter_usage(raw     : str  = "./data/cmp/raw/meter_usage", 
+                       curated : str  = "./data/cmp/curated/meter_usage",
+                       schema  : list = ["account_number", "service_point_id", "meter_id", 
+                                         "interval_end_datetime", "meter_channel", "kwh"]):
     '''
     This function reads all CSVs in the specified `raw` directory, adds the defined `schema`, and then saves
     the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
     
     Methodology:
         1. Read all CSVs in the `raw` directory without headers and assign the defined column names.
-        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
+        2. Save the DataFrame as a .parquet file in the `curated` directory.
         
     Parameters:
-        raw           (str)  : Path to the directory containing raw `meter_usage` CSV files.
-        curated       (str)  : Directory where the partitioned .parquet files should be saved.
-        partition_col (list) : Column name(s) to use for partitioning the parquet files.
-        schema        (list) : Column names(s) to apply to the resulting DataFrame as headers.
+        raw     (str)  : Path to the directory containing raw `meter_usage` CSV files.
+        curated (str)  : Directory where the partitioned .parquet files should be saved.
+        schema  (list) : Column names(s) to apply to the resulting DataFrame as headers.
     '''
     
     try:
@@ -319,36 +324,24 @@ def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter_usage",
         concat_df = load_data_files(path = raw, cols = schema)
         
         # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        if not os.path.exists(curated):
-            lg.warning(f"Directory {curated} does not exist. It will now be created.")
-            os.makedirs(curated)
-
-        pq.write_to_dataset(pa.Table.from_pandas(concat_df), 
-                            root_path      = curated, 
-                            partition_cols = partition_col, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
-        
-        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+        write_results(data = concat_df, destination = curated)
 
     except Exception as e:
         lg.error(f"Error while curating meter usage data: {e}")
 
-def curate_locations(raw           : str  = "./data/cmp/raw/locations", 
-                     curated       : str  = "./data/cmp/curated/locations",
-                     partition_col : list = ['account_number']):
+def curate_locations(raw     : str  = "./data/cmp/raw/locations", 
+                     curated : str  = "./data/cmp/curated/locations"):
     '''
     This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
     the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
     
     Methodology:
         1. Read all CSVs in the `raw` directory using the existing headers.
-        2. Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`.
+        2. Save the DataFrame as a .parquet file in the `curated` directory.
         
     Parameters:
-        raw           (str)  : Path to the directory containing the raw `locations` CSV file.
-        curated       (str)  : Directory where the partitioned .parquet files should be saved.
-        partition_col (list) : Column name(s) to use for partitioning the parquet files.
+        raw     (str)  : Path to the directory containing the raw `locations` CSV file.
+        curated (str)  : Directory where the partitioned .parquet files should be saved.
     '''
 
     try:
@@ -356,24 +349,13 @@ def curate_locations(raw           : str  = "./data/cmp/raw/locations",
         concat_df = load_data_files(path = raw)
         
         # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        if not os.path.exists(curated):
-            lg.warning(f"Directory {curated} does not exist. It will now be created.")
-            os.makedirs(curated)
-
-        pq.write_to_dataset(pa.Table.from_pandas(concat_df), 
-                            root_path      = curated, 
-                            partition_cols = partition_col, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
-        
-        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+        write_results(data = concat_df, destination = curated)
 
     except Exception as e:
         lg.error(f"Error while curating cmp bills data: {e}")
 
-def curate_cmp_bills(raw           : str  = "./data/cmp/raw/bills", 
-                     curated       : str  = "./data/cmp/curated/bills",
-                     partition_col : list = ['account_number']):
+def curate_cmp_bills(raw     : str  = "./data/cmp/raw/bills", 
+                     curated : str  = "./data/cmp/curated/bills"):
     '''
     This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
     the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
@@ -393,24 +375,13 @@ def curate_cmp_bills(raw           : str  = "./data/cmp/raw/bills",
         concat_df = load_data_files(path = raw, type = 'parquet')
         
         # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        if not os.path.exists(curated):
-            lg.warning(f"Directory {curated} does not exist. It will now be created.")
-            os.makedirs(curated)
-
-        pq.write_to_dataset(pa.Table.from_pandas(concat_df), 
-                            root_path      = curated, 
-                            partition_cols = partition_col, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
-        
-        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+        write_results(data = concat_df, destination = curated)
 
     except Exception as e:
         lg.error(f"Error while curating cmp bills data: {e}")
 
-def curate_ampion_bills(raw           : str  = "./data/ampion/raw/bills/csv", 
-                        curated       : str  = "./data/ampion/curated/bills",
-                        partition_col : list = ['account_number']):
+def curate_ampion_bills(raw     : str  = "./data/ampion/raw/bills/csv", 
+                        curated : str  = "./data/ampion/curated/bills"):
     '''
     This function reads all CSVs in the specified `raw` directory, uses the existing headers, and then saves
     the combined data as a partitioned .parquet file in the `curated` directory with snappy compression.
@@ -430,17 +401,7 @@ def curate_ampion_bills(raw           : str  = "./data/ampion/raw/bills/csv",
         concat_df = load_data_files(path = raw, type = 'parquet')
         
         # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
-        if not os.path.exists(curated):
-            lg.warning(f"Directory {curated} does not exist. It will now be created.")
-            os.makedirs(curated)
-
-        pq.write_to_dataset(pa.Table.from_pandas(concat_df), 
-                            root_path      = curated, 
-                            partition_cols = partition_col, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
-        
-        lg.info(f"Data saved as partitioned .parquet files in {curated}.")
+        write_results(data = concat_df, destination = curated)
 
     except Exception as e:
         lg.error(f"Error while curating cmp bills data: {e}")
@@ -494,12 +455,7 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
                             'interval_end'   : datetime.strptime(meter_details.group(2), "%m.%d.%Y").strftime("%Y-%m-%d") if meter_details else "NULL",
                             'total_kwh'      : ""})
 
-        df = pd.DataFrame(records)
-        
-        if not os.path.exists(output):
-            os.makedirs(output)
-            
-        df.to_csv(os.path.join(output, 'scraped_bills.csv'), index = False)
+        write_results(data = pd.DataFrame(records), destination = output)
     
     except Exception as e:
         return f"Error while curating bill data: {e}"
@@ -554,12 +510,7 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills",
                         'bill_credits'   : prices[i][0],
                         'price'          : prices[i][1] if pdf_name < 202300 else prices[i][2]} for i in range(len(abbr_numbers))]
 
-            if not os.path.exists(output):
-                os.makedirs(output)
-
-            # Step 6: Write the data to CSV files in the `output` directory
-            pd.DataFrame(records).to_csv(os.path.join(output, f"{os.path.basename(pdf_path).replace('.pdf', '.csv')}"), 
-                                         index = False)
+        write_results(data = pd.DataFrame(records), destination = output)
 
     except Exception as e:
         print(f"Error while processing and exporting data: {e}")
@@ -581,7 +532,7 @@ Functions:
     - model_fct_electric_brew : Generates a central fact table of all electric usage records and their associated charges.
 '''
 
-def model_dim_datetimes(model : str = "./data/modeled/dim_datetimes"):
+def model_dim_datetimes(model: str = "./data/modeled/dim_datetimes"):
     '''
     This function creates a datetime dimension table from the `meter_usage` DataFrame.
     It extracts unique timestamps, generates various time components, and saves the result as a .parquet file.
@@ -590,11 +541,10 @@ def model_dim_datetimes(model : str = "./data/modeled/dim_datetimes"):
         1. Extract unique timestamps from `meter_usage['interval_end_datetime']` and sort them.
         2. Create a DataFrame with these timestamps and generate time components such as increment, hour, etc.
         3. Define the period of the day based on the hour.
-        4. Insert `id` at the first column position
-        5. Save the DataFrame as a .parquet file in the specified `model` directory with snappy compression.
+        4. Save the DataFrame as a .parquet file in the specified `model` directory with snappy compression.
         
     Parameters:
-        model (str) : Directory where the .parquet file should be saved.
+        model (str): Directory where the .parquet file should be saved.
     '''
     
     try:
@@ -622,32 +572,26 @@ def model_dim_datetimes(model : str = "./data/modeled/dim_datetimes"):
                          'Mid-peak: 7AM to 5PM, 9PM to 11PM' if (7 <= hour < 17) or (21 <= hour < 23) else 
                          'On-peak: 5PM to 9PM'))
         
-        # Step 4: Insert `id` at the first column position
-        df.insert(0, 'id', range(1, len(df) + 1))
-
-        # Step 5: Save the DataFrame as a .parquet file
-        pq.write_to_dataset(pa.Table.from_pandas(df), 
-                            root_path      = model, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
-
-        lg.info(f"Dimension table saved as .parquet file in {model}.")
+        # Step 4: Save the DataFrame as a .parquet file
+        write_results(data         = df, 
+                      destination  = model,
+                      add_id       = True,
+                      partition_by = None)
 
     except Exception as e:
         lg.error(f"Error creating datetime dimension table: {e}")
 
-def model_dim_meters(model : str = "./data/modeled/dim_meters"):
+def model_dim_meters(model: str = "./data/modeled/dim_meters"):
     '''
     This function creates a meters dimension table by joining data from the `meter_usage` and `locations` DataFrames.
     It extracts account numbers, service points, meter IDs, streets, and labels, and saves the result as a .parquet file.
 
     Methodology:
         1. Extract and join relevant columns based on `account_number`.
-        2. Create a unique identifier `id` for each row.
-        3. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
+        2. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
 
     Parameters:
-        model (str) : Directory where the .parquet file should be saved.
+        model (str): Directory where the .parquet file should be saved.
     '''
 
     try:
@@ -657,16 +601,11 @@ def model_dim_meters(model : str = "./data/modeled/dim_meters"):
                       on  = 'account_number', 
                       how = 'left')
 
-        # Step 2: Create a unique identifier `id` for each row
-        df.insert(0, 'id', range(1, len(df) + 1))
-
-        # Step 3: Save the resulting DataFrame as a .parquet file
-        pq.write_to_dataset(pa.Table.from_pandas(df), 
-                            root_path      = model, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
-
-        lg.info(f"Meters dimension table saved as .parquet file in {model}.")
+        # Step 2: Save the DataFrame as a .parquet file
+        write_results(data         = df, 
+                      destination  = model,
+                      add_id       = True,
+                      partition_by = None)
 
     except Exception as e:
         lg.error(f"Error creating meters dimension table: {e}")
@@ -680,8 +619,7 @@ def model_dim_bills(model: str = "./data/modeled/dim_bills"):
         1. Group `cmp_bills` and `ampion_bills` by common dimensions and aggregate metrics.
         2. Concatenate the results and assign a source identifier for each row.
         3. Replace `interval_start` and `interval_end` with `billing_interval`
-        4. Create a unique identifier `id` for each row.
-        5. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
+        4. Save the resulting DataFrame as a .parquet file in the specified `model` directory with snappy compression.
     
     Parameters:
         model (str): Directory where the .parquet file should be saved.
@@ -719,22 +657,16 @@ def model_dim_bills(model: str = "./data/modeled/dim_bills"):
                                   for s, e in zip(df['interval_start'], df['interval_end'])]
         df.drop(columns = ['interval_start', 'interval_end'], inplace = True)
 
-        # Step 4: Create a unique identifier `id` for each row
-        df.insert(0, 'id', range(1, len(df) + 1))
-
-        # Step 5: Save the resulting DataFrame as a .parquet file
-        pq.write_to_dataset(pa.Table.from_pandas(df), 
-                            root_path      = model, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
-
-        lg.info(f"Bills dimension table saved as .parquet file in {model}.")
+        # Step 4: Save the DataFrame as a .parquet file
+        write_results(data         = df, 
+                      destination  = model,
+                      add_id       = True,
+                      partition_by = None)
 
     except Exception as e:
         lg.error(f"Error creating bills dimension table: {e}")
 
-def model_fct_electric_brew(model         : str  = "./data/modeled/fct_electric_brew",
-                            partition_col : list = ['account_number']):
+def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
     
     '''
     This function generates a central fact table recording electric usage and associated charges for each account per time interval.
@@ -748,12 +680,10 @@ def model_fct_electric_brew(model         : str  = "./data/modeled/fct_electric_
         4. Compute remaining kWh and used kWh per reading for CMP billing, starting at the end of each interval.
         5. Compute remaining kWh and used kWh per reading for Ampion billing, starting at the beginning of each interval.
         6. Calculate delivery, service, and supply costs based on used kWh.
-        4. Create a unique identifier `id` for each row.
-        8. Save the resulting DataFrame as a .parquet file in the specified 'model' directory with snappy compression.
+        7. Save the resulting DataFrame as a .parquet file in the specified 'model' directory with snappy compression.
 
     Parameters:
         model (str): Directory where the .parquet file should be saved.
-        partition_col (list): List of column names to partition the .parquet file upon.
     '''
     
     try:
@@ -786,28 +716,21 @@ def model_fct_electric_brew(model         : str  = "./data/modeled/fct_electric_
         int_df['ampion_kwh_used'] = np.minimum(int_df['kwh'], int_df['ampion_kwh_left']).clip(lower = 0)
 
         # Step 6: Compute cost metrics
-        fct_df = pd.DataFrame(index = int_df.index)
-        fct_df['dim_datetimes_id'] = int_df['id']
-        fct_df['dim_meters_id']    = int_df['id_met']
-        fct_df['dim_bills_id']     = np.where(int_df['ampion_kwh_used'] > 0, int_df['id_amp'], int_df['id_cmp'])
-        fct_df['account_number']   = int_df['account_number']
-        fct_df['kwh']              = int_df['kwh']
-        fct_df['delivery_cost']    = int_df['delivered_kwh_used'] * int_df['delivery_rate']
-        fct_df['service_cost']     = int_df['service_charge']     * int_df['kwh'] / int_df['total_recorded_kwh']
-        fct_df['supply_cost']      = int_df['delivered_kwh_used'] * int_df['supply_rate'] + int_df['ampion_kwh_used'] * int_df['supply_rate_amp']
-        fct_df['total_cost']       = fct_df['delivery_cost'] + fct_df['service_cost'] + fct_df['supply_cost']
+        df = pd.DataFrame(index = int_df.index)
+        df['dim_datetimes_id']  = int_df['id']
+        df['dim_meters_id']     = int_df['id_met']
+        df['dim_bills_id']      = np.where(int_df['ampion_kwh_used'] > 0, int_df['id_amp'], int_df['id_cmp'])
+        df['account_number']    = int_df['account_number']
+        df['kwh']               = int_df['kwh']
+        df['delivery_cost']     = int_df['delivered_kwh_used'] * int_df['delivery_rate']
+        df['service_cost']      = int_df['service_charge']     * int_df['kwh'] / int_df['total_recorded_kwh']
+        df['supply_cost']       = int_df['delivered_kwh_used'] * int_df['supply_rate'] + int_df['ampion_kwh_used'] * int_df['supply_rate_amp']
+        df['total_cost']        = df['delivery_cost'] + df['service_cost'] + df['supply_cost']
 
-        # Step 7: Assign unique identifier and select columns
-        fct_df.insert(0, 'id', range(1, len(fct_df) + 1))
-
-        # Step 8: Save as a .parquet file
-        pq.write_to_dataset(pa.Table.from_pandas(fct_df), 
-                            root_path      = model, 
-                            partition_cols = partition_col, 
-                            compression    = 'snappy', 
-                            use_dictionary = True)
-
-        lg.info(f"Final fact table saved as .parquet file in {model}.")
+        # Step 7: Save the DataFrame as a .parquet file
+        write_results(data         = df, 
+                      destination  = model,
+                      add_id       = True)
 
     except Exception as e:
         lg.error(f"Error while creating the final fact table: {e}")
