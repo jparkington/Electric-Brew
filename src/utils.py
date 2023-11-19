@@ -192,7 +192,16 @@ Functions:
     - curate_locations   : Converts a CSV with manual entries into Parquet files.
     - curate_cmp_bills   : Curates the manuall edited CSVs from `1scrape_cmp_bills` into partitioned Parquet files.
     - scrape_cmp_bills   : Scrapes billing data from PDFs into a CSV file.
+'''
 
+'''
+load_files(): Accept a type argument (CSV [Default], PDF); use glob; try/except with .error and exit; specified_schema (Default [None]) that uses an unpacked dictionary with a conditional (e.g. if schema then {header : None, usecols : ... names : ...})
+write_result(): Needs better name; accept a type argument (CSV, Parquet [Default]); add_id argument (True [Default]); partition_col (None [Default]) that works with both Parquet and a CSV structure if applicable
+
+While at it, the `scrape_cmp_bills` logic should be reworked to land the curated CSVs in the same folder structure as the PDFs
+For glob, is there a simpler way to say "look at all subdirectories after this path, even if there are none, to find this file extension"?
+
+The remaining "logic" should just be the regex strings for 
 '''
 
 def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter_usage", 
