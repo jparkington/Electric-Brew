@@ -73,7 +73,7 @@ Processed, but unaggregated source tables:
 
 - `locations`: Stores location-based information for CMP accounts.
 
-- `cmp_bills`: Aggregates billing information from various suppliers.
+- `cmp_bills`: Aggregates billing information from various non-solar suppliers, with CMP as the delivery partner.
 
 - `ampion_bills`: Aggregates billing information and delivery volume from Ampion, Austin Street's solar provider.
 
