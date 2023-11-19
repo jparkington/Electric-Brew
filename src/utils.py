@@ -4,6 +4,7 @@ from glob              import glob
 from matplotlib.pyplot import rcParams
 from re                import findall, search, DOTALL
 from seaborn           import color_palette
+from typing            import *
 
 import os
 import duckdb          as dd
@@ -188,21 +189,64 @@ fct_electric_brew = read_data("modeled/fct_electric_brew")
 Contains utility functions that scrape and restructure data from raw sources into more structured formats.
 
 Functions:
-    - curate_meter_usage : Curates meter usage data from raw CSVs into partitioned Parquet files.
-    - curate_locations   : Converts a CSV with manual entries into Parquet files.
-    - curate_cmp_bills   : Curates the manuall edited CSVs from `1scrape_cmp_bills` into partitioned Parquet files.
-    - scrape_cmp_bills   : Scrapes billing data from PDFs into a CSV file.
+    - load_data_files : Load data files from the specified directory. Supports CSV and PDF file types.
+    - scrape_cmp_bills : Scrapes billing data from PDFs into a CSV file.
 '''
 
-'''
-load_files(): Accept a type argument (CSV [Default], PDF); use glob; try/except with .error and exit; specified_schema (Default [None]) that uses an unpacked dictionary with a conditional (e.g. if schema then {header : None, usecols : ... names : ...})
-write_result(): Needs better name; accept a type argument (CSV, Parquet [Default]); add_id argument (True [Default]); partition_col (None [Default]) that works with both Parquet and a CSV structure if applicable
+def load_data_files(path : str, 
+                    type : str = 'CSV', 
+                    cols : List[str] = None) -> Union[pd.DataFrame, str]:
+    '''
+    Load data files from the specified directory. Supports CSV and PDF file types.
 
-While at it, the `scrape_cmp_bills` logic should be reworked to land the curated CSVs in the same folder structure as the PDFs
-For glob, is there a simpler way to say "look at all subdirectories after this path, even if there are none, to find this file extension"?
+    Methodology:
+        1. Determine the file type (CSV or PDF) and prepare to load files accordingly.
+        2. For CSV files:
+           a. Load each file, optionally applying specified column names.
+           b. Concatenate all CSV data into a single DataFrame.
+        3. For PDF files:
+           a. Extract text content from each page of each PDF file.
+           b. Create a DataFrame with content and page number for each extracted page.
 
-The remaining "logic" should just be the regex strings for 
-'''
+    Parameters:
+        path (str): Path to the directory containing the files.
+        type (str): Type of the files to load (CSV, PDF). Defaults to 'CSV'.
+        cols (Optional[List[str]]): List of column names to be used as headers for CSV files. Defaults to None.
+
+    Returns:
+        Union[pd.DataFrame, str]: Loaded data as a DataFrame. For CSV files, it concatenates all data;
+                                   for PDF files, each row represents a page's content and page number.
+    '''
+    type  = type.lower()
+    files = glob.glob(os.path.join(path, "**", f"*.{type}"), recursive = True)
+
+    if not files:
+        raise FileNotFoundError(f"No '{type}' files found in {path}.")
+    
+    try:
+        if type == 'csv':
+
+            lg.info(f"Loading CSV files from {path}.")
+            csvs = [pd.read_csv(file, names = cols, header = None) if cols else pd.read_csv(file) 
+                    for file in files]
+            
+            return pd.concat(csvs, ignore_index = True)
+
+        elif type == 'pdf':
+
+            lg.info(f"Loading PDF files from {path}.")
+            pages = [{'content' : page.extract_text(), 'file_path': file, 'page_number' : page.page_number}
+                     for file in files
+                     for page in pl.open(file).pages
+                     if page.extract_text()]
+            
+            return pd.DataFrame(pages)
+
+        else:
+            raise ValueError(f"Unsupported file type: {type}")
+
+    except Exception as e:
+        lg.error(f"Error loading files from {path}: {e}")
 
 def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter_usage", 
                        curated       : str  = "./data/cmp/curated/meter_usage",
@@ -226,15 +270,7 @@ def curate_meter_usage(raw           : str  = "./data/cmp/raw/meter_usage",
     
     try:
         # Step 1: Read all CSVs in the `raw` directory and add headers
-        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
-        if not raw_files:
-            lg.warning(f"No CSV files found in {raw}. Exiting function.")
-            return
-    
-        concat_df = pd.concat([pd.read_csv(file, 
-                                           header  = None, 
-                                           usecols = range(len(schema)),
-                                           names   = schema) for file in raw_files])
+        concat_df = load_data_files(path = raw, cols = schema)
         
         # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
         if not os.path.exists(curated):
@@ -271,12 +307,7 @@ def curate_locations(raw           : str  = "./data/cmp/raw/locations",
 
     try:
         # Step 1: Read all CSVs in the `raw` directory using existing headers
-        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
-        if not raw_files:
-            lg.warning(f"No CSV files found in {raw}. Exiting function.")
-            return
-    
-        concat_df = pd.concat([pd.read_csv(file) for file in raw_files])
+        concat_df = load_data_files(path = raw)
         
         # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
         if not os.path.exists(curated):
@@ -313,12 +344,7 @@ def curate_cmp_bills(raw           : str  = "./data/cmp/raw/bills",
 
     try:
         # Step 1: Read all CSVs in the `raw` directory using existing headers
-        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
-        if not raw_files:
-            lg.warning(f"No CSV files found in {raw}. Exiting function.")
-            return
-    
-        concat_df = pd.concat([pd.read_csv(file) for file in raw_files])
+        concat_df = load_data_files(path = raw)
         
         # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
         if not os.path.exists(curated):
@@ -355,12 +381,7 @@ def curate_ampion_bills(raw           : str  = "./data/ampion/raw/bills/csv",
 
     try:
         # Step 1: Read all CSVs in the `raw` directory using existing headers
-        raw_files = [os.path.join(raw, file) for file in os.listdir(raw) if file.endswith('.csv')]
-        if not raw_files:
-            lg.warning(f"No CSV files found in {raw}. Exiting function.")
-            return
-    
-        concat_df = pd.concat([pd.read_csv(file) for file in raw_files])
+        concat_df = load_data_files(path = raw)
         
         # Step 2: Save the DataFrame as a .parquet file in the `curated` directory, partitioned by `partition_col`
         if not os.path.exists(curated):
@@ -399,8 +420,8 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
     '''
     
     try:
-        records = []
-        for pdf_path in glob(f"{raw}/**/*pdf", recursive = True):
+        # Step 1: Iterate through each PDF in the `raw` directory
+        pdf_data = load_data_files(path = raw, type = 'PDF')
 
             def extract_field(pattern, replace_dict = None):
                 search_result = search(pattern, pdf_text)
@@ -410,9 +431,6 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills",
                     field_value = "".join(replace_dict.get(char, char) for char in field_value)
                     
                 return field_value
-
-            with pl.open(pdf_path) as pdf:
-                pdf_text = " ".join(page.extract_text() for page in pdf.pages)
 
             meter_details = search(r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges", 
                                     pdf_text, 
@@ -461,12 +479,7 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills",
 
     try:
         # Step 1: Iterate through each PDF in the `raw` directory
-        for pdf_path in glob(f"{raw}/**/*.pdf", recursive = True):
-
-            # Step 2: Open each PDF and extract text using pdfplumber
-            pdf_name = int(os.path.basename(pdf_path).replace('.pdf', ''))
-            with pl.open(pdf_path) as pdf:
-                pdf_text = " ".join(page.extract_text() for page in pdf.pages)
+        pdf_data = load_data_files(path = raw, type = 'PDF')
 
             # Step 3: Use regular expressions to find specific data fields in the extracted text
             r_invoice     = r"Invoice:\s(\d+)"
