@@ -235,7 +235,7 @@ def load_data_files(path : str,
         elif type == 'pdf':
 
             lg.info(f"Loading PDF files from {path}.")
-            pages = [{'content' : page.extract_text(), 'file_path': file, 'page_number' : page.page_number}
+            pages = [{'page_number': page.page_number, 'file_path': file, 'content': page.extract_text()}
                      for file in files
                      for page in pl.open(file).pages
                      if page.extract_text()]
@@ -353,60 +353,64 @@ def write_results(data           : pd.DataFrame,
 #     except Exception as e:
 #         return f"Error while curating bill data: {e}"
     
-# def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills", 
-#                         output : str = "./data/ampion/raw/bills/csv"):
-#     '''
-#     This function reads all PDFs in the specified `raw` directory, extracts specific information from the 
-#     Ampion bills using regular expressions, and then saves the data as CSV files in the `output` directory.
+def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills/pdf", 
+                        output : str = "./data/ampion/raw/bills/csv"):
+    '''
+    This function reads all PDFs in the specified `raw` directory, extracts specific information from the 
+    Ampion bills using regular expressions, and then saves the data as CSV files in the `output` directory.
 
-#     Methodology:
-#         1. Iterate through each PDF in the `raw` directory.
-#         2. Open each PDF and extract text using pdfplumber.
-#         3. Use regular expressions to find specific data fields in the extracted text.
-#         4. Map abbreviated account numbers to full account numbers.
-#         5. Create a list of dictionaries containing the scraped data.
-#         6. Write the data to CSV files in the `output` directory.
+    Methodology:
+        1. Iterate through each PDF in the `raw` directory.
+        2. Open each PDF and extract text using pdfplumber.
+        3. Use regular expressions to find specific data fields in the extracted text.
+        4. Map abbreviated account numbers to full account numbers.
+        5. Create a list of dictionaries containing the scraped data.
+        6. Write the data to CSV files in the `output` directory.
 
-#     Parameters:
-#         raw    (str): Path to the directory containing raw Ampion bill PDF files.
-#         output (str): Directory where the scraped data CSV files should be saved.
-#     '''
+    Parameters:
+        raw    (str): Path to the directory containing raw Ampion bill PDF files.
+        output (str): Directory where the scraped data CSV files should be saved.
+    '''
 
-#     try:
-#         # Step 1: Iterate through each PDF in the `raw` directory
-#         pdf_data = load_data_files(path = raw, type = 'PDF')
+    try:
+        # Step 1: Iterate through each PDF in the `raw` directory
+        pdf_data = load_data_files(path = raw, 
+                                   type = 'PDF')
 
-#             # Step 3: Use regular expressions to find specific data fields in the extracted text
-#             r_invoice     = r"Invoice:\s(\d+)"
-#             r_abbr_number = r'\*{5}(\d+)'
-#             r_kwh_values  = r'(\d{1,4}(?:,\d{3})*?) kWh'
-#             r_prices      = r'allocated\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})'
-#             r_dates       = r'(\d{2}\.\d{2}\.\d{4})\s*–\s*(\d{2}\.\d{2}\.\d{4})'
+        # Step 3: Use regular expressions to find specific data fields in the extracted text
+        account_map  = {str(acc)[-8:]: acc for acc in locations['account_number']}
+        r_invoice    = r"Invoice:\s(\d+)"
+        r_abbr_acc   = r'\*{5}(\d+)'
+        r_dates      = r'(\d{2}\.\d{2}\.\d{4})\s*–\s*(\d{2}\.\d{2}\.\d{4})'
+        r_kwh_values = r'(\d{1,4}(?:,\d{3})*?) kWh'
+        r_prices     = r'allocated\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})'
+        records      = []
 
-#             invoice_number = search(r_invoice,      pdf_text).group(1)
-#             abbr_numbers   = findall(r_abbr_number, pdf_text)
-#             kwh_values     = findall(r_kwh_values,  pdf_text)
-#             prices         = findall(r_prices,      pdf_text)
-#             dates          = findall(r_dates,       pdf_text)
+        for _, row in pdf_data.iterrows():
 
-#             # Step 4: Map abbreviated account numbers to full account numbers from `locations`
-#             account_mapping = {str(acc)[-8:]: acc for acc in locations['account_number']}
-#             full_numbers    = [account_mapping.get(acc, acc) for acc in abbr_numbers]
+            invoice_number = search(r_invoice,     row['content']).group(1)
+            abbr_numbers   = findall(r_abbr_acc,   row['content'])
+            dates          = findall(r_dates,      row['content'])
+            kwh_values     = findall(r_kwh_values, row['content'])
+            prices         = findall(r_prices,     row['content'])
 
-#             # Step 5: Create a list of dictionaries containing the scraped data to pass to `pandas`
-#             records = [{'invoice_number' : invoice_number,
-#                         'account_number' : full_numbers[i],
-#                         'supplier'       : "Ampion",
-#                         'interval_start' : datetime.strptime(dates[i][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
-#                         'interval_end'   : datetime.strptime(dates[i][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
-#                         'kwh'            : int(kwh_values[i].replace(',', '')),
-#                         'bill_credits'   : prices[i][0],
-#                         'price'          : prices[i][1] if pdf_name < 202300 else prices[i][2]} for i in range(len(abbr_numbers))]
+            # Step 5: Create a list of dictionaries containing the scraped data to pass to `pandas`
+            records.append({'invoice_number' : invoice_number,
+                            'account_number' : account_map.get(abbr_number, abbr_number),
+                            'supplier'       : "Ampion",
+                            'interval_start' : datetime.strptime(dates[i][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
+                            'interval_end'   : datetime.strptime(dates[i][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
+                            'kwh'            : int(kwh_values[i].replace(',', '')),
+                            'bill_credits'   : prices[i][0],
+                            'price'          : prices[i][1] if int(invoice_number[0:4]) < 2023 else prices[i][2]} 
+                                                
+                            for i, abbr_number in enumerate(range(len(abbr_numbers))))
 
-#         write_results(data = pd.DataFrame(records), dest = output)
+        write_results(data = pd.DataFrame(records), 
+                      dest = output)
 
-#     except Exception as e:
-#         print(f"Error while processing and exporting data: {e}")
+    except Exception as e:
+        print(f"Error while processing and exporting data: {e}")
 
 
 '''
