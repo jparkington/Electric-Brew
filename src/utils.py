@@ -218,7 +218,7 @@ def load_data_files(path : str,
                        for PDF files, each row represents a page's content and page number.
     '''
     type  = type.lower()
-    files = glob.glob(os.path.join(path, "**", f"*.{type}"), recursive = True)
+    files = glob(os.path.join(path, "**", f"*.{type}"), recursive = True)
 
     if not files:
         raise FileNotFoundError(f"No '{type}' files found in {path}.")
