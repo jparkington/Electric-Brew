@@ -3,6 +3,7 @@ from glob              import glob
 from matplotlib.pyplot import rcParams
 from re                import findall, search, DOTALL
 from seaborn           import set_style
+from shutil            import rmtree
 from typing            import *
 
 import os
@@ -217,6 +218,8 @@ def load_data_files(path : str,
         pd.DataFrame : Loaded data as a DataFrame. For CSV and Parquet files, it concatenates all data;
                        for PDF files, each row represents a page's content and page number.
     '''
+
+    # Step 1: Load all files for a given data `type`.
     type  = type.lower()
     files = glob(os.path.join(path, "**", f"*.{type}"), recursive = True)
 
@@ -224,6 +227,7 @@ def load_data_files(path : str,
         raise FileNotFoundError(f"No '{type}' files found in {path}.")
     
     try:
+        # Step 2: For CSV files
         if type == 'csv':
 
             lg.info(f"Loading CSV files from {path}.")
@@ -232,6 +236,7 @@ def load_data_files(path : str,
             
             return pd.concat(csvs, ignore_index = True)
 
+        # Step 3: For PDF files
         elif type == 'pdf':
 
             lg.info(f"Loading PDF files from {path}.")
@@ -242,6 +247,7 @@ def load_data_files(path : str,
             
             return pd.DataFrame(pages)
         
+        # Step 4: For Parquet files
         elif type == 'parquet':
 
             lg.info(f"Loading Parquet dataset from {path}.")
@@ -259,34 +265,49 @@ def write_results(data           : pd.DataFrame,
                   add_id         : bool = False, 
                   partition_by   : str  = 'account_number',
                   compression    : str  = 'snappy',
-                  use_dictionary : bool = True):
+                  use_dictionary : bool = True,
+                  overwrite      : bool = True):
     '''
     Write curated data to a specified Parquet directory with an optional primary key, optional partitioning,
-    and snappy compression.
+    and snappy compression. Optionally overwrite existing data or append to it.
 
     Methodology:
-        1. Check if the destination directory exists, and create it if not.
-        2. Optionally add a unique identifier to the data.
-        3. Write the DataFrame to a Parquet directory, handling compression and partitioning if required.
+        1. Check if the destination directory exists. If not, create it.
+        2. If the directory exists and `overwrite` is True, delete the existing data and recreate the directory.
+        3. If the directory exists and `overwrite` is False, prepare to append data to the existing directory.
+        4. Optionally add a unique identifier to the data.
+        5. Write the DataFrame to the specified Parquet destination, handling compression and partitioning if required.
 
     Parameters:
         data           (pd.DataFrame) : The DataFrame to be written.
         dest           (str)          : Path to the destination directory.
-        add_id         (bool)         : Whether to add a unique identifier to the data. Defaults to True.
-        partition_by   (str)          : Column to partition by. Defaults to None.
+        add_id         (bool)         : Whether to add a unique identifier to the data. Defaults to False.
+        partition_by   (str)          : Column to partition by. Defaults to 'account_number'.
         compression    (str)          : Compression method for Parquet files. Defaults to 'snappy'.
         use_dictionary (bool)         : Whether to enable dictionary encoding. Defaults to True.
+        overwrite      (bool)         : Whether to overwrite existing data in the directory. Defaults to True.
     '''
-
+    
+    # Step 1: Check if the destination directory exists.
     if not os.path.exists(dest):
-
         lg.info(f"Directory {dest} does not exist. It will now be created.")
-        os.makedirs(dest)
-      
-    if add_id:
 
+    # Step 2: Delete the existing data and recreate the directory.
+    elif overwrite:
+        lg.info(f"Overwriting existing data in directory {dest}.")
+        rmtree(dest)
+
+    # Step 3: Append data to the existing directory.
+    else:
+        lg.info(f"Directory {dest} exists and `overwrite` is not set. Data will be appended instead.")
+
+    os.makedirs(dest, exist_ok = True)
+    
+    # Step 4: Optionally add a unique identifier to the data.
+    if add_id:
         data['id'] = range(1, len(data) + 1)
 
+    # Step 5: Write the DataFrame to the specified Parquet destination.
     try:
         pq.write_to_dataset(pa.Table.from_pandas(data), 
                             root_path      = dest, 

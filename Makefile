@@ -47,6 +47,12 @@ eda2:
 	@echo "Generating 'Scatter Plot of kWh Usage Over Time Colored by Location'."
 	@conda run -n $(ENV_NAME) python -B src/eda/eda_2_kwh_by_location.py
 
+# Run the full ETL pipeline for analytical data
+etl:
+	@echo "Initiating the ETL pipeline..."
+	@conda run -n $(ENV_NAME) python -B src/etl.py
+	@echo "ETL pipeline execution complete. Data is now ready for analytics."
+
 # Create a chain of commands to set up the Conda environment properly
 setup: create-env set-pythonpath
 	@echo "Environment setup complete."
