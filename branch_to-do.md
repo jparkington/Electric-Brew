@@ -5,4 +5,4 @@
 5. Ensure `curation.py` is mentioned at the end of the documentation
 6. Consider a new name for `curation.py`
 7. Design Make commands for `curation.py` or whatever name it becomes
-8. Implement a replace strategy for all curation steps
+8. Implement a "replace" strategy when writing results for all curation steps

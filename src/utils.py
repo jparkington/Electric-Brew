@@ -357,15 +357,17 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills/pdf",
                         output : str = "./data/ampion/raw/bills/csv"):
     '''
     This function reads all PDFs in the specified `raw` directory, extracts specific information from the 
-    Ampion bills using regular expressions, and then saves the data as CSV files in the `output` directory.
+    Ampion bills using regular expressions, and then saves a Parquet directory to the specified `output`.
 
     Methodology:
-        1. Iterate through each PDF in the `raw` directory.
-        2. Open each PDF and extract text using pdfplumber.
+        1. Load data from PDF files in the `raw` directory using `load_data_files`.
+        2. Create a map of the bills' abbreviated account numbers to full account numbers.
         3. Use regular expressions to find specific data fields in the extracted text.
-        4. Map abbreviated account numbers to full account numbers.
-        5. Create a list of dictionaries containing the scraped data.
-        6. Write the data to CSV files in the `output` directory.
+        4. Create a list of dictionaries containing the scraped data, including "Miscellaneous Charges" if present.
+        5. Write the data to CSV files in the `output` directory.
+
+    The function handles standard charges as well as a conditional case for "Miscellaneous Charges" 
+    which requires a different extraction logic for certain fields.
 
     Parameters:
         raw    (str): Path to the directory containing raw Ampion bill PDF files.
@@ -373,39 +375,68 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills/pdf",
     '''
 
     try:
-        # Step 1: Iterate through each PDF in the `raw` directory
+        # Step 1: Load data from PDF files
         pdf_data = load_data_files(path = raw, 
                                    type = 'PDF')
 
-        # Step 3: Use regular expressions to find specific data fields in the extracted text
-        account_map  = {str(acc)[-8:]: acc for acc in locations['account_number']}
-        r_invoice    = r"Invoice:\s(\d+)"
-        r_abbr_acc   = r'\*{5}(\d+)'
-        r_dates      = r'(\d{2}\.\d{2}\.\d{4})\s*–\s*(\d{2}\.\d{2}\.\d{4})'
-        r_kwh_values = r'(\d{1,4}(?:,\d{3})*?) kWh'
-        r_prices     = r'allocated\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})'
-        records      = []
+        # Step 2: Map abbreviated account numbers to full account numbers
+        acc_map    = {str(acc)[-4:]: acc for acc in locations['account_number']}
 
+        # Regular expressions for data fields
+        r_invoice  = r"Invoice:\s(\d+)"
+        r_abbr_acc = r'\*{5}(\d+)'
+        r_dates    = r'(\d{2}\.\d{2}\.\d{4})\s*–\s*(\d{2}\.\d{2}\.\d{4})'
+        r_kwh      = r'(\d{1,4}(?:,\d{3})*?) kWh'
+        r_prices   = r'allocated\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})'
+        records    = []
+
+        # Step 3: Use regular expressions to extract data
         for _, row in pdf_data.iterrows():
 
-            invoice_number = search(r_invoice,     row['content']).group(1)
-            abbr_numbers   = findall(r_abbr_acc,   row['content'])
-            dates          = findall(r_dates,      row['content'])
-            kwh_values     = findall(r_kwh_values, row['content'])
-            prices         = findall(r_prices,     row['content'])
+            invoice_number = search(r_invoice,   row['content']).group(1)
+            abbr_numbers   = findall(r_abbr_acc, row['content'])
+            dates          = findall(r_dates,    row['content'])
+            kwh_values     = findall(r_kwh,      row['content'])
+            prices         = findall(r_prices,   row['content'])
 
-            # Step 5: Create a list of dictionaries containing the scraped data to pass to `pandas`
-            records.append({'invoice_number' : invoice_number,
-                            'account_number' : account_map.get(abbr_number, abbr_number),
-                            'supplier'       : "Ampion",
-                            'interval_start' : datetime.strptime(dates[i][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
-                            'interval_end'   : datetime.strptime(dates[i][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
-                            'kwh'            : int(kwh_values[i].replace(',', '')),
-                            'bill_credits'   : prices[i][0],
-                            'price'          : prices[i][1] if int(invoice_number[0:4]) < 2023 else prices[i][2]} 
-                                                
-                            for i, abbr_number in enumerate(range(len(abbr_numbers))))
+             # Step 4: Create records for regular charges
+            for i, abbr_number in enumerate(abbr_numbers):
 
+                records.append({'invoice_number' : invoice_number,
+                                'account_number' : acc_map.get(abbr_number[-4:], abbr_number),
+                                'supplier'       : "Ampion",
+                                'interval_start' : datetime.strptime(dates[i][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
+                                'interval_end'   : datetime.strptime(dates[i][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
+                                'kwh'            : int(kwh_values[i].replace(',', '')),
+                                'bill_credits'   : prices[i][0],
+                                'price'          : prices[i][1] if int(invoice_number[0:4]) < 2023 else prices[i][2]})
+                
+            if "Miscellaneous Charges" in row['content']:
+
+                # Slice the content to only include text after "Miscellaneous Charges"
+                misc_content = row['content'][row['content'].find("Miscellaneous Charges"):]
+                    
+                r_misc_abbr_acc = r"utility acct \*\*\*\*(\d+):"
+                r_misc_kwh      = r"\*{4}(\d+):(\d+)\s*kWh"
+                r_misc_credits  = r"\$(\d+(?:,\d{3})*\.\d{2})\s*bill credits"
+                r_misc_prices   = r'bill credits allocated @ \$\s*(\d+(?:,\d{3})*\.\d{2})\s+\$\s*(\d+(?:,\d{3})*\.\d{2})'
+
+                misc_abbr_number  = search(r_misc_abbr_acc, misc_content).group(1)
+                misc_kwh          = search(r_misc_kwh,      misc_content).group(2)
+                misc_bill_credits = search(r_misc_credits,  misc_content).group(1)
+                misc_prices       = search(r_misc_prices,   misc_content).groups()
+
+                 # Step 4 (cont.): Create records for "Miscellaneous Charges" if present
+                records.append({'invoice_number' : invoice_number,
+                                'account_number' : acc_map.get(misc_abbr_number, misc_abbr_number),
+                                'supplier'       : "Ampion",
+                                'interval_start' : datetime.strptime(dates[0][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
+                                'interval_end'   : datetime.strptime(dates[0][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
+                                'kwh'            : misc_kwh,
+                                'bill_credits'   : misc_bill_credits,
+                                'price'          : misc_prices[0] if int(invoice_number[0:4]) < 2023 else misc_prices[1]})
+
+        # Step 5: Write the data to Parquet
         write_results(data = pd.DataFrame(records), 
                       dest = output)
 
