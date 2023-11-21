@@ -5,3 +5,4 @@
 5. Add new regex commands to `/src/README.md`
 6. Built out ETL and Variables section in that README
 7. Rework `curated` to reflect the two helper functions
+8. Add quick links to the top-level README
