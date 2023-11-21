@@ -15,7 +15,6 @@
   - [Peak Hour Optimization](#peak-hour-optimization)
   - [ROI Analysis](#roi-analysis)
   - [Additional Sources to Consider](#additional-sources-to-consider)
-- [Data Acquisition](#data-acquisition)
 - [Acknowledgments](#acknowledgments)
 
 ## Project Team
@@ -83,20 +82,8 @@ Through this strategic partnership, Austin Street Brewery aspires not only to en
   - [Sierra Nevada Brewing Co.'s](https://sierranevada.com/sustainability/) annual sustainability report that includes data on renewable energy usage.
   - [BrewDog's](https://www.brewdog.com/uk/tomorrow) "Make Earth Great Again" report, outlining their carbon-negative status and sustainability initiatives.
 
-## Data Acquisition
-
-- **Private Brewery Data**: Detailed electricity usage data, utility bills, and operational process information will be directly provided by Austin Street Brewery and NEEFC. Logins for accessing granular data from CMP's smart meter system will also be shared by these stakeholders.
-
-- **Industry Benchmarking Data**: Data for industry comparison will be accessed through the Brewers Association Benchmarking Survey, which Austin Street Brewery is a part of.
-
-- **Public and Academic Sources**: Investment cost data for ROI analysis will be sourced from public databases like the U.S. Energy Information Administration and DSIRE. Time-of-use rates will be obtained from Maine's Public Utilities Commission or directly from utility providers.
-
-- **Case Studies**: Key case studies on energy efficiency from other breweries will be gathered from publicly available sustainability reports and academic publications. Examples include New Belgium Brewing Company, Sierra Nevada Brewing Co., Alaskan Brewing Company, and BrewDog.
-
-- **Weather and Additional Contextual Data**: Historical weather data will be sourced from platforms like NOAA's Climate Data Online.
-
 ## Acknowledgments
 
 This project was shaped under the supervision of [**Professor Philip Bogden**](https://www.khoury.northeastern.edu/people/philip-bogden/) during our *Intro to Data Management* class at the **Roux Institute of Northeastern University**. 
 
-We would like to express our gratitude to Professor Bogden for his consistent guidance and invaluable insights. Our thanks also extend to our TA, Meghana Chillara, for her patience, consistently timely input, and collaboration with each of us.
+We would like to express our gratitude to **Professor Bogden** for his consistent guidance and invaluable insights. Our thanks also extend to our TA, **Meghana Chillar**a, for her patience, consistently timely input, and collaboration with each of us, and to Harsh Bhojwani and Anurag Daga for helping us keep our spirits high and helping us step back at the most opportunite times.
