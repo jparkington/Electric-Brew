@@ -30,4 +30,4 @@ pdf_data = load_data_files(path = raw,
 #                 'interval_end'   : datetime.strptime(meter_details.group(2), "%m.%d.%Y").strftime("%Y-%m-%d") if meter_details else "NULL",
 #                 'total_kwh'      : ""})
 
-pdf_data.to_csv('cmp_bills.csv')
+pdf_data.to_csv('src/cmp_bills.csv')

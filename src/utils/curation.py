@@ -3,7 +3,7 @@ from glob              import glob
 from re                import findall, search
 from shutil            import rmtree
 from typing            import *
-from variables         import locations
+from utils.variables   import locations
 
 import os
 import logging         as lg

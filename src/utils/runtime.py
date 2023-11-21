@@ -55,12 +55,11 @@ def read_data(file_path: str) -> pd.DataFrame:
     The function automatically resolves the path relative to the project's /data/ directory.
     
     Steps:
-    1. Get the absolute path of the current file (utils.py) using `os.path.abspath(__file__)`.
+    1. Get the absolute path of the current file (`runtime.py`) using `os.path.abspath(__file__)`.
     2. Determine the directory of the current file (`src`) using `os.path.dirname()`.
     3. Navigate to the project root directory by going up one level with `..`.
     4. Append 'data' to the project root directory to reach the /data/ directory.
     5. Join this with the user-provided `file_path` to construct the full path to the .parquet file.
-    6. Conditionally set the first column to an index if it's named `id`
     
     Parameters:
         file_path (str) : Relative path to the .parquet file, starting from the /data/ directory.
@@ -69,10 +68,10 @@ def read_data(file_path: str) -> pd.DataFrame:
         pd.DataFrame : DataFrame containing the data read from the .parquet file.
     '''
     
-    current_file_path = os.path.abspath(__file__)           # Get the absolute path of the current file (utils.py)
-    src_directory     = os.path.dirname(current_file_path)  # Get the directory of the file at runtime
-    project_root      = os.path.join(src_directory, '..')   # Go up one directory to get to the project root
-    data_directory    = os.path.join(project_root, 'data')  # Join with 'data' to get to the data directory
+    current_file_path = os.path.abspath(__file__)               # Get the absolute path of the current file
+    src_directory     = os.path.dirname(current_file_path)      # Get the directory of the file at runtime
+    project_root      = os.path.join(src_directory, '..', '..') # Go up two directories to get to the project root
+    data_directory    = os.path.join(project_root, 'data')      # Join with 'data' to get to the data directory
     full_file_path    = os.path.abspath(os.path.join(data_directory, file_path))
 
     df = pq.read_table(full_file_path).to_pandas()
