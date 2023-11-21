@@ -1,5 +1,5 @@
-from eda_features import meter_usage_engineered as mue
-from utils import set_plot_params
+from eda_features  import meter_usage_engineered as mue
+from utils.runtime import set_plot_params
 
 import matplotlib.pyplot as plt
 import seaborn as sns  

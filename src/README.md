@@ -1,312 +1,32 @@
 <!-- omit in toc -->
 # Utility Functions
 
-The `/src/` directory contains a `utils` module full of scripts that support the main functionalities of this project, aligning with conventional structuring in data science and software development projects. This document provides a brief overview of each function and its purpose, signature, and expected usage.
+The `/src/` directory contains a `utils` directory full of scripts that support the main functionalities of this project, aligning with conventional structuring in data science and software development projects. This document provides a brief overview of each function and its purpose, signature, and expected usage.
 
-> **Note**: To facilitate smooth development and execution, it's recommended to run all commands out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** is set to point directly to the `/src/` directory within this Conda environment. This allows you to easily import the `utils` module and its DataFrames and functions from any script within `/src/`.
+> **Note**: To facilitate smooth development and execution, it's recommended to run all commands out of the Conda environment created for the project, `electric-brew`. The **PYTHONPATH** is set to point directly to the `/src/` directory within this Conda environment. This allows you to easily import any function or variable within the `utils` module into any script within `/src/`.
 
 <!-- omit in toc -->
 ## Table of Contents
-- [Runtime](#runtime)
-  - [`set_plot_params`](#set_plot_params)
-  - [`read_data`](#read_data)
-  - [`connect_to_db`](#connect_to_db)
-- [DataFrames](#dataframes)
-  - [`meter_usage`](#meter_usage)
-  - [`locations`](#locations)
-  - [`cmp_bills`](#cmp_bills)
-  - [`ampion_bills`](#ampion_bills)
-  - [`dim_datetimes`](#dim_datetimes)
-  - [`dim_accounts`](#dim_accounts)
-  - [`dim_bills`](#dim_bills)
-  - [`fct_electric_brew`](#fct_electric_brew)
-- [Curation](#curation)
+- [`curation.py`](#curationpy)
   - [`curate_meter_usage`](#curate_meter_usage)
     - [**Regular Expressions**](#regular-expressions)
     - [**Manual Interventions**](#manual-interventions)
   - [`scrape_ampion_bills`](#scrape_ampion_bills)
     - [**Regular Expressions**](#regular-expressions-1)
-    - [**Manual Interventions**](#manual-interventions-1)
-- [Modeling](#modeling)
+- [`etl.py`](#etlpy)
+- [`modeling.py`](#modelingpy)
   - [`model_dim_datetimes`](#model_dim_datetimes)
   - [`model_dim_meters`](#model_dim_meters)
   - [`model_dim_bills`](#model_dim_bills)
   - [`model_fct_electric_brew`](#model_fct_electric_brew)
+- [`runtime.py`](#runtimepy)
+  - [`set_plot_params`](#set_plot_params)
+  - [`read_data`](#read_data)
+  - [`connect_to_db`](#connect_to_db)
+- [`variables.py`](#variablespy)
 
 
-## Runtime
-
-This section contains functions primarily focused on setting up and configuring the environment for data visualization and data reading. These functions make sure that all plots have a uniform appearance and that data files can be easily read into Pandas DataFrames.
-
-### `set_plot_params`
-
-**Purpose**  
-Initializes and returns custom plotting parameters for `matplotlib`, ensuring consistent visual style throughout the project.
-
-**Signature** 
-```python
-def set_plot_params() -> list:
-```
-
-**Returns**  
-A list containing RGBA color tuples that comprise the custom color palette for plots.
-
-### `read_data`
-
-**Purpose**  
-Reads `.parquet` files into Pandas DataFrames. The function resolves the path relative to the `data` directory of the project, no matter where your script is located within the `src` directory or where you've cloned the repo. As such, it expects a file path string that starts from within the `data` directory.
-
-**Signature** 
-```python
-def read_data(file_path : str) -> pd.DataFrame:
-```
-
-**Returns**  
-A DataFrame containing the data read from the supplied Parquet file path.
-
-### `connect_to_db`
-
-**Purpose**  
-Establishes a connection to the `electric_brew` DuckDB database and creates SQL views based on Parquet files for the Electric Brew project. It facilitates direct querying of Parquet files, ensuring real-time data reflection in the views and simplifying data access across the project.
-
-**Signature** 
-```python
-def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_brew.db'),
-                  vws : dict = {'meter_usage'       : 'cmp/curated/meter_usage',
-                                'locations'         : 'cmp/curated/locations',
-                                'cmp_bills'         : 'cmp/curated/bills',
-                                'ampion_bills'      : 'ampion/curated/bills',
-                                'dim_datetimes'     : 'modeled/dim_datetimes',
-                                'dim_meters'        : 'modeled/dim_meters',
-                                'dim_bills'         : 'modeled/dim_bills',
-                                'fct_electric_brew' : 'modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
-```
-
-**Methodology**
-
-1. **Database Connection**: Establishes or opens a connection to the specified DuckDB database.
-2. **View Creation**: Iterates through a mapping of view names to Parquet file paths, creating a SQL view for each. If a view exists, it proceeds without interruption.
-
-**Returns**  
-The function returns a `duckdb.DuckDBPyConnection` object, representing the connected DuckDB database instance.
-
-The database itself is accessible in any `/src/` script via the `electric_brew` variable. This standardized access point ensures uniformity and convenience in database interactions throughout the project.
-
-A comprehensive Entity-Relationship Diagram (ERD) of the database can be found in the `sql` directory's [README](../data/sql/README.md). This ERD provides a visual representation of the tables, their schemas, and the relationships between each.
-
-## DataFrames
-
-This section initializes commonly used DataFrames at the start, making them readily available across different parts of the project. This promotes code reusability and performance optimization.
-
-### `meter_usage`
-
-A repository for meter-level electrical consumption data from Central Maine Power (CMP) in 15-minute intervals. Used in analyses of electricity usage patterns, billing, and location-related insights. The DataFrame is partitioned by `account_number`, enabling quick data retrieval for individual accounts. 
-
-**Source**: Central Maine Power (CMP)  
-**Location**: `./data/cmp/curated/meter_usage`  
-**Partitioning**: `account_number`  
-
-**Schema**:
-
-  - `service_point_id` (**int**): A unique identifier for the point where the electrical service is provided, often tied to a specific location or customer.
-  
-  - `meter_id` (**str**): Identifier for the electrical meter installed at the service point. It records the amount of electricity consumed.
-  
-  - `interval_end_datetime` (**str**): Timestamp marking the end of the meter reading interval, typically indicating when the meter was read.
-  
-  - `meter_channel` (**int**): The channel number on the electrical meter. Meters with multiple channels can record different types of data.
-  
-  - `kwh` (**float**): Kilowatt-hours recorded by the meter during the interval, representing the unit of electricity consumed.
-
-  - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account. Used for all billing and service interactions.
-
-### `locations`
-
-A DataFrame that contains location-based information for CMP accounts, linking street addresses to account numbers. It is essential for correlating energy consumption with specific locations and their equipment.
-
-**Source**: Manual Entry
-**Location**: `./data/cmp/curated/locations`  
-**Partitioning**: `account_number`  
-
-**Schema**:
-
-  - `street` (**str**): The street address associated with the CMP account, detailing the exact location.
-  
-  - `label` (**str**): A simplified or common name label for the location, which may be used for easier reference.
-  
-  - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account, linking the location to the specific account for billing and service interactions.
-
-### `cmp_bills`
-
-A consolidated view of billing information from various suppliers for Central Maine Power (CMP) accounts. The DataFrame is partitioned by `account_number`, making it easy to retrieve data for specific accounts quickly.
-
-**Source**: Central Maine Power (CMP)  
-**Location**: `./data/cmp/curated/bills`  
-**Partitioning**: `account_number`  
-
-**Schema**:
-
-  - `invoice_number` (**str**): The unique identifier for each invoice, representing a specific billing period. Useful for tracking the source of data.
-  - 
-  - `supplier` (**str**): The electricity supplier for the billing period. This is often a third-party energy supplier, though some billing periods use "Banked Generation" and credits from prebious supplier purchases.
-  
-  - `amount_due` (**float**): The total monetary amount due for the billing period. This includes all charges, fees, and taxes.
-  
-  - `service_charge` (**float**): A volume-based fee charged for delivery service through the electrical grid by CMP.
-  
-  - `delivery_rate` (**float**): The rate charged per kilowatt-hour for the delivery of electricity from the power generation point to your location.
-  
-  - `supply_rate` (**float**): The rate charged per kilowatt-hour for the actual electricity consumed. This may vary based on the supplier.
-  
-  - `interval_start` (**str**): The starting date of the billing cycle, formatted as MM/DD/YYYY.
-  
-  - `interval_end` (**str**): The ending date of the billing cycle, formatted as MM/DD/YYYY.
-  
-  - `kwh_delivered` (**int**): The total amount of electricity consumed during the billing cycle, measured in kilowatt-hours.
-  
-  - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account, facilitating billing and service interactions.
-
-### `ampion_bills`
-
-A consolidated view of billing data from Ampion, structured to provide easy access to detailed information about energy usage and pricing for each account, based on which tier Austin Street was opted into at the time of the bill. This DataFrame is crucial for tracking the full cost of delivery over time.
-
-**Source**: Ampion  
-**Location**: `./data/ampion/curated/bills`  
-**Partitioning**: `account_number`  
-
-**Schema**:
-
-- `invoice_number` (**str**): The unique identifier for each invoice, representing a specific billing period. Useful for tracking the source of data.
-
-- `supplier` (**str**): The name of the energy supplier, which can be used as a foreign key to join with transactional data related to billing and consumption.
-
-- `interval_start` (**str**): The start date of the billing cycle, formatted as YYYY-MM-DD.
-
-- `interval_end` (**str**): The end date of the billing cycle, formatted as YYYY-MM-DD.
-  
-- `kwh` (**int**): The total amount of electricity supplied by Ampion during the billing cycle, measured in kilowatt-hours (kWh).
-  
-- `bill_credits` (**float**): The total monetary value of renewable energy credits allocated to the account, reflecting the benefits of participating in renewable energy programs.
-  
-- `price` (**float**): The adjusted price charged for energy supply and consumption, after applying renewable energy bill credits, representing the final cost to the customer.
-  
-- `account_number` (**str**): A unique identifier originally assigned by CMP for each customer's account, facilitating billing and service interactions.
-  
-
-### `dim_datetimes`
-
-A detailed dimensional table that contains the breakdown of timestamps into individual date and time components, along with a classification of each time into a specific period of the day such as 'Off-peak', 'Mid-peak', or 'On-peak'. This table is key for time series analysis and enables efficient filtering and aggregation based on time attributes in data analysis workflows.
-
-**Source**: Derived from `meter_usage` DataFrame  
-**Location**: `./data/modeled/dim_datetimes` 
-
-**Schema**:
-
-  - `id` (**int**): A unique identifier starting at 1 for each row in the table, serving as a primary key.
-  
-  - `timestamp` (**datetime**): The exact date and time the measurement was taken, precise up to minutes.
-
-  - `increment` (**int**): The minute component of the timestamp, indicating the 15-minute interval.
-  
-  - `hour` (**int**): The hour component of the timestamp, represented in a 24-hour format.
-  
-  - `date` (**date**): The date of the timestamp, normalized to midnight of that day.
-  
-  - `week` (**int**): The week number of the year when the timestamp occurs, according to ISO standards.
-  
-  - `week_in_year` (**int**): Duplicate of `week` for legacy support; represents the ISO week number within the year.
-  
-  - `month` (**int**): The month number extracted from the timestamp.
-  
-  - `month_name` (**str**): The full name of the month extracted from the timestamp.
-  
-  - `quarter` (**int**): The quarter of the year to which the timestamp belongs.
-  
-  - `year` (**int**): The year component extracted from the timestamp.
-  
-  - `period` (**str**): A categorical label defining the time period of the day based on the hour, used for analysis of peak and off-peak hours.
-
-### `dim_accounts`
-
-A centralized dimensional table that aggregates meter-specific information, like service points, meter IDs, and location details. It merges dimensions from various curated sources into a single table, enabling easier categorization and making the data more accessible for analysis.
-
-**Source**: Derived from the `meter_usage` and `locations` DataFrames  
-**Location**: `./data/modeled/dim_meters` 
-
-**Schema**:
-
-  - `id` (**int**): A unique identifier starting at 1 for each row in the table, serving as a primary key.
-
-  - `meter_id` (**str**): The unique identifier for the meter that records energy consumption data.
-
-  - `service_point_id` (**int**): A unique identifier for the physical location where energy consumption is measured.
-  
-  - `account_number` (**str**): The unique identifier for each customer account, which can serve as a foreign key to other curated data.
-  
-  - `street` (**str**): The street address associated with the service point, providing a granular location detail.
-  
-  - `label` (**str**): A descriptive label for the location, often used for easier identification or categorization of the service area.
-
-### `dim_bills`
-
-A comprehensive dimensional table that combines detailed billing information from both Central Maine Power (CMP) and Ampion. This table is pivotal for analyzing overall energy consumption, costs, and understanding the nuances of billing from different energy suppliers. It merges the structured data from CMP's diverse suppliers with the nuanced billing details of Ampion, including renewable energy credits and adjusted pricing.
-
-**Source**: Derived from `cmp_bills` and `ampion_bills` DataFrames  
-**Location**: `./data/modeled/dim_bills`  
-
-**Schema**:
-
-  - `id` (**int**): A unique identifier starting at 1 for each row in the table, serving as a primary key.
-
-  - `invoice_number` (**str**): The unique identifier for each invoice, encapsulating data for specific billing periods from both CMP and Ampion, crucial for tracking and analysis.
-
-  - `account_number` (**str**): The identifier assigned by CMP, used consistently across both CMP and Ampion, enabling seamless integration and comparison of billing data.
-
-  - `supplier` (**str**): The name of the energy supplier, reflecting either CMP's third-party suppliers or Ampion's renewable energy provision, essential for supplier-based comparisons and analysis.
-
-  - `kwh_delivered` (**float**): The total kilowatt-hours of energy delivered, combining CMP's electricity consumption metrics with Ampion's supplied and delivered kWh.
-
-  - `service_charge` (**float**): The service charge applied, derived from CMP's volume-based fees, indicative of the fixed costs associated with energy delivery.
-
-  - `delivery_rate` (**float**): The rate charged per kilowatt-hour for the delivery of electricity, a crucial metric for understanding delivery cost structures across CMP suppliers.
-
-  - `supply_rate` (**float**): The rate charged per kilowatt-hour for the energy supply, incorporating both CMP's supplier rates and Ampion's adjusted pricing, vital for cost analysis.
-
-  - `source` (**str**): The origin of the billing data ('CMP' or 'Ampion').
-
-  - `billing_interval` (**list[date]**): A list of dates representing the entire billing cycle, from the start to the end date, providing a detailed view of the billing period for each record.
-
-### `fct_electric_brew`
-
-The `fct_electric_brew` table is the central fact table that consolidates detailed records of electricity usage and associated costs for each account within specific billing intervals. This comprehensive dataset merges and transforms detailed meter readings, billing information, and rate schedules to provide insights into electricity consumption, cost structures, and temporal usage patterns. It is pivotal for profitability analysis, cost allocation, and understanding the dynamics of electricity usage and charges.
-
-**Source**: This table is synthesized from the `meter_usage`, `cmp_bills`, `ampion_bills`, `dim_meters`, `dim_datetimes`, and `dim_bills` DataFrames. The synthesis involves expanding billing intervals to a daily granularity, merging with meter and datetime dimensions, allocating service charges based on usage, and aggregating costs.
-
-**Location**: `./data/modeled/fct_electric_brew`
-
-**Schema**:
-
-  - `id` (**int**): The primary key of the table, assigned sequentially starting from 1, uniquely identifying each record in the dataset.
-
-  - `dim_datetimes_id` (**int**): References the `dim_datetimes` table, providing a reference to the exact date and time corresponding to each meter reading, essential for analyzing usage patterns over time.
-
-  - `dim_meters_id` (**int**): References the `dim_meters` table, indicating the specific meter through which electricity consumption data was recorded, crucial for understanding the geographical and physical source of consumption data.
-
-  - `dim_bills_id` (**int**): References the `dim_bills` table, indicating the source of billing data (CMP or Ampion), which is vital for differentiating the billing methodologies and cost calculations.
-
-  - `account_number` (**str**): The account identifier that ties the electricity usage and cost data to a specific customer account, enabling account-level analysis and billing.
-
-  - `kwh` (**float**): Represents the total electricity consumed in kilowatt-hours during the billing interval, serving as the basis for cost calculations and usage analysis.
-
-  - `delivery_cost` (**float**): The calculated cost associated with the delivery of electricity from CMP, derived from the used kWh and the delivery rate.
-
-  - `service_cost` (**float**): The portion of the total cost allocated for service charges, proportionally distributed based on kWh usage in a given billing interval.
-
-  - `supply_cost` (**float**): The cost for the electricity supply itself, computed from the used kWh and respective supply rates, which varies based on the source of billing and the type of supply contract.
-
-  - `total_cost` (**float**): The aggregate cost incurred, encompassing delivery, service, and supply costs, providing a comprehensive view of the financial impact of electricity consumption for each account on each meter reading.
-
-## Curation
+## [`curation.py`](utils/curation.py)
 
 This section comprises functions that transform raw data files into structured and query-optimized formats. This includes converting raw CSVs into partitioned Parquet files and extracting relevant data from PDFs.
 
@@ -482,17 +202,11 @@ The `scrape_ampion_bills` function employs various regular expressions (RegEx) t
    
    **Purpose**: Extracts the start and end dates of the billing period.
 
-#### **Manual Interventions**
+## [`etl.py`](utils/etl.py)
 
-After the automated scraping process is completed by `scrape_ampion_bills`, one additional intervention must be taken in order for data completeness.
+Reproducibility script for taking all of the landed raw files and passing them through each stage of the landing zone architecture, until the data is ready for analytics. Will add more detail here.
 
-1. **Add Miscellaneous Adjustments to `misc_adjustments.csv`**:  
-    - **Initial State**: Some bills have an additional non-standard section that explains in text why the bill has an additional charge for a given account. 
-    - **Action**: Manually add a row to `misc_adjustments.csv` that replicates the existing schema from the other CSVs in the directory.
-    - **Example**: See [`202310.pdf`](../data/ampion/raw/bills/pdf/202310.pdf).
-
-
-## Modeling
+## [`modeling.py`](utils/modeling.py)
 
 This section comprises functions that transform DataFrames into a structured, denormalized data model optimized for analytical queries and data visualization. It includes the generation of dimensional tables and the enhancement of timestamp data to facilitate intuitive querying.
 
@@ -619,3 +333,69 @@ A `.parquet` file saved in the specified `modeled` directory containing the `fct
 | 500278 | 34353            | 8             | 153.0        | 1.186 | 0.092165      | 0.024701     | 0.000000    | 0.116866   | 35012790198    |
 | 500279 | 34357            | 8             | 153.0        | 1.150 | 0.089368      | 0.023951     | 0.000000    | 0.113319   | 35012790198    |
 | 500280 | 34361            | 8             | 153.0        | 1.120 | 0.087036      | 0.023326     | 0.000000    | 0.110363   | 35012790198    |
+
+## [`runtime.py`](utils/runtime.py)
+
+This section contains functions primarily focused on setting up and configuring the environment for data visualization and data reading. These functions make sure that all plots have a uniform appearance and that data files can be easily read into Pandas DataFrames.
+
+### `set_plot_params`
+
+**Purpose**  
+Initializes and returns custom plotting parameters for `matplotlib`, ensuring consistent visual style throughout the project.
+
+**Signature** 
+```python
+def set_plot_params() -> list:
+```
+
+**Returns**  
+A list containing RGBA color tuples that comprise the custom color palette for plots.
+
+### `read_data`
+
+**Purpose**  
+Reads `.parquet` files into Pandas DataFrames. The function resolves the path relative to the `data` directory of the project, no matter where your script is located within the `src` directory or where you've cloned the repo. As such, it expects a file path string that starts from within the `data` directory.
+
+**Signature** 
+```python
+def read_data(file_path : str) -> pd.DataFrame:
+```
+
+**Returns**  
+A DataFrame containing the data read from the supplied Parquet file path.
+
+### `connect_to_db`
+
+**Purpose**  
+Establishes a connection to the `electric_brew` DuckDB database and creates SQL views based on Parquet files for the Electric Brew project. It facilitates direct querying of Parquet files, ensuring real-time data reflection in the views and simplifying data access across the project.
+
+**Signature** 
+```python
+def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_brew.db'),
+                  vws : dict = {'meter_usage'       : 'cmp/curated/meter_usage',
+                                'locations'         : 'cmp/curated/locations',
+                                'cmp_bills'         : 'cmp/curated/bills',
+                                'ampion_bills'      : 'ampion/curated/bills',
+                                'dim_datetimes'     : 'modeled/dim_datetimes',
+                                'dim_meters'        : 'modeled/dim_meters',
+                                'dim_bills'         : 'modeled/dim_bills',
+                                'fct_electric_brew' : 'modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
+```
+
+**Methodology**
+
+1. **Database Connection**: Establishes or opens a connection to the specified DuckDB database.
+2. **View Creation**: Iterates through a mapping of view names to Parquet file paths, creating a SQL view for each. If a view exists, it proceeds without interruption.
+
+**Returns**  
+The function returns a `duckdb.DuckDBPyConnection` object, representing the connected DuckDB database instance.
+
+The database itself is accessible in any `/src/` script via the `electric_brew` variable. This standardized access point ensures uniformity and convenience in database interactions throughout the project.
+
+A comprehensive Entity-Relationship Diagram (ERD) of the database can be found in the `sql` directory's [README](../data/sql/README.md). This ERD provides a visual representation of the tables, their schemas, and the relationships between each.
+
+## [`variables.py`](utils/variables.py)
+
+This section initializes commonly used DataFrames (and their supporting database), making them readily available across different parts of the project. This promotes code reusability and performance optimization.
+
+For detailed descriptions of the fields, their data types, and the files responsible for thier curation, visit our [**data dictionary**](../docs/data_dictionary.md) document.

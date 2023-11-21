@@ -1,4 +1,5 @@
-from utils import *
+from curation import *
+from modeling import *
 
 # RAW
 scrape_cmp_bills()

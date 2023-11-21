@@ -1,4 +1,4 @@
-from utils import *
+from utils.curation import *
 
 raw = "./data/cmp/raw/bills"
 
