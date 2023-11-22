@@ -241,17 +241,21 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills/pdf",
                                    type = 'PDF')
 
         # Step 2: Map abbreviated account numbers to full account numbers
-        acc_map    = {str(acc)[-4:]: acc for acc in locations['account_number']}
+        acc_map = {str(acc)[-4:]: acc for acc in locations['account_number']}
 
         # Regular expressions for data fields
-        r_invoice  = r"Invoice:\s(\d+)"
-        r_abbr_acc = r'\*{5}(\d+)'
-        r_dates    = r'(\d{2}\.\d{2}\.\d{4})\s*–\s*(\d{2}\.\d{2}\.\d{4})'
-        r_kwh      = r'(\d{1,4}(?:,\d{3})*?) kWh'
-        r_prices   = r'allocated\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})'
-        records    = []
+        r_invoice       = r"Invoice:\s(\d+)"
+        r_abbr_acc      = r'\*{5}(\d+)'
+        r_dates         = r'(\d{2}\.\d{2}\.\d{4})\s*–\s*(\d{2}\.\d{2}\.\d{4})'
+        r_kwh           = r'(\d{1,4}(?:,\d{3})*?) kWh'
+        r_prices        = r'allocated\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})'
+        r_misc_abbr_acc = r"utility acct \*\*\*\*(\d+):"
+        r_misc_kwh      = r"\*{4}(\d+):(\d+)\s*kWh"
+        r_misc_credits  = r"\$(\d+(?:,\d{3})*\.\d{2})\s*bill credits"
+        r_misc_prices   = r'bill credits allocated @ \$\s*(\d+(?:,\d{3})*\.\d{2})\s+\$\s*(\d+(?:,\d{3})*\.\d{2})'
 
         # Step 3: Use regular expressions to extract data
+        records = []
         for _, row in pdf_data.iterrows():
 
             invoice_number = search(r_invoice,   row['content']).group(1)
@@ -276,11 +280,6 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills/pdf",
 
                 # Slice the content to only include text after "Miscellaneous Charges"
                 misc_content = row['content'][row['content'].find("Miscellaneous Charges"):]
-                    
-                r_misc_abbr_acc = r"utility acct \*\*\*\*(\d+):"
-                r_misc_kwh      = r"\*{4}(\d+):(\d+)\s*kWh"
-                r_misc_credits  = r"\$(\d+(?:,\d{3})*\.\d{2})\s*bill credits"
-                r_misc_prices   = r'bill credits allocated @ \$\s*(\d+(?:,\d{3})*\.\d{2})\s+\$\s*(\d+(?:,\d{3})*\.\d{2})'
 
                 misc_abbr_number  = search(r_misc_abbr_acc, misc_content).group(1)
                 misc_kwh          = search(r_misc_kwh,      misc_content).group(2)
@@ -302,4 +301,4 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills/pdf",
                       dest = output)
 
     except Exception as e:
-        print(f"Error while processing and exporting data: {e}")
+        print(f"Error while processing and exporting Ampion bills: {e}")
