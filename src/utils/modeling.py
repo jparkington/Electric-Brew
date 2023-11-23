@@ -118,13 +118,13 @@ def model_dim_bills(model: str = "./data/modeled/dim_bills"):
         common_dims = ['invoice_number', 'account_number', 'interval_start', 'interval_end', 'supplier']
 
         # Standardize `cmp_bills`
-        df1 = cmp_bills.groupby(common_dims, observed = True) \
-                       .agg(kwh_delivered  = ('kwh_delivered',  'sum'),
-                            service_charge = ('service_charge', 'sum'), 
-                            delivery_rate  = ('delivery_rate',  'mean'),
-                            supply_rate    = ('supply_rate',    'mean')) \
-                       .reset_index()
-        df1['source'] = "CMP"
+        df1 = cmp_bills.apply(lambda col: col.fillna(0) if col.dtype.kind in 'biufc' else col)
+        df1['kwh_delivered']
+        df1['service_charge']
+        df1['taxes']         = df['delivery_tax']    + df['supply_tax']
+        df1['delivery_rate'] = df['delivery_charge'] / df['kwh_delivered']
+        df1['supply_rate']   = df['supply_charge']   / df['kwh_supplied']
+        df1['source']        = "CMP"
 
         # Standardize `ampion_bills`
         df2 = ampion_bills.groupby(common_dims, observed = True) \
@@ -132,13 +132,14 @@ def model_dim_bills(model: str = "./data/modeled/dim_bills"):
                                price          = ('price', 'sum')) \
                           .reset_index()
         df2['service_charge'] = 0
+        df2['taxes']          = 0
         df2['delivery_rate']  = 0
         df2['supply_rate']    = df2['price'] / df2['kwh_delivered']
         df2['source']         = "Ampion"
         df2.drop(columns = ['price'], inplace = True)
 
         # Step 2: Concatenate standardize dataframes
-        df = pd.concat([df1, df2], ignore_index = True)
+        df = pd.concat([df1[df2.columns], df2], ignore_index = True)
 
         # Step 3: Replace `interval_start` and `interval_end` with `billing_interval`
         df['billing_interval'] = [pd.date_range(s, e, inclusive = 'both').date.tolist() 
@@ -167,7 +168,7 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
         3. Calculate total kWh recorded for each invoice number and kWh delivered.
         4. Compute remaining kWh and used kWh per reading for CMP billing, starting at the end of each interval.
         5. Compute remaining kWh and used kWh per reading for Ampion billing, starting at the beginning of each interval.
-        6. Calculate delivery, service, and supply costs based on used kWh.
+        6. Calculate delivery and supply costs based on used kWh, and allocate service and tax costs.
         7. Save the resulting DataFrame as a .parquet file in the specified 'model' directory with snappy compression.
 
     Parameters:
@@ -177,8 +178,8 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
     try:
         # Step 1: Expand 'dim_bills' and group by source
         explode = {s: df for s, df in dim_bills.explode('billing_interval')
-                                             .assign(date = lambda x: pd.to_datetime(x['billing_interval']))
-                                             .groupby('source')}
+                                               .assign(date = lambda x: pd.to_datetime(x['billing_interval']))
+                                               .groupby('source')}
 
         # Step 2: Merge with meter usage and dimension tables
         bill_fields = ['account_number', 'date']
@@ -191,6 +192,7 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
 
         # Step 3: Calculate total kWh recorded
         int_df['total_recorded_kwh'] = int_df.groupby(['invoice_number', 'kwh_delivered'])['kwh'].transform('sum')
+        int_df['kwh_ratio']          = int_df['kwh'] / int_df['total_recorded_kwh']
 
         # Steps 4 & 5: Calculate remaining and used kWh for CMP and Ampion
         cmp_waterfall = int_df.sort_values(by = ['invoice_number', 'timestamp'])
@@ -211,8 +213,9 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
         df['account_number']    = int_df['account_number']
         df['kwh']               = int_df['kwh']
         df['delivery_cost']     = int_df['delivered_kwh_used'] * int_df['delivery_rate']
-        df['service_cost']      = int_df['service_charge']     * int_df['kwh'] / int_df['total_recorded_kwh']
+        df['service_cost']      = int_df['service_charge']     * int_df['kwh_ratio']
         df['supply_cost']       = int_df['delivered_kwh_used'] * int_df['supply_rate'] + int_df['ampion_kwh_used'] * int_df['supply_rate_amp']
+        df['tax_cost']          = int_df['taxes']              * int_df['kwh_ratio']
         df['total_cost']        = df['delivery_cost'] + df['service_cost'] + df['supply_cost']
 
         # Step 7: Save the DataFrame as a .parquet file
