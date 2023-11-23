@@ -71,7 +71,11 @@ def load_data_files(path : str,
         if type == 'csv':
 
             lg.info(f"Loading CSV files from {path}.")
-            csvs = [pd.read_csv(file, names = cols, header = None) if cols else pd.read_csv(file) 
+            csvs = [pd.read_csv(file, 
+                                names  = cols, 
+                                header  = None, 
+                                usecols = range(len(cols))) 
+                                if cols else pd.read_csv(file) 
                     for file in files]
             
             return pd.concat(csvs, ignore_index = True)

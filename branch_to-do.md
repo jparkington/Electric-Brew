@@ -1,4 +1,4 @@
-1. Incorporate a new `tax_cost` field and logic into `fct_electric_brew`
+1. Incorporate a new `tax_cost` field and logic into `fct_electric_brew` (from `dim_bills`)
 2. Modify ERD, Data Dictionary to account for the new fields
 3. Test all curation scripts in `etl.py`
 4. Add new regex commands to `/src/README.md`

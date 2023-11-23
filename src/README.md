@@ -340,7 +340,7 @@ def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_
                   vws : dict = {'meter_usage'       : 'cmp/curated/meter_usage',
                                 'locations'         : 'cmp/curated/locations',
                                 'cmp_bills'         : 'cmp/curated/bills',
-                                'ampion_bills'      : 'ampion/curated/bills',
+                                'ampion_bills'      : 'ampion/curated',
                                 'dim_datetimes'     : 'modeled/dim_datetimes',
                                 'dim_meters'        : 'modeled/dim_meters',
                                 'dim_bills'         : 'modeled/dim_bills',
