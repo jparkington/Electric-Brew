@@ -21,9 +21,9 @@ write_results(
                     dest = "./data/cmp/curated/bills")
 
 write_results(
-    load_data_files(path = "./data/ampion/raw/bills/csv", 
+    load_data_files(path = "./data/ampion/raw/csv", 
                     type = 'parquet'), 
-                    dest = "./data/ampion/curated/bills")
+                    dest = "./data/ampion/curated")
 
 # MODELED
 model_dim_datetimes()

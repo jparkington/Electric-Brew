@@ -1,6 +1,6 @@
 from datetime          import datetime
 from glob              import glob
-from re                import findall, search
+from re                import findall, search, DOTALL
 from shutil            import rmtree
 from typing            import *
 from utils.variables   import locations
@@ -186,7 +186,7 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills/pdf",
             Searches for a pattern in text and returns either the first group if found or the default value.
             '''
 
-            match = re.search(pattern, text, re.DOTALL)
+            match = search(pattern, text, DOTALL)
             return match.group(1) if match else default
 
         # Regular expressions for data fields
@@ -212,23 +212,23 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills/pdf",
             amount_due     = better_search(r_amount_due,   page.get(1))
             delivery_tax   = better_search(r_delivery_tax, page.get(2))
 
-            delivery_groups = re.findall(r_delivery_group, page.get(2), re.DOTALL)
+            delivery_groups = findall(r_delivery_group, page.get(2), DOTALL)
             for start, end in delivery_groups:
 
                 # Find content for the current delivery group
-                delivery_content = re.search(rf"({start}.*?)({end}).*?(?=\s*Delivery Charges:|\Z)", 
-                                             page.get(2), 
-                                             re.DOTALL).group()
+                delivery_content = search(rf"({start}.*?)({end}).*?(?=\s*Delivery Charges:|\Z)", 
+                                          page.get(2), 
+                                          DOTALL).group()
 
                 service_charge  = better_search(r_service_charge, delivery_content)
-                delivery_search = re.search(r_delivery_service, delivery_content, re.DOTALL)
+                delivery_search = search(r_delivery_service, delivery_content, DOTALL)
                 kwh_delivered   = delivery_search.group(1).replace(",", "") if delivery_search else ""
                 delivery_charge = delivery_search.group(2) if delivery_search else ""
 
                 # Step 3: Extract supplier information
                 supplier = kwh_supplied = supply_charge = supply_tax = ""
                 supplier_page = next((n for n, s in page.items() 
-                                    if n >= 3 and re.search(r_supplier_info, s, re.DOTALL)), None)
+                                    if n >= 3 and search(r_supplier_info, s, DOTALL)), None)
 
                 if supplier_page:
                     supplier_content = page[supplier_page]
@@ -259,8 +259,8 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills/pdf",
     except Exception as e:
         print(f"Error while processing CMP bills: {e}")
     
-def scrape_ampion_bills(raw    : str = "./data/ampion/raw/bills/pdf", 
-                        output : str = "./data/ampion/raw/bills/csv"):
+def scrape_ampion_bills(raw    : str = "./data/ampion/raw/pdf", 
+                        output : str = "./data/ampion/raw/csv"):
     '''
     This function reads all PDFs in the specified `raw` directory, extracts specific information from the 
     Ampion bills using regular expressions, and then saves a Parquet directory to the specified `output`.
