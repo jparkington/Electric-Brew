@@ -1,0 +1,19 @@
+# This Conda environment facilitates package management and ensures reproducibility.
+#
+# It sets up a virtual environment with specified dependencies and versions,
+# making it easier to run commands via a Makefile for a consistent development and execution environment.
+
+name: electric-brew
+channels:
+  - conda-forge
+
+dependencies:
+  - make          # Build automation using Makefile
+  - matplotlib    # Plotting with plt.hist(), plt.plot(), plt.savefig(), etc.
+  - numpy         # Numerical operations like sqrt() and linspace()
+  - pandas        # Data manipulation and analysis using DataFrames
+  - pdfplumber    # Parsing PDF files and extracting text from them
+  - pyarrow       # Curating data into `.parquet` structures with compression and logical partitioning
+  - python-duckdb # In-process SQL OLAP database for direct querying and manipulation of Parquet files
+  - seaborn       # Advanced plotting of linear regressions
+  - tabulate      # Clean Markdown-friendly table outputs of DataFrames
