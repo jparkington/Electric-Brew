@@ -9,7 +9,7 @@ ADD DETAILED DESCRIPTION. LINK TO ERD and `src` README.
 - [`cmp_bills`](#cmp_bills)
 - [`ampion_bills`](#ampion_bills)
 - [`dim_datetimes`](#dim_datetimes)
-- [`dim_accounts`](#dim_accounts)
+- [`dim_meters`](#dim_meters)
 - [`dim_bills`](#dim_bills)
 - [`fct_electric_brew`](#fct_electric_brew)
 
@@ -148,9 +148,9 @@ A detailed dimensional table that contains the breakdown of timestamps into indi
   
   - `period` (**str**): A categorical label defining the time period of the day based on the hour, used for analysis of peak and off-peak hours.
 
-## `dim_accounts`
+## `dim_meters`
 
-A centralized dimensional table that aggregates meter-specific information, like service points, meter IDs, and location details. It merges dimensions from various curated sources into a single table, enabling easier categorization and making the data more accessible for analysis.
+A centralized dimensional table that aggregates detailed information specific to electricity meters, including service points, meter IDs, and associated location details. This table merges dimensions from various curated sources into a single comprehensive table, facilitating easier analysis and categorization of energy consumption data.
 
 **Source**: Derived from the `meter_usage` and `locations` DataFrames  
 **Location**: `./data/modeled/dim_meters` 
@@ -159,15 +159,15 @@ A centralized dimensional table that aggregates meter-specific information, like
 
   - `id` (**int**): A unique identifier starting at 1 for each row in the table, serving as a primary key.
 
-  - `meter_id` (**str**): The unique identifier for the meter that records energy consumption data.
+  - `meter_id` (**str**): The unique identifier for the electricity meter that records energy consumption data.
 
-  - `service_point_id` (**int**): A unique identifier for the physical location where energy consumption is measured.
-  
-  - `account_number` (**str**): The unique identifier for each customer account, which can serve as a foreign key to other curated data.
-  
-  - `street` (**str**): The street address associated with the service point, providing a granular location detail.
-  
-  - `label` (**str**): A descriptive label for the location, often used for easier identification or categorization of the service area.
+  - `service_point_id` (**int**): A unique identifier for the physical location where energy consumption is measured by the meter.
+
+  - `account_number` (**str**): A unique identifier originally assigned by CMP for each customer's account, facilitating billing and service interactions. It is a consistent key within `meter_usage`, `cmp_bills`, and `ampion_bills`.
+
+  - `street` (**str**): The street address associated with the service point, providing detailed location information.
+
+  - `label` (**str**): A descriptive name for the location, used for easier categorization and reporting of the service area.
 
 ## `dim_bills`
 
