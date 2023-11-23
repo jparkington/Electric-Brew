@@ -6,7 +6,6 @@ scrape_cmp_bills()
 scrape_ampion_bills()
 
 # CURATED
-### This needs to only try to retrieve the number of columns specified in `cols`
 write_results(
     load_data_files(path = "./data/cmp/raw/meter_usage",
                     cols = ["account_number", "service_point_id", "meter_id", "interval_end_datetime", "meter_channel", "kwh"]),
