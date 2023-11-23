@@ -25,11 +25,11 @@ write_results(
                     type = 'parquet'), 
                     dest = "./data/ampion/curated")
 
-# # MODELED
-# model_dim_datetimes()
-# model_dim_meters()
-# model_dim_bills()
-# model_fct_electric_brew()
+# MODELED
+model_dim_datetimes()
+model_dim_meters()
+model_dim_bills()
+model_fct_electric_brew()
 
 # # DATABASE
-# connect_to_db()
+connect_to_db()

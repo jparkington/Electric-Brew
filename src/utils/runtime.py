@@ -119,7 +119,7 @@ def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_
             continue
 
         except Exception as e:
-            lg.error(f"Error occurred while creating view '{k}': {e}")
+            lg.error(f"Error occurred while creating view '{k}': {e}\n")
             raise e
 
     return db

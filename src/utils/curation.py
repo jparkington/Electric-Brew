@@ -70,7 +70,7 @@ def load_data_files(path : str,
         # Step 2: For CSV files
         if type == 'csv':
 
-            lg.info(f"Loading CSV files from {path}.")
+            lg.info(f"Loading CSV files from `{path}`.")
             csvs = [pd.read_csv(file, 
                                 names  = cols, 
                                 header  = None, 
@@ -83,7 +83,7 @@ def load_data_files(path : str,
         # Step 3: For PDF files
         elif type == 'pdf':
 
-            lg.info(f"Loading PDF files from {path}.")
+            lg.info(f"Loading PDF files from `{path}`.")
             pages = [{'page_number': page.page_number, 'file_path': file, 'content': page.extract_text()}
                      for file in files
                      for page in pl.open(file).pages
@@ -94,15 +94,15 @@ def load_data_files(path : str,
         # Step 4: For Parquet files
         elif type == 'parquet':
 
-            lg.info(f"Loading Parquet dataset from {path}.")
+            lg.info(f"Loading Parquet dataset from `{path}`.")
 
             return pq.read_table(path).to_pandas()
 
         else:
-            raise ValueError(f"Unsupported file type: {type}")
+            raise ValueError(f"Unsupported file type: `{type}`")
 
     except Exception as e:
-        lg.error(f"Error loading files from {path}: {e}")
+        lg.error(f"Error loading files from `{path}`: {e}\n")
 
 def write_results(data           : pd.DataFrame, 
                   dest           : str, 
@@ -134,16 +134,16 @@ def write_results(data           : pd.DataFrame,
     
     # Step 1: Check if the destination directory exists.
     if not os.path.exists(dest):
-        lg.info(f"Directory {dest} does not exist. It will now be created.")
+        lg.info(f"Directory `{dest}` does not exist. It will now be created.")
 
     # Step 2: Delete the existing data and recreate the directory.
     elif overwrite:
-        lg.info(f"Overwriting existing data in directory {dest}.")
+        lg.info(f"Overwriting existing data in directory `{dest}`.")
         rmtree(dest)
 
     # Step 3: Append data to the existing directory.
     else:
-        lg.info(f"Directory {dest} exists and `overwrite` is not set. Data will be appended instead.")
+        lg.info(f"Directory `{dest}` exists and `overwrite` is not set. Data will be appended instead.")
 
     os.makedirs(dest, exist_ok = True)
     
@@ -159,10 +159,10 @@ def write_results(data           : pd.DataFrame,
                             compression    = compression,
                             use_dictionary = use_dictionary)
 
-        lg.info(f"Data written in Parquet to {dest}.")
+        lg.info(f"Data written in Parquet to `{dest}`.\n")
 
     except Exception as e:
-        lg.error(f"Error writing data to {dest}: {e}")
+        lg.error(f"Error writing data to `{dest}`: {e}\n")
 
 def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills/pdf",
                      output : str = "./data/cmp/raw/bills/parquet"):
@@ -185,7 +185,7 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills/pdf",
         pdf_data = load_data_files(path = raw, 
                                    type = 'PDF')
         
-        def better_search(pattern, text, default = ""):
+        def better_search(pattern, text, default = "0"):
             '''
             Searches for a pattern in text and returns either the first group if found or the default value.
             '''
@@ -226,42 +226,44 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills/pdf",
 
                 service_charge  = better_search(r_service_charge, delivery_content)
                 delivery_search = search(r_delivery_service, delivery_content, DOTALL)
-                kwh_delivered   = delivery_search.group(1).replace(",", "") if delivery_search else ""
-                delivery_charge = delivery_search.group(2) if delivery_search else ""
+                kwh_delivered   = delivery_search.group(1).replace(",", "") if delivery_search else "0"
+                delivery_charge = delivery_search.group(2)                  if delivery_search else "0"
 
                 # Step 3: Extract supplier information
-                supplier = kwh_supplied = supply_charge = supply_tax = ""
+                supplier      = ""
+                kwh_supplied  = supply_charge = supply_tax = "0"
                 supplier_page = next((n for n, s in page.items() 
                                     if n >= 3 and search(r_supplier_info, s, DOTALL)), None)
 
                 if supplier_page:
+
                     supplier_content = page[supplier_page]
-                    supplier = better_search(r_supplier_info, supplier_content).strip().replace(" Supplier", "")
-                    kwh_supplied = better_search(r_kwh_supplied,  supplier_content).replace(",", "")
+                    supplier      = better_search(r_supplier_info, supplier_content, "").strip().replace(" Supplier", "")
+                    kwh_supplied  = better_search(r_kwh_supplied,  supplier_content).replace(",", "")
                     supply_charge = better_search(r_supply_charge, supplier_content)
-                    supply_tax = better_search(r_supply_tax,    supplier_content)
+                    supply_tax    = better_search(r_supply_tax,    supplier_content)
 
                 # Step 4: Create records
                 records.append({'invoice_number'  : invoice_number,
                                 'account_number'  : account_number,
-                                'amount_due'      : amount_due,
-                                'delivery_tax'    : delivery_tax,
+                                'amount_due'      : float(amount_due),
+                                'delivery_tax'    : float(delivery_tax),
                                 'interval_start'  : datetime.strptime(start.strip(), "%m/%d/%Y").strftime("%Y-%m-%d"),
-                                'interval_end'    : datetime.strptime(end.strip(),   "%m/%d/%Y").strftime("%Y-%m-%d"),
-                                'service_charge'  : service_charge,
-                                'kwh_delivered'   : kwh_delivered,
-                                'delivery_charge' : delivery_charge,
+                                'interval_end'    : datetime.strptime(end.strip(), "%m/%d/%Y").strftime("%Y-%m-%d"),
+                                'service_charge'  : float(service_charge),
+                                'kwh_delivered'   : int(kwh_delivered),
+                                'delivery_charge' : float(delivery_charge),
                                 'supplier'        : supplier,
-                                'kwh_supplied'    : kwh_supplied,
-                                'supply_charge'   : supply_charge,
-                                'supply_tax'      : supply_tax})
+                                'kwh_supplied'    : int(kwh_supplied),
+                                'supply_charge'   : float(supply_charge),
+                                'supply_tax'      : float(supply_tax)})
 
         # Step 5: Write the data to Parquet
         write_results(data = pd.DataFrame(records), 
                       dest = output)
 
     except Exception as e:
-        print(f"Error while processing CMP bills: {e}")
+        print(f"Error while processing CMP bills: {e}\n")
     
 def scrape_ampion_bills(raw    : str = "./data/ampion/raw/pdf", 
                         output : str = "./data/ampion/raw/parquet"):
@@ -322,8 +324,8 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/pdf",
                                 'interval_start' : datetime.strptime(dates[i][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
                                 'interval_end'   : datetime.strptime(dates[i][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
                                 'kwh'            : int(kwh_values[i].replace(',', '')),
-                                'bill_credits'   : prices[i][0],
-                                'price'          : prices[i][1] if int(invoice_number[0:4]) < 2023 else prices[i][2]})
+                                'bill_credits'   : float(prices[i][0]),
+                                'price'          : float(prices[i][1]) if int(invoice_number[0:4]) < 2023 else float(prices[i][2])})
                 
             if "Miscellaneous Charges" in row['content']:
 
@@ -342,12 +344,12 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/pdf",
                                 'interval_start' : datetime.strptime(dates[0][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
                                 'interval_end'   : datetime.strptime(dates[0][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
                                 'kwh'            : int(misc_kwh.replace(',', '')),
-                                'bill_credits'   : misc_bill_credits,
-                                'price'          : misc_prices[0] if int(invoice_number[0:4]) < 2023 else misc_prices[1]})
+                                'bill_credits'   : float(misc_bill_credits),
+                                'price'          : float(misc_prices[0]) if int(invoice_number[0:4]) < 2023 else float(misc_prices[1])})
 
         # Step 5: Write the data to Parquet
         write_results(data = pd.DataFrame(records), 
                       dest = output)
 
     except Exception as e:
-        print(f"Error while processing and exporting Ampion bills: {e}")
+        print(f"Error while processing and exporting Ampion bills: {e}\n")

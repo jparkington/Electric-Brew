@@ -67,7 +67,7 @@ def model_dim_datetimes(model: str = "./data/modeled/dim_datetimes"):
                       partition_by = None)
 
     except Exception as e:
-        lg.error(f"Error creating datetime dimension table: {e}")
+        lg.error(f"Error creating datetime dimension table: {e}\n")
 
 def model_dim_meters(model: str = "./data/modeled/dim_meters"):
     '''
@@ -96,7 +96,7 @@ def model_dim_meters(model: str = "./data/modeled/dim_meters"):
                       partition_by = None)
 
     except Exception as e:
-        lg.error(f"Error creating meters dimension table: {e}")
+        lg.error(f"Error creating meters dimension table: {e}\n")
 
 def model_dim_bills(model: str = "./data/modeled/dim_bills"):
     '''
@@ -121,14 +121,14 @@ def model_dim_bills(model: str = "./data/modeled/dim_bills"):
         df1 = cmp_bills.apply(lambda col: col.fillna(0) if col.dtype.kind in 'biufc' else col)
         df1['kwh_delivered']
         df1['service_charge']
-        df1['taxes']         = df['delivery_tax']    + df['supply_tax']
-        df1['delivery_rate'] = df['delivery_charge'] / df['kwh_delivered']
-        df1['supply_rate']   = df['supply_charge']   / df['kwh_supplied']
+        df1['taxes']         = df1['delivery_tax']    + df1['supply_tax']
+        df1['delivery_rate'] = df1['delivery_charge'] / df1['kwh_delivered']
+        df1['supply_rate']   = df1['supply_charge']   / df1['kwh_supplied']
         df1['source']        = "CMP"
 
         # Standardize `ampion_bills`
         df2 = ampion_bills.groupby(common_dims, observed = True) \
-                          .agg(kwh_delivered  = ('kwh', 'sum'), 
+                          .agg(kwh_delivered  = ('kwh',   'sum'), 
                                price          = ('price', 'sum')) \
                           .reset_index()
         df2['service_charge'] = 0
@@ -139,7 +139,8 @@ def model_dim_bills(model: str = "./data/modeled/dim_bills"):
         df2.drop(columns = ['price'], inplace = True)
 
         # Step 2: Concatenate standardize dataframes
-        df = pd.concat([df1[df2.columns], df2], ignore_index = True)
+        df1 = df1[df2.columns]
+        df = pd.concat([df1, df2], ignore_index = True)
 
         # Step 3: Replace `interval_start` and `interval_end` with `billing_interval`
         df['billing_interval'] = [pd.date_range(s, e, inclusive = 'both').date.tolist() 
@@ -153,7 +154,7 @@ def model_dim_bills(model: str = "./data/modeled/dim_bills"):
                       partition_by = None)
 
     except Exception as e:
-        lg.error(f"Error creating bills dimension table: {e}")
+        lg.error(f"Error creating bills dimension table: {e}\n")
 
 def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
     
@@ -224,4 +225,4 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
                       add_id = True)
 
     except Exception as e:
-        lg.error(f"Error while creating the final fact table: {e}")
+        lg.error(f"Error while creating the final fact table: {e}\n")
