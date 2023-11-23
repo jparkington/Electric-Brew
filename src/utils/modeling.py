@@ -217,7 +217,7 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
         df['service_cost']      = int_df['service_charge']     * int_df['kwh_ratio']
         df['supply_cost']       = int_df['delivered_kwh_used'] * int_df['supply_rate'] + int_df['ampion_kwh_used'] * int_df['supply_rate_amp']
         df['tax_cost']          = int_df['taxes']              * int_df['kwh_ratio']
-        df['total_cost']        = df['delivery_cost'] + df['service_cost'] + df['supply_cost']
+        df['total_cost']        = df['delivery_cost'] + df['service_cost'] + df['supply_cost'] + df['tax_cost']
 
         # Step 7: Save the DataFrame as a .parquet file
         write_results(data   = df, 

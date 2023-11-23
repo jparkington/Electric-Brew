@@ -4,3 +4,4 @@
 4. Rework `curated` docs and docstring to reflect the two helper functions
 5. Add docstring and more detail to `etl.py`
 6. Add quick links to the top-level README
+7. Work out circular logic between `etl` and `variables` (since they both call `electric_brew.db`)

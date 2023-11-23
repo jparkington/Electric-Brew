@@ -149,7 +149,7 @@ def write_results(data           : pd.DataFrame,
     
     # Step 4: Optionally add a unique identifier to the data.
     if add_id:
-        data['id'] = range(1, len(data) + 1)
+        data.insert(0, 'id', range(1, len(data) + 1))
 
     # Step 5: Write the DataFrame to the specified Parquet destination.
     try:

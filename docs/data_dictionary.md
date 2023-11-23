@@ -61,32 +61,39 @@ A consolidated view of billing information from various suppliers for Central Ma
 
 **Schema**:
 
-  - `invoice_number` (**str**): The unique identifier for each invoice, representing a specific billing period. Useful for tracking the source of data.
-  - 
-  - `supplier` (**str**): The electricity supplier for the billing period. This is often a third-party energy supplier, though some billing periods use "Banked Generation" and credits from prebious supplier purchases.
-  
-  - `amount_due` (**float**): The total monetary amount due for the billing period. This includes all charges, fees, and taxes.
-  
-  - `service_charge` (**float**): A volume-based fee charged for delivery service through the electrical grid by CMP.
-  
-  - `delivery_rate` (**float**): The rate charged per kilowatt-hour for the delivery of electricity from the power generation point to your location.
-  
-  - `supply_rate` (**float**): The rate charged per kilowatt-hour for the actual electricity consumed. This may vary based on the supplier.
-  
-  - `interval_start` (**str**): The starting date of the billing cycle, formatted as MM/DD/YYYY.
-  
-  - `interval_end` (**str**): The ending date of the billing cycle, formatted as MM/DD/YYYY.
-  
-  - `kwh_delivered` (**int**): The total amount of electricity consumed during the billing cycle, measured in kilowatt-hours.
-  
-  - `account_number` (**int**): A unique identifier assigned by Central Maine Power for the customer's account, facilitating billing and service interactions.
+- `invoice_number` (**str**): The unique identifier for each invoice, representing a specific billing period. Useful for tracking the source of data.
+
+- `amount_due` (**float**): The total monetary amount due for the billing period as stated on the bill, encompassing all charges, including energy consumption, delivery services, taxes, and other fees.
+
+- `delivery_tax` (**float**): The tax amount levied on the delivery component of the electricity service by the state of Maine.
+
+- `interval_start` (**str**): The start date of the billing cycle, formatted as YYYY-MM-DD. 
+
+- `interval_end` (**str**): The end date of the billing cycle, formatted as YYYY-MM-DD. 
+
+- `service_charge` (**float**): A fixed fee assessed for the delivery of electricity. 
+  This charge covers the maintenance and use of the electrical grid infrastructure.
+
+- `kwh_delivered` (**int**): The total amount of electricity, in kilowatt-hours, delivered to the customer during the billing cycle.
+
+- `delivery_charge` (**float**): The charge for the delivery of electricity measured by `kwh_delivered`. These two facts are used to calculate `delivery_rate`.
+
+- `supplier` (**str**): The name of the company supplying the electricity. This can vary if the customer has chosen a supplier other than CMP.
+
+- `kwh_supplied` (**int**): The total amount of electricity, in kilowatt-hours, the `supplier` was responsible for supplying during the billing cycle.
+
+- `supply_charge` (**float**): The charge for the electricity supplied measured by `kwh_supplied`. These two facts are used to calculate `supply_rate`.
+
+- `supply_tax` (**float**): The tax amount levied on the supply component of the electricity service by the state of Maine.
+
+- `account_number` (**str**): A unique identifier assigned by Central Maine Power for the customer's account. It is used for both billing and service interactions and is a consistent key within `meter_usage`, `cmp_bills`, and `ampion_bills`.
 
 ## `ampion_bills`
 
 A consolidated view of billing data from Ampion, structured to provide easy access to detailed information about energy usage and pricing for each account, based on which tier Austin Street was opted into at the time of the bill. This DataFrame is crucial for tracking the full cost of delivery over time.
 
 **Source**: Ampion  
-**Location**: `./data/ampion/curated/bills`  
+**Location**: `./data/ampion/curated`  
 **Partitioning**: `account_number`  
 
 **Schema**:
@@ -95,17 +102,17 @@ A consolidated view of billing data from Ampion, structured to provide easy acce
 
 - `supplier` (**str**): The name of the energy supplier, which can be used as a foreign key to join with transactional data related to billing and consumption.
 
-- `interval_start` (**str**): The start date of the billing cycle, formatted as YYYY-MM-DD.
+- `interval_start` (**str**): The start date of the billing cycle, formatted as YYYY-MM-DD. Indicates the beginning of the period for which the electricity usage is being billed.
 
-- `interval_end` (**str**): The end date of the billing cycle, formatted as YYYY-MM-DD.
-  
+- `interval_end` (**str**): The end date of the billing cycle, formatted as YYYY-MM-DD. Marks the closure of the period for which the electricity usage is being billed.
+
 - `kwh` (**int**): The total amount of electricity supplied by Ampion during the billing cycle, measured in kilowatt-hours (kWh).
-  
+
 - `bill_credits` (**float**): The total monetary value of renewable energy credits allocated to the account, reflecting the benefits of participating in renewable energy programs.
-  
+
 - `price` (**float**): The adjusted price charged for energy supply and consumption, after applying renewable energy bill credits, representing the final cost to the customer.
-  
-- `account_number` (**str**): A unique identifier originally assigned by CMP for each customer's account, facilitating billing and service interactions.
+
+- `account_number` (**str**): A unique identifier originally assigned by CMP for each customer's account, facilitating billing and service interactions. It is a consistent key within `meter_usage`, `cmp_bills`, and `ampion_bills`.
   
 
 ## `dim_datetimes`
@@ -175,13 +182,15 @@ A comprehensive dimensional table that combines detailed billing information fro
 
   - `invoice_number` (**str**): The unique identifier for each invoice, encapsulating data for specific billing periods from both CMP and Ampion, crucial for tracking and analysis.
 
-  - `account_number` (**str**): The identifier assigned by CMP, used consistently across both CMP and Ampion, enabling seamless integration and comparison of billing data.
+  - `account_number` (**str**): A unique identifier originally assigned by CMP for each customer's account, facilitating billing and service interactions. It is a consistent key within `meter_usage`, `cmp_bills`, and `ampion_bills`.
 
   - `supplier` (**str**): The name of the energy supplier, reflecting either CMP's third-party suppliers or Ampion's renewable energy provision, essential for supplier-based comparisons and analysis.
 
   - `kwh_delivered` (**float**): The total kilowatt-hours of energy delivered, combining CMP's electricity consumption metrics with Ampion's supplied and delivered kWh.
 
   - `service_charge` (**float**): The service charge applied, derived from CMP's volume-based fees, indicative of the fixed costs associated with energy delivery.
+
+  - `taxes` (**float**): The sum of both the `delivery_tax` and `supply_tax` from CMP's billing structure, representing the total tax obligation to the state of Maine on each bill.
 
   - `delivery_rate` (**float**): The rate charged per kilowatt-hour for the delivery of electricity, a crucial metric for understanding delivery cost structures across CMP suppliers.
 
@@ -209,14 +218,16 @@ The `fct_electric_brew` table is the central fact table that consolidates detail
 
   - `dim_bills_id` (**int**): References the `dim_bills` table, indicating the source of billing data (CMP or Ampion), which is vital for differentiating the billing methodologies and cost calculations.
 
-  - `account_number` (**str**): The account identifier that ties the electricity usage and cost data to a specific customer account, enabling account-level analysis and billing.
-
   - `kwh` (**float**): Represents the total electricity consumed in kilowatt-hours during the billing interval, serving as the basis for cost calculations and usage analysis.
 
   - `delivery_cost` (**float**): The calculated cost associated with the delivery of electricity from CMP, derived from the used kWh and the delivery rate.
 
-  - `service_cost` (**float**): The portion of the total cost allocated for service charges, proportionally distributed based on kWh usage in a given billing interval.
+  - `service_cost` (**float**): The portion of the total cost allocated for service charges, proportionally distributed based on kWh usage within the billing interval.
 
   - `supply_cost` (**float**): The cost for the electricity supply itself, computed from the used kWh and respective supply rates, which varies based on the source of billing and the type of supply contract.
 
-  - `total_cost` (**float**): The aggregate cost incurred, encompassing delivery, service, and supply costs, providing a comprehensive view of the financial impact of electricity consumption for each account on each meter reading.
+  - `tax_cost` (**float**): The portion of the total Maine taxes for delivery and supply, calculated proportionally based on the kWh usage within the billing interval.
+
+  - `total_cost` (**float**): The aggregate cost incurred, encompassing delivery, service, supply, and tax costs, providing a comprehensive view of the financial impact of electricity consumption for each account on each meter reading.
+
+  - `account_number` (**str**): A unique identifier originally assigned by CMP for each customer's account, facilitating billing and service interactions. It is a consistent key within `meter_usage`, `cmp_bills`, and `ampion_bills`.

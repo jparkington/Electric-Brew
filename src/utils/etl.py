@@ -31,5 +31,5 @@ model_dim_meters()
 model_dim_bills()
 model_fct_electric_brew()
 
-# # DATABASE
+# DATABASE
 connect_to_db()
