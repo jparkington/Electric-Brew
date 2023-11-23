@@ -20,7 +20,7 @@ Variables:
 meter_usage       = read_data("cmp/curated/meter_usage")
 locations         = read_data("cmp/curated/locations")
 cmp_bills         = read_data("cmp/curated/bills")
-ampion_bills      = read_data("ampion/curated/bills")
+ampion_bills      = read_data("ampion/curated")
 
 # Modeled DataFrames
 dim_datetimes     = read_data("modeled/dim_datetimes")

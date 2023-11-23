@@ -161,7 +161,7 @@ def write_results(data           : pd.DataFrame,
         lg.error(f"Error writing data to {dest}: {e}")
 
 def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills/pdf",
-                     output : str = "./data/cmp/raw/bills/csv"):
+                     output : str = "./data/cmp/raw/bills/parquet"):
     '''
     This function reads all PDFs in the specified `raw` directory, extracts specific information from CMP bills using 
     regular expressions, and then returns a list of dictionaries containing the scraped data.
@@ -260,7 +260,7 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills/pdf",
         print(f"Error while processing CMP bills: {e}")
     
 def scrape_ampion_bills(raw    : str = "./data/ampion/raw/pdf", 
-                        output : str = "./data/ampion/raw/csv"):
+                        output : str = "./data/ampion/raw/parquet"):
     '''
     This function reads all PDFs in the specified `raw` directory, extracts specific information from the 
     Ampion bills using regular expressions, and then saves a Parquet directory to the specified `output`.
@@ -337,7 +337,7 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/pdf",
                                 'supplier'       : "Ampion",
                                 'interval_start' : datetime.strptime(dates[0][0], "%m.%d.%Y").strftime("%Y-%m-%d"),
                                 'interval_end'   : datetime.strptime(dates[0][1], "%m.%d.%Y").strftime("%Y-%m-%d"),
-                                'kwh'            : misc_kwh,
+                                'kwh'            : int(misc_kwh).replace(',', ''),
                                 'bill_credits'   : misc_bill_credits,
                                 'price'          : misc_prices[0] if int(invoice_number[0:4]) < 2023 else misc_prices[1]})
 
