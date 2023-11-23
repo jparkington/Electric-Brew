@@ -10,7 +10,6 @@ The `/src/` directory contains a `utils` directory full of scripts that support 
 - [`curation.py`](#curationpy)
   - [`curate_meter_usage`](#curate_meter_usage)
     - [**Regular Expressions**](#regular-expressions)
-    - [**Manual Interventions**](#manual-interventions)
   - [`scrape_ampion_bills`](#scrape_ampion_bills)
     - [**Regular Expressions**](#regular-expressions-1)
 - [`etl.py`](#etlpy)
@@ -112,41 +111,7 @@ The `scrape_cmp_bills` function uses various regular expressions (RegEx) to iden
     - `(\d{1,4},?\d{0,3}) KWH`: Captures one or more digits, optionally a comma, and more digits followed by ' KWH'.
     - `.*?Total Current Delivery Charges`: Lazily matches any number of any characters until it finds the text 'Total Current Delivery Charges'.
 
-    **Purpose**: Captures multiple details (interval start, interval end, and kilowatt-hours (kWh) delivered) within the section starting with "Delivery Charges".
-
-#### **Manual Interventions**
-
-After the automated scraping process is completed by `scrape_cmp_bills`, several manual inputs are generally required to ensure data accuracy and completeness. Here are the steps for those interventions:
-
-1. **File Relocation and Renaming**:  
-    - **Initial State**: A CSV file named `scraped_bills.csv` is generated in the `cmp/raw/bills` directory.  
-    - **Action**: Rename this file to `scraped_bills_with_edits` to avoid accidental overwrites of manually curated data.
-
-2. **Handling Null 'Amount Due'**:  
-    - **Scenario**: Sometimes the `amount_due` field is NULL if the bill is fully paid off.  
-    - **Action**: Manually enter a 0 for such cases.  
-    - **Example**: See [`30010320353/700000447768_bill.pdf`](../data/cmp/raw/bills/30010320353/700000447768_bill.pdf).
-
-3. **Managing Multiple Billing Intervals**:  
-    - **Scenario**: Some bills may have more than one billing interval, often crossing fiscal quarters, and the function can only pick up one.
-    - **Action**: Add an additional row in the CSV with the same `account_number`, `amount_due`, and `pdf_file_name`, but with differing values for other fields, like `kwh_delivered`  
-    - **Example**: See [`30010320353/703001515406_bill.pdf`](../data/cmp/raw/bills/30010320353/703001515406_bill.pdf) and [`30010320353/702001847715_bill.pdf`](../data/cmp/raw/bills/30010320353/702001847715_bill.pdf).
-
-4. **Addressing Missing 'Delivery Service Rate'**:  
-    - **Scenario**: Some bills do not include a `delivery_service_rate`.  
-    - **Action**: Leave this field and `kwh_delivered` as NULL, with the understanding that the delivery was covered by previous `Banked Generation`.  
-    - **Example**: See [`30010320353/705001871139_bill.pdf`](../data/cmp/raw/bills/30010320353/705001871139_bill.pdf).
-
-5. **External Electricity Supply**:  
-    - **Scenario**: In cases where electricity is supplied by an external provider.  
-    - **Action**: Manually add the `supplier` and `supply_rate`.
-    - **Example**: See [`30010320353/701001868909_bill.pdf`](../data/cmp/raw/bills/30010320353/701001868909_bill.pdf).
-
-6. **Record Total kWh**:  
-    - **Scenario**: This columns in each bill's **Meter Details** might be located in different places.
-    - **Action**: Manually add `total_kwh` for each new bill.
-
-After these manual interventions are performed, the curated CSV file is ready for conversion into Parquet format for further data processing.
+    **Purpose**: Captures multiple details (interval start, interval end, and kilowatt-hours (kWh) delivered) within the section starting with "Delivery Charges".\
 
 ### `scrape_ampion_bills`
  

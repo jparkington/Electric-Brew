@@ -36,7 +36,7 @@ def extract_records_from_cmp_bills(raw: str = "./data/cmp/raw/bills"):
         r_delivery_tax     = r"Maine Sales Tax \+\$(\d+\.\d{2})"
         r_delivery_group   = r"Delivery Charges:.*?\(\s*(\d{2}/\d{2}/\d{4})\s*-\s*(\d{2}/\d{2}/\d{4})\s*\)"
         r_service_charge   = r"Service Charge.*?\+\$(\d+\.\d{2})"
-        r_delivery_service = r"(?:Delivery Service: ([\d,]+) KWH @\$[\d.]+ \+\$(\d+\.\d{2}))?"
+        r_delivery_service = r"Delivery Service: ([\d,]+) KWH (?:@\$\d+\.\d{6} )?\+\$(\d+\.\d{2})"
         r_supplier_info    = r"Prior Balance for ([A-Z\s\w.]+)(?: Supplier)? \$\d+\.\d{2}"
         r_kwh_supplied     = r"Energy Charge ([\d,]+) KWH"
         r_supply_charge    = r"Energy Charge.*?\+\$(\d+\.\d{2})"
@@ -54,30 +54,30 @@ def extract_records_from_cmp_bills(raw: str = "./data/cmp/raw/bills"):
             amount_due     = better_search(r_amount_due,   page.get(1))
             delivery_tax   = better_search(r_delivery_tax, page.get(2))
 
-            # Extract data from delivery groups on page 2
-            for start, end in re.findall(r_delivery_group, page.get(2), re.DOTALL):
+            delivery_groups = re.findall(r_delivery_group, page.get(2), re.DOTALL)
+            for start, end in delivery_groups:
 
                 # Find content for the current delivery group
-                delivery_content = better_search(rf"({start}.*?{end}.*?)(?={r_delivery_group}|$)", 
-                                                 page.get(2))
-        
-                # Extract service charge, kwh delivered, and delivery charge
+                delivery_content = re.search(rf"({start}.*?)({end}).*?(?=\s*Delivery Charges:|\Z)", 
+                                             page.get(2), 
+                                             re.DOTALL).group()
+
                 service_charge  = better_search(r_service_charge, delivery_content)
                 delivery_search = re.search(r_delivery_service, delivery_content, re.DOTALL)
                 kwh_delivered   = delivery_search.group(1).replace(",", "") if delivery_search else ""
-                delivery_charge = delivery_search.group(2)                  if delivery_search else ""
+                delivery_charge = delivery_search.group(2) if delivery_search else ""
 
                 # Step 3: Extract supplier information
                 supplier = kwh_supplied = supply_charge = supply_tax = ""
                 supplier_page = next((n for n, s in page.items() 
-                                      if n >= 3 and re.search(r_supplier_info, s, re.DOTALL)), None)
+                                    if n >= 3 and re.search(r_supplier_info, s, re.DOTALL)), None)
 
                 if supplier_page:
                     supplier_content = page[supplier_page]
-                    supplier         = better_search(r_supplier_info, supplier_content).strip().replace(" Supplier", "")
-                    kwh_supplied     = better_search(r_kwh_supplied,  supplier_content).replace(",", "")
-                    supply_charge    = better_search(r_supply_charge, supplier_content)
-                    supply_tax       = better_search(r_supply_tax,    supplier_content)
+                    supplier = better_search(r_supplier_info, supplier_content).strip().replace(" Supplier", "")
+                    kwh_supplied = better_search(r_kwh_supplied,  supplier_content).replace(",", "")
+                    supply_charge = better_search(r_supply_charge, supplier_content)
+                    supply_tax = better_search(r_supply_tax,    supplier_content)
 
                 # Step 4: Create records
                 records.append({'invoice_number'  : invoice_number,
