@@ -1,5 +1,4 @@
 from matplotlib.pyplot import rcParams
-from seaborn           import set_style
 
 import os
 import duckdb          as dd
