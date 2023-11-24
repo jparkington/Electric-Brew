@@ -29,25 +29,29 @@ def setup_plot_params():
     adhere to this custom style.
     '''
 
-    # Use seaborn's darkgrid style
-    set_style('darkgrid')
-
     rcParams.update({# Axes parameters                           # Tick parameters
-                     'xtick.labelsize'    : 8,                   'ytick.labelsize'    : 8,
-                     'axes.labelsize'     : 10,
-                     'axes.labelweight'   : 'bold',              # Figure parameters
-                     'axes.titlesize'     : 13,                  'figure.figsize'     : (15, 10),
-                     'axes.titleweight'   : 'bold',              'figure.autolayout'  : True,
-                     'axes.labelpad'      : 15,
-                     'axes.titlepad'      : 15,
+                    'axes.facecolor'     : '.05',                'xtick.labelsize'    : 8,
+                    'axes.grid'          : True,                 'xtick.color'        : '1',
+                    'axes.labelcolor'    : 'white',              'xtick.major.size'   : 0,
+                    'axes.spines.left'   : False,                'ytick.labelsize'    : 8,
+                    'axes.spines.right'  : False,                'ytick.color'        : '1',
+                    'axes.spines.top'    : False,                'ytick.major.size'   : 0,
+                    'axes.labelsize'     : 10,
+                    'axes.labelweight'   : 'bold',               # Figure parameters
+                    'axes.titlesize'     : 13,                   'figure.facecolor'   : 'black',
+                    'axes.titleweight'   : 'bold',               'figure.figsize'     : (15, 10),
+                    'axes.labelpad'      : 15,                   'figure.autolayout'  : True,
+                    'axes.titlepad'      : 15,
 
-                     # Font and text parameters                  # Legend parameters
-                     'font.family'        : 'DejaVu Sans Mono',  'legend.borderpad'   : 0.75,
-                     'font.size'          : 8,                   'legend.facecolor'   : '1',
-                     'font.style'         : 'normal',            
+                    # Font and text parameters                   # Legend parameters
+                    'font.family'        : 'DejaVu Sans Mono',   'legend.facecolor'   : '0.3',
+                    'font.size'          : 8,                    'legend.edgecolor'   : '0.3',
+                    'font.style'         : 'normal',             'legend.borderpad'   : 0.75,
+                    'text.color'         : 'white',              'legend.framealpha'  : '0.5',
 
-                     # Grid parameters
-                     'grid.linestyle'     : ':'})
+                    # Grid parameters
+                    'grid.linestyle'     : ':',
+                    'grid.color'         : '0.2'})
 
 def read_data(file_path: str) -> pd.DataFrame:
     '''
