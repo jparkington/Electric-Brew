@@ -14,8 +14,13 @@ The `/src/` directory contains a `utils` directory full of scripts that support 
     - [**Regular Expressions**](#regular-expressions)
   - [`scrape_ampion_bills`](#scrape_ampion_bills)
     - [**Regular Expressions**](#regular-expressions-1)
-- [`etl.py`](#etlpy)
+- [`dataframes.py`](#dataframespy)
   - [Overview](#overview)
+    - [Curated DataFrames](#curated-dataframes)
+    - [Modeled DataFrames](#modeled-dataframes)
+  - [Data Dictionary](#data-dictionary)
+- [`etl.py`](#etlpy)
+  - [Overview](#overview-1)
   - [Script Execution Flow](#script-execution-flow)
   - [Detailed Function Descriptions](#detailed-function-descriptions)
 - [`modeling.py`](#modelingpy)
@@ -27,13 +32,6 @@ The `/src/` directory contains a `utils` directory full of scripts that support 
   - [`set_plot_params`](#set_plot_params)
   - [`read_data`](#read_data)
   - [`connect_to_db`](#connect_to_db)
-- [`variables.py`](#variablespy)
-  - [Overview](#overview-1)
-  - [DataFrames and Database Initialization](#dataframes-and-database-initialization)
-    - [Curated DataFrames](#curated-dataframes)
-    - [Modeled DataFrames](#modeled-dataframes)
-    - [DuckDB Database Connection](#duckdb-database-connection)
-  - [Data Dictionary](#data-dictionary)
 
 
 ## [`curation.py`](utils/curation.py)
@@ -236,6 +234,28 @@ The `scrape_ampion_bills` function uses various regular expressions to accuratel
    - `bill credits allocated @ \$\s*`: Literal text indicating the start of the price section.
    - `(\d+(?:,\d{3})*\.\d{2})`: Captures a monetary value with comma-separated thousands and two decimal places.
    - Another `(\d+(?:,\d{3})*\.\d{2})`: Captures a second monetary value in the same format.
+
+## [`dataframes.py`](utils/dataframes.py)
+
+### Overview
+This script serves as a central repository for initializing key DataFrames used throughout the Electric Brew project. By centralizing these data structures, the script promotes efficiency, consistency, and code reusability across various components of the project. It ensures that data is accessed in an optimized manner, leveraging pre-curated and modeled data sets.
+
+These DataFrames are categorized into 'Curated DataFrames' and 'Modeled DataFrames,' reflecting their stage in the data pipeline.
+
+#### Curated DataFrames
+- `meter_usage`: Contains kWh readings from Central Maine Power (CMP), offering granular insight into electricity usage in as frequent as 15-minute intervals.
+- `locations`: Enriches the dataset with manually curated CSV entries, detailing Austin Street's account locations and relevant metadata.
+- `cmp_bills`: Houses CMP's billing data, including delivery and supplier rates for various periods, essential for financial analysis.
+- `ampion_bills`: Captures billing data from Austin Street's solar provider, Ampion, detailing kWh supplied and associated pricing.
+
+#### Modeled DataFrames
+- `dim_datetimes`: Breaks down timestamps into individual date and time components, aiding in detailed temporal analysis.
+- `dim_meters`: Consolidates account numbers, service points, and location details into a singular dimensional table.
+- `dim_bills`: Unifies key dimensions and metrics from both `cmp_bills` and `ampion_bills`, providing a comprehensive billing overview.
+- `fct_electric_brew`: The central fact table that encapsulates detailed records of electricity usage, billing, and delivery costs.
+
+### Data Dictionary
+For an in-depth understanding of each DataFrame, including field descriptions, data types, and their curation sources, refer to the [**data dictionary**](../docs/data_dictionary.md). This document offers a detailed blueprint of the data structure and schema used in the Electric Brew project.
 
 ## [`etl.py`](utils/etl.py)
 
@@ -456,29 +476,3 @@ The function returns a `duckdb.DuckDBPyConnection` object, representing the conn
 The database itself is accessible in any `/src/` script via the `electric_brew` variable. This standardized access point ensures uniformity and convenience in database interactions throughout the project.
 
 A comprehensive Entity-Relationship Diagram (ERD) of the database can be found in the `sql` directory's [README](../data/sql/README.md). This ERD provides a visual representation of the tables, their schemas, and the relationships between each.
-
-## [`variables.py`](utils/variables.py)
-
-### Overview
-This script serves as a central repository for initializing key DataFrames and a DuckDB database connection used throughout the Electric Brew project. By centralizing these data structures, the script promotes efficiency, consistency, and code reusability across various components of the project. It ensures that data is accessed in an optimized manner, leveraging pre-curated and modeled data sets.
-
-### DataFrames and Database Initialization
-Several `pandas` DataFrames are initialized as variables, each representing a specific aspect of the project's data model. These DataFrames are categorized into 'Curated DataFrames' and 'Modeled DataFrames,' reflecting their stage in the data pipeline. Additionally, a DuckDB database connection is established to facilitate SQL-based data operations on top of all the defined DataFrames below.
-
-#### Curated DataFrames
-- `meter_usage`: Contains kWh readings from Central Maine Power (CMP), offering granular insight into electricity usage in as frequent as 15-minute intervals.
-- `locations`: Enriches the dataset with manually curated CSV entries, detailing Austin Street's account locations and relevant metadata.
-- `cmp_bills`: Houses CMP's billing data, including delivery and supplier rates for various periods, essential for financial analysis.
-- `ampion_bills`: Captures billing data from Austin Street's solar provider, Ampion, detailing kWh supplied and associated pricing.
-
-#### Modeled DataFrames
-- `dim_datetimes`: Breaks down timestamps into individual date and time components, aiding in detailed temporal analysis.
-- `dim_meters`: Consolidates account numbers, service points, and location details into a singular dimensional table.
-- `dim_bills`: Unifies key dimensions and metrics from both `cmp_bills` and `ampion_bills`, providing a comprehensive billing overview.
-- `fct_electric_brew`: The central fact table that encapsulates detailed records of electricity usage, billing, and delivery costs.
-
-#### DuckDB Database Connection
-- `electric_brew`: Establishes a DuckDB database connection, containing pointer views to all the above DataFrames. This connection is instrumental for executing complex SQL queries directly on the DataFrame data, enhancing the project's data handling capabilities.
-
-### Data Dictionary
-For an in-depth understanding of each DataFrame, including field descriptions, data types, and their curation sources, refer to the [**data dictionary**](../docs/data_dictionary.md). This document offers a detailed blueprint of the data structure and schema used in the Electric Brew project.

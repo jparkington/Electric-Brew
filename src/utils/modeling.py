@@ -1,6 +1,5 @@
-from curation  import write_results
-from variables import meter_usage, locations, cmp_bills, ampion_bills, \
-                      dim_datetimes, dim_meters, dim_bills
+from curation         import write_results
+from utils.dataframes import *
 
 import logging as lg
 import numpy   as np

@@ -1,11 +1,11 @@
 from eda_features  import meter_usage_engineered as mue
-from utils.runtime import set_plot_params
+from utils.runtime import setup_plot_params
 
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-colors = set_plot_params()
+colors = setup_plot_params()
 
 # Group by period and sum kWh
 period_kwh = mue.groupby('period')['kwh'].sum().reset_index()

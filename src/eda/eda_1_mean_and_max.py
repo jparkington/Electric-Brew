@@ -1,5 +1,5 @@
 from eda_features  import meter_usage_engineered as mue
-from utils.runtime import set_plot_params
+from utils.runtime import setup_plot_params
 
 import logging
 import numpy             as np
@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pandas            as pd
 import seaborn           as sns
 
-colors = set_plot_params() # Enables dark mode, larger canvas sizes, and sizing considerations
+colors = setup_plot_params() # Enables dark mode, larger canvas sizes, and sizing considerations
 
 logger = logging.getLogger('matplotlib') # Get the logger for 'matplotlib'
 logger.setLevel(logging.WARN)            # Set the logging level to WARN to ignore INFO messages

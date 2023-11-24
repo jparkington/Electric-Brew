@@ -1,11 +1,11 @@
 from eda_features  import meter_usage_engineered as mue
-from utils.runtime import set_plot_params
+from utils.runtime import setup_plot_params
 
 import matplotlib.pyplot as plt
 import numpy             as np
 import seaborn           as sns  
 
-colors = set_plot_params() # Enables dark mode, larger canvas sizes, and sizing considerations
+colors = setup_plot_params() # Enables dark mode, larger canvas sizes, and sizing considerations
 
 years     = np.sort(mue['year'].unique())
 meter_ids = mue['meter_id'].nunique()

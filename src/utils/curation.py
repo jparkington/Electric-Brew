@@ -3,7 +3,7 @@ from glob              import glob
 from re                import findall, search, DOTALL
 from shutil            import rmtree
 from typing            import *
-from utils.variables   import locations
+from utils.dataframes  import locations
 
 import os
 import logging         as lg
