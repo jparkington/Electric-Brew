@@ -30,6 +30,7 @@ The `/src/` directory contains a `utils` directory full of scripts that support 
   - [`model_fct_electric_brew`](#model_fct_electric_brew)
 - [`runtime.py`](#runtimepy)
   - [`set_plot_params`](#set_plot_params)
+  - [`find_project_root`](#find_project_root)
   - [`read_data`](#read_data)
   - [`connect_to_db`](#connect_to_db)
 
@@ -434,10 +435,26 @@ def set_plot_params() -> list:
 **Returns**  
 A list containing RGBA color tuples that comprise the custom color palette for plots.
 
+### `find_project_root`
+
+**Purpose**  
+Starts at the directory of the script that calls it, and iteratively moves up the directory tree until it finds a directory containing a specified identifier, usually a unique file or directory like '.git', in order to determine the project root directory in a dynamic and reliable way.
+
+If a relative path is also supplied, the function will join that path to the identified project root, using `os`.
+
+**Signature** 
+```python
+def find_project_root(rel_path : str = None,
+                      root_id  : str = '.git') -> str:
+```
+
+**Returns**  
+The absolute path to the project root directory plus the optional `rel_path`.
+
 ### `read_data`
 
 **Purpose**  
-Reads `.parquet` files into Pandas DataFrames. The function resolves the path relative to the `data` directory of the project, no matter where your script is located within the `src` directory or where you've cloned the repo. As such, it expects a file path string that starts from within the `data` directory.
+Reads `.parquet` files into Pandas DataFrames. The function resolves the path relative to the root directory of the project, no matter where your script is located within the `src` directory or where you've cloned the repo.
 
 **Signature** 
 ```python
@@ -454,15 +471,15 @@ Establishes a connection to the `electric_brew` DuckDB database and creates SQL 
 
 **Signature** 
 ```python
-def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_brew.db'),
-                  vws : dict = {'meter_usage'       : 'cmp/curated/meter_usage',
-                                'locations'         : 'cmp/curated/locations',
-                                'cmp_bills'         : 'cmp/curated/bills',
-                                'ampion_bills'      : 'ampion/curated',
-                                'dim_datetimes'     : 'modeled/dim_datetimes',
-                                'dim_meters'        : 'modeled/dim_meters',
-                                'dim_bills'         : 'modeled/dim_bills',
-                                'fct_electric_brew' : 'modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
+def connect_to_db(path : str = './data/sql/electric_brew.db',,
+                  vws  : dict = {'meter_usage'       : './data/cmp/curated/meter_usage',
+                                 'locations'         : './data/cmp/curated/locations',
+                                 'cmp_bills'         : './data/cmp/curated/bills',
+                                 'ampion_bills'      : './data/ampion/curated',
+                                 'dim_datetimes'     : './data/modeled/dim_datetimes',
+                                 'dim_meters'        : './data/modeled/dim_meters',
+                                 'dim_bills'         : './data/modeled/dim_bills',
+                                 'fct_electric_brew' : './data/modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
 ```
 
 **Methodology**

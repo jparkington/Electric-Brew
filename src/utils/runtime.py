@@ -14,9 +14,10 @@ Contains utility functions that configure the runtime environment and are called
 executed. These include `rcParams` and specific paradigms for reading data into dataframes.
 
 Functions:
-    - set_plot_params : Sets up custom plot parameters for matplotlib.
-    - read_data       : Reads a .parquet file into a Pandas DataFrame.
-    - connect_to_db   : Connects to DuckDB and creates specified views within it if not already present.
+    - set_plot_params   : Sets up custom plot parameters for matplotlib.
+    - find_project_root : Finds the project directory by searching for a specified identifier in the directory tree.
+    - read_data         : Reads a .parquet file into a Pandas DataFrame.
+    - connect_to_db     : Connects to DuckDB and creates specified views within it if not already present.
 '''
 
 def setup_plot_params():
@@ -52,51 +53,79 @@ def setup_plot_params():
                     'grid.linestyle'     : ':',
                     'grid.color'         : '0.2'})
 
+def find_project_root(rel_path : str = None,
+                      root_id  : str = '.git',) -> str:
+    '''
+    Finds the project root directory by searching for a specified identifier in the directory tree.
+
+    This function starts at the directory of the script that calls it, and iteratively moves up the directory tree 
+    until it finds a directory containing the specified identifier, usually a unique file or directory like '.git'. 
+    This is useful for determining the project root directory in a dynamic and reliable way, regardless of the 
+    specific location of the script within the project.
+
+    If a relative path is provided, it is appended to the project root using `os`
+
+    Parameters:
+        rel_path (str) : A relative path to append to the project root.
+        root_id  (str) : A unique pattern that signifies the project root directory. Defaults to '.git', common for repos.
+
+
+    Returns:
+        str: The absolute path to the project root directory.
+    '''
+
+    try:
+        current   = os.path.abspath(__file__) # Get the absolute path of the current file
+        directory = os.path.dirname(current)  # Get the directory of the current file
+
+        root = directory
+        while not os.path.exists(os.path.join(root, root_id)):
+
+            root = os.path.dirname(root)
+
+            if root == '/':  # Safety check to avoid infinite loop
+                lg.error(f"Project root with identifier '{root_id}' not found.")
+            
+        if rel_path:
+            # Ignore the leading '.' if present in the relative path
+            components = rel_path.lstrip('./').split(os.sep)
+            root       = os.path.join(root, *components)
+
+        return root
+
+    except Exception as e:
+        lg.error(f"Error finding project root: {e}\n")
+
 def read_data(file_path: str) -> pd.DataFrame:
     '''
-    This function reads a .parquet file from a specified relative path into a Pandas DataFrame.
+    Reads a .parquet file from a specified relative path into a Pandas DataFrame.
     The function automatically resolves the path relative to the project's /data/ directory.
-    
-    Steps:
-    1. Get the absolute path of the current file (`runtime.py`) using `os.path.abspath(__file__)`.
-    2. Determine the directory of the current file (`src`) using `os.path.dirname()`.
-    3. Navigate to the project root directory by going up one level with `..`.
-    4. Append 'data' to the project root directory to reach the /data/ directory.
-    5. Join this with the user-provided `file_path` to construct the full path to the .parquet file.
-    
+
     Parameters:
-        file_path (str) : Relative path to the .parquet file, starting from the /data/ directory.
+        file_path (str): Relative path to the .parquet file, starting from the /data/ directory.
         
     Returns:
-        pd.DataFrame : DataFrame containing the data read from the .parquet file.
+        pd.DataFrame: DataFrame containing the data read from the .parquet file.
     '''
-    
-    current_file_path = os.path.abspath(__file__)               # Get the absolute path of the current file
-    src_directory     = os.path.dirname(current_file_path)      # Get the directory of the file at runtime
-    project_root      = os.path.join(src_directory, '..', '..') # Go up two directories to get to the project root
-    data_directory    = os.path.join(project_root, 'data')      # Join with 'data' to get to the data directory
-    full_file_path    = os.path.abspath(os.path.join(data_directory, file_path))
 
-    df = pq.read_table(full_file_path).to_pandas()
+    # Read the .parquet file and return as a Pandas DataFrame
+    return pq.read_table(find_project_root(file_path)).to_pandas()
 
-    return df
-
-def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_brew.db'),
-                  vws : dict = {'meter_usage'       : 'cmp/curated/meter_usage',
-                                'locations'         : 'cmp/curated/locations',
-                                'cmp_bills'         : 'cmp/curated/bills',
-                                'ampion_bills'      : 'ampion/curated',
-                                'dim_datetimes'     : 'modeled/dim_datetimes',
-                                'dim_meters'        : 'modeled/dim_meters',
-                                'dim_bills'         : 'modeled/dim_bills',
-                                'fct_electric_brew' : 'modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
+def connect_to_db(path : str = './data/sql/electric_brew.db',
+                  vws  : dict = {'meter_usage'       : './data/cmp/curated/meter_usage',
+                                 'locations'         : './data/cmp/curated/locations',
+                                 'cmp_bills'         : './data/cmp/curated/bills',
+                                 'ampion_bills'      : './data/ampion/curated',
+                                 'dim_datetimes'     : './data/modeled/dim_datetimes',
+                                 'dim_meters'        : './data/modeled/dim_meters',
+                                 'dim_bills'         : './data/modeled/dim_bills',
+                                 'fct_electric_brew' : './data/modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
     '''
     This function creates views in a DuckDB database for the Electric Brew project by reading data from 
     parquet files. It leverages DuckDB's ability to directly query Parquet files, which simplifies the 
     data loading process compared to a traditional SQL database approach.
 
-    These views will automatically change as the underlying Parquet data changes. If the view already exists
-    at runtime, this function will continue past the view creation step.
+    These views will automatically change as the underlying Parquet data changes.
 
     Methodology:
         1. Establish a connection to the DuckDB database, or create it if it doesn't exist.
@@ -111,15 +140,13 @@ def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_
         duckdb.DuckDBPyConnection: The connected DuckDB database instance.
     '''
 
+    db = dd.connect(find_project_root(path))
+
     for k, v in vws.items():
         try:
             # Create SQL view for each parquet file
-            db.execute(f"CREATE VIEW {k} AS SELECT * FROM read_parquet('./data/{v}/**/*.parquet')")
-            lg.info(f"Created view '{k}' from parquet files at '{v}'.")
-
-        except dd.duckdb.CatalogException:
-            # This error occurs if the view already exists
-            continue
+            db.execute(f"DROP VIEW IF EXISTS {k}")
+            db.execute(f"CREATE VIEW {k} AS SELECT * FROM read_parquet('{find_project_root(v)}/**/*.parquet')")
 
         except Exception as e:
             lg.error(f"Error occurred while creating view '{k}': {e}\n")
