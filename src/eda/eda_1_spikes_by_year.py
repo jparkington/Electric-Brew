@@ -1,11 +1,11 @@
-from eda_features import meter_usage_engineered as mue
-from utils import set_plot_params
+from eda_features  import meter_usage_engineered as mue
+from utils.runtime import setup_plot_params
 
 import numpy             as np
 import matplotlib.pyplot as plt
 import seaborn           as sns
 
-colors = set_plot_params() # Enables dark mode, larger canvas sizes, and sizing considerations
+colors = setup_plot_params() # Enables dark mode, larger canvas sizes, and sizing considerations
 
 # Filter the DataFrame for extreme outliers
 plot_df = mue.loc[mue.extreme_outlier == True]

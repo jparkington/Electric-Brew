@@ -5,6 +5,7 @@
 <!-- omit in toc -->
 ## Table of Contents
 
+- [Quick Links](#quick-links)
 - [Project Team](#project-team)
 - [Stakeholders](#stakeholders)
 - [Story](#story)
@@ -15,8 +16,21 @@
   - [Peak Hour Optimization](#peak-hour-optimization)
   - [ROI Analysis](#roi-analysis)
   - [Additional Sources to Consider](#additional-sources-to-consider)
-- [Data Acquisition](#data-acquisition)
 - [Acknowledgments](#acknowledgments)
+
+## Quick Links
+
+Welcome to the Electric Brew Project! Below you'll find quick links to key documents and resources that provide in-depth information about various aspects of our data pipeline and infrastructure:
+
+1. **[Data Dictionary](/docs/data_dictionary.md)**: Delve into our detailed data dictionary, which offers a complete overview of all the tables, fields, and their data types within the project.
+
+2. **[Data Lineage and Parquet Tips](/data/README.md)**: Understand the lineage of our data and get practical tips for working with Parquet files, ensuring effective data management and analysis.
+
+3. **[ERD and DuckDB Usage](/data/sql/README.md)**: Access our Entity-Relationship Diagram (ERD) for a visual representation of our data model, along with guidelines for leveraging DuckDB for your data queries and storage needs.
+
+4. **[Data Pipeline Functions](/src/README.md)**: Explore the comprehensive list of functions utilized in our data pipeline, detailing their purposes and usage.
+
+Each link will guide you to a dedicated section or document, providing you with the necessary guidance to navigate and utilize our project's data resources effectively.
 
 ## Project Team
 - **Sean Sullivan** ([@seanmainer](https://github.com/seanmainer))
@@ -83,20 +97,8 @@ Through this strategic partnership, Austin Street Brewery aspires not only to en
   - [Sierra Nevada Brewing Co.'s](https://sierranevada.com/sustainability/) annual sustainability report that includes data on renewable energy usage.
   - [BrewDog's](https://www.brewdog.com/uk/tomorrow) "Make Earth Great Again" report, outlining their carbon-negative status and sustainability initiatives.
 
-## Data Acquisition
-
-- **Private Brewery Data**: Detailed electricity usage data, utility bills, and operational process information will be directly provided by Austin Street Brewery and NEEFC. Logins for accessing granular data from CMP's smart meter system will also be shared by these stakeholders.
-
-- **Industry Benchmarking Data**: Data for industry comparison will be accessed through the Brewers Association Benchmarking Survey, which Austin Street Brewery is a part of.
-
-- **Public and Academic Sources**: Investment cost data for ROI analysis will be sourced from public databases like the U.S. Energy Information Administration and DSIRE. Time-of-use rates will be obtained from Maine's Public Utilities Commission or directly from utility providers.
-
-- **Case Studies**: Key case studies on energy efficiency from other breweries will be gathered from publicly available sustainability reports and academic publications. Examples include New Belgium Brewing Company, Sierra Nevada Brewing Co., Alaskan Brewing Company, and BrewDog.
-
-- **Weather and Additional Contextual Data**: Historical weather data will be sourced from platforms like NOAA's Climate Data Online.
-
 ## Acknowledgments
 
 This project was shaped under the supervision of [**Professor Philip Bogden**](https://www.khoury.northeastern.edu/people/philip-bogden/) during our *Intro to Data Management* class at the **Roux Institute of Northeastern University**. 
 
-We would like to express our gratitude to Professor Bogden for his consistent guidance and invaluable insights. Our thanks also extend to our TA, Meghana Chillara, for her patience, consistently timely input, and collaboration with each of us.
+We would like to express our gratitude to **Professor Bogden** for his consistent guidance and invaluable insights. Our thanks also extend to our TA, **Meghana Chillara**, for her patience, consistently timely input, and collaboration with each of us. Special thanks to both **Harsh Bhojwani** and **Anurag Daga** as well, for helping us keep our spirits high and reminding us to take a step back at the most opportunite times.

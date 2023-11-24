@@ -1,10 +1,10 @@
-from eda_features import meter_usage_engineered as mue
-from utils import set_plot_params
+from eda_features  import meter_usage_engineered as mue
+from utils.runtime import setup_plot_params
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-colors = set_plot_params()
+colors = setup_plot_params()
 
 # Map each meter_id to a unique color
 unique_meters = mue['meter_id'].unique()

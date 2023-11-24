@@ -1,9 +1,9 @@
-from eda_features import meter_usage_engineered as mue
-from utils import set_plot_params
+from eda_features  import meter_usage_engineered as mue
+from utils.runtime import setup_plot_params
 
 import matplotlib.pyplot as plt
 
-colors = set_plot_params()
+colors = setup_plot_params()
 
 # Define colors for each unique location
 location_colors = {'Industrial Way': colors[0], 'Fox Street': colors[1]}
