@@ -1,5 +1,6 @@
 from curation  import write_results
-from variables import *
+from variables import meter_usage, locations, cmp_bills, ampion_bills, \
+                      dim_datetimes, dim_meters, dim_bills
 
 import logging as lg
 import numpy   as np
