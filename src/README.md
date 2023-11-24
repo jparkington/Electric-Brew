@@ -440,13 +440,16 @@ A list containing RGBA color tuples that comprise the custom color palette for p
 **Purpose**  
 Starts at the directory of the script that calls it, and iteratively moves up the directory tree until it finds a directory containing a specified identifier, usually a unique file or directory like '.git', in order to determine the project root directory in a dynamic and reliable way.
 
+If a relative path is also supplied, the function will join that path to the identified project root, using `os`.
+
 **Signature** 
 ```python
-def find_project_root(root_id : str = '.git') -> str:
+def find_project_root(rel_path : str = None,
+                      root_id  : str = '.git') -> str:
 ```
 
 **Returns**  
-The absolute path to the project root directory.
+The absolute path to the project root directory plus the optional `rel_path`.
 
 ### `read_data`
 

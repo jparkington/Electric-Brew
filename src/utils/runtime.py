@@ -53,7 +53,8 @@ def setup_plot_params():
                     'grid.linestyle'     : ':',
                     'grid.color'         : '0.2'})
 
-def find_project_root(root_id : str = '.git') -> str:
+def find_project_root(rel_path : str = None,
+                      root_id  : str = '.git',) -> str:
     '''
     Finds the project root directory by searching for a specified identifier in the directory tree.
 
@@ -62,9 +63,12 @@ def find_project_root(root_id : str = '.git') -> str:
     This is useful for determining the project root directory in a dynamic and reliable way, regardless of the 
     specific location of the script within the project.
 
+    If a relative path is provided, it is appended to the project root using `os`
+
     Parameters:
-        root_identifier (str) : A unique identifier that signifies the project root directory. 
-                                Defaults to '.git', which is common for Git repositories.
+        rel_path (str) : A relative path to append to the project root.
+        root_id  (str) : A unique pattern that signifies the project root directory. Defaults to '.git', common for repos.
+
 
     Returns:
         str : The absolute path to the project root directory.
@@ -74,19 +78,23 @@ def find_project_root(root_id : str = '.git') -> str:
         current   = os.path.abspath(__file__) # Get the absolute path of the current file
         directory = os.path.dirname(current)  # Get the directory of the current file
 
-        project_root = directory
-        while not os.path.exists(os.path.join(project_root, root_id)):
+        root = directory
+        while not os.path.exists(os.path.join(root, root_id)):
 
-            project_root = os.path.dirname(project_root)
+            root = os.path.dirname(root)
 
-            if project_root == '/':  # Safety check to avoid infinite loop
+            if root == '/':  # Safety check to avoid infinite loop
                 lg.error(f"Project root with identifier '{root_id}' not found.")
             
-        return project_root
+        if rel_path:
+            # Ignore the leading '.' if present in the relative path
+            components = rel_path.lstrip('./').split(os.sep)
+            root       = os.path.join(root, *components)
+
+        return root
 
     except Exception as e:
         lg.error(f"Error finding project root: {e}\n")
-
 
 def read_data(file_path: str) -> pd.DataFrame:
     '''
@@ -136,7 +144,7 @@ def connect_to_db(path : str = './data/sql/electric_brew.db',
         duckdb.DuckDBPyConnection: The connected DuckDB database instance.
     '''
 
-    db = dd.connect(
+    db = dd.connect(find_project_root(path))
 
     for k, v in vws.items():
         try:
