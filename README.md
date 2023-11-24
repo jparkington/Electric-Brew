@@ -5,6 +5,7 @@
 <!-- omit in toc -->
 ## Table of Contents
 
+- [Quick Links](#quick-links)
 - [Project Team](#project-team)
 - [Stakeholders](#stakeholders)
 - [Story](#story)
@@ -16,6 +17,20 @@
   - [ROI Analysis](#roi-analysis)
   - [Additional Sources to Consider](#additional-sources-to-consider)
 - [Acknowledgments](#acknowledgments)
+
+## Quick Links
+
+Welcome to the Electric Brew Project! Below you'll find quick links to key documents and resources that provide in-depth information about various aspects of our data pipeline and infrastructure:
+
+1. **[Data Dictionary](/docs/data_dictionary.md)**: Delve into our detailed data dictionary, which offers a complete overview of all the tables, fields, and their data types within the project.
+
+2. **[Data Lineage and Parquet Tips](/data/README.md)**: Understand the lineage of our data and get practical tips for working with Parquet files, ensuring effective data management and analysis.
+
+3. **[ERD and DuckDB Usage](/data/sql/README.md)**: Access our Entity-Relationship Diagram (ERD) for a visual representation of our data model, along with guidelines for leveraging DuckDB for your data queries and storage needs.
+
+4. **[Data Pipeline Functions](/src/README.md)**: Explore the comprehensive list of functions utilized in our data pipeline, detailing their purposes and usage.
+
+Each link will guide you to a dedicated section or document, providing you with the necessary guidance to navigate and utilize our project's data resources effectively.
 
 ## Project Team
 - **Sean Sullivan** ([@seanmainer](https://github.com/seanmainer))
