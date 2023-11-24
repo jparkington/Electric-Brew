@@ -1,7 +1,7 @@
 <!-- omit in toc -->
 # Data Dictionary for Electric Brew
 
-ADD DETAILED DESCRIPTION. LINK TO ERD and `src` README.
+This document provides detailed descriptions of all data elements within our project, including tables, fields, and their respective data types. For a more comprehensive understanding, it is recommended to view this in conjunction with our [Entity-Relationship Diagram (ERD)](/data/sql/README.md). For a technical understanding of how the underlying data for these tables was handled, take a look at our documentation on the [Data Pipeline Functions](/src/README.md) in this project.
 
 <!-- omit in toc -->
 - [`meter_usage`](#meter_usage)

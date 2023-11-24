@@ -30,8 +30,6 @@ Welcome to the Electric Brew Project! Below you'll find quick links to key docum
 
 4. **[Data Pipeline Functions](/src/README.md)**: Explore the comprehensive list of functions utilized in our data pipeline, detailing their purposes and usage.
 
-Each link will guide you to a dedicated section or document, providing you with the necessary guidance to navigate and utilize our project's data resources effectively.
-
 ## Project Team
 - **Sean Sullivan** ([@seanmainer](https://github.com/seanmainer))
 - **Joseph Nelson Farrell** ([@nfarrell011](https://github.com/nfarrell011))
