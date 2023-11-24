@@ -8,11 +8,16 @@ The `/src/` directory contains a `utils` directory full of scripts that support 
 <!-- omit in toc -->
 ## Table of Contents
 - [`curation.py`](#curationpy)
-  - [`curate_meter_usage`](#curate_meter_usage)
+  - [`load_data_files`](#load_data_files)
+  - [`write_results`](#write_results)
+  - [`scrape_cmp_bills`](#scrape_cmp_bills)
     - [**Regular Expressions**](#regular-expressions)
   - [`scrape_ampion_bills`](#scrape_ampion_bills)
     - [**Regular Expressions**](#regular-expressions-1)
 - [`etl.py`](#etlpy)
+  - [Overview](#overview)
+  - [Script Execution Flow](#script-execution-flow)
+  - [Detailed Function Descriptions](#detailed-function-descriptions)
 - [`modeling.py`](#modelingpy)
   - [`model_dim_datetimes`](#model_dim_datetimes)
   - [`model_dim_meters`](#model_dim_meters)
@@ -23,95 +28,151 @@ The `/src/` directory contains a `utils` directory full of scripts that support 
   - [`read_data`](#read_data)
   - [`connect_to_db`](#connect_to_db)
 - [`variables.py`](#variablespy)
+  - [Overview](#overview-1)
+  - [DataFrames and Database Initialization](#dataframes-and-database-initialization)
+    - [Curated DataFrames](#curated-dataframes)
+    - [Modeled DataFrames](#modeled-dataframes)
+    - [DuckDB Database Connection](#duckdb-database-connection)
+  - [Data Dictionary](#data-dictionary)
 
 
 ## [`curation.py`](utils/curation.py)
 
 This section comprises functions that transform raw data files into structured and query-optimized formats. This includes converting raw CSVs into partitioned Parquet files and extracting relevant data from PDFs.
 
-### `curate_meter_usage`
+### `load_data_files`
 
-Note: the documentation for this section will be reworked, since the paradigm for each `curate_` function is essentially the same, except for the addition of `schema` in this first one.
+This function efficiently loads data files from a specified directory, accommodating multiple file types, including CSV, PDF, and Parquet. It is designed to streamline the data integration process, allowing for the consolidation of various data sources into a single, manageable format.
 
-Processes all CSV files from the provided directory, integrates the specified schema, and subsequently consolidates the data into a partitioned `.parquet` file in the designated output directory. This conversion and curation process is optimized with `snappy` compression for efficiency.
-
-**Signature** 
+**Signature**
 ```python
-def curate_meter_usage(raw           : str, 
-                       curated       : str, 
-                       partition_col : list, 
-                       schema        : list):
+def load_data_files(path : str, 
+                    type : str       = 'CSV', 
+                    cols : List[str] = None) -> Union[pd.DataFrame, str]
 ```
 
 **Parameters**
+- **`path`**: The directory path where the data files are stored.
 
-- **`raw`**: Path to the directory containing raw `meter_usage` CSV files.
+- **`type`**: Specifies the format of the files to be processed. This function supports 'CSV' for comma-separated values, 'PDF', and 'Parquet' for the columnar storage format. Default is set to 'CSV'.
 
-- **`curated`** : Directory where the consolidated `.parquet` files will be saved.
+- **`cols`**: An optional list of column names to apply as headers when loading CSV files, allowing for the customization of data structure right at the loading stage.
 
-- **`partition_col`**: Columns by which the .parquet files will be partitioned.
+**Functionality**
+1. **File Type Determination**: The function first identifies the type of files to be processed, preparing the necessary procedures for each file format.
+2. **CSV Files Handling**: For CSV files, the function loads each file individually, applies the specified column names if provided, and then concatenates all data into a single DataFrame.
+3. **PDF Files Processing**: For PDF files, the function extracts text content from each page and compiles this information into a DataFrame, with each row representing a page.
+4. **Parquet Files Loading**: For Parquet files, the function directly reads the dataset from the given directory, leveraging Parquet's efficient columnar storage format and partitioning.
 
-- **`schema`**: Columns that will be used as headers in the resulting DataFrame.
+### `write_results`
+
+This function is writes processed data into Parquet files, stored in a designated directory. It offers flexibility in managing data output, including options for adding a primary key, partitioning data based on specified columns, applying `snappy` compression for efficient storage, and choosing between overwriting or appending to existing data. This function is crucial for the final stage of data curation, ensuring data is stored in an optimized and organized manner for future retrieval and analysis.
+
+**Signature**
+```python
+def write_results(data           : pd.DataFrame, 
+                  dest           : str, 
+                  add_id         : bool = False, 
+                  partition_by   : str  = 'account_number', 
+                  compression    : str  = 'snappy', 
+                  use_dictionary : bool = True, 
+                  overwrite      : bool = True)
+```
+
+**Parameters**
+- **`data`**: The DataFrame to be exported into Parquet format.
+
+- **`dest`**: The file path for the destination directory.
+
+- **`add_id`**: A flag indicating whether to add a sequential identifier column ('id') to the DataFrame, which acts as a primary key.
+
+- **`partition_by`**: An optional parameter to specify a column by which the data should be partitioned, enhancing data organization and retrieval efficiency.
+
+- **`compression`**: Determines the compression method for the Parquet files. 'Snappy' is selected by default for its balance of compression integrity and performance.
+
+- **`use_dictionary`**: A flag to enable or disable dictionary encoding within the Parquet files, which can improve performance and compression for datasets with repeated values.
+
+- **`overwrite`**: Determines whether to overwrite existing data in the destination directory or append to it.
+
+**Functionality**
+1. **Directory Preparation**: Checks if the specified destination directory exists and prepares it for data writing, creating it if necessary or handling overwriting and appending based on the `overwrite` flag.
+2. **ID Column Addition**: If `add_id` is True, the function adds a unique identifier column to the DataFrame, enhancing data traceability.
+3. **Data Writing**: Executes the process of converting the DataFrame into Parquet format and writing it to the specified destination, taking into account partitioning and compression settings.
+
+### `scrape_cmp_bills`
  
-This function automates the extraction of specific fields from a collection of PDF bills stored in a directory. It is designed to capture around 90% of the values from these bills. However, due to variations in the format and content of individual documents, manual review and intervention is required for complete accuracy.
+This function reads all PDFs in a specified directory, extracting specific information from CMP bills using regular expressions. Each bill is dissected into structured records that represent single delivery groups, with the aim of capturing complete data across all pages of the bill.
 
 **Signature** 
 ```python
-def scrape_cmp_bills(raw    : str, 
-                     output : str):
+def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills/pdf",
+                     output : str = "./data/cmp/raw/bills/parquet"):
 ```
 
 **Parameters**
 
 - **`raw`**: Path to the directory containing the PDF bills that need to be processed.
 
-- **`output`** : Path where the extracted data will be saved as a CSV file.
+- **`output`** : Path where the extracted data will be saved as a Parquet directory.
 
 #### **Regular Expressions**
 
-The `scrape_cmp_bills` function uses various regular expressions (RegEx) to identify and extract specific pieces of information from text content within utility bills stored as PDF files. Below, each RegEx is broken down to explain its components and what it aims to capture. Patterns were detected and tested using [**RegExr**](https://regexr.com), a visual IDE for finding RegEx patterns within blocks of text.
+The `scrape_cmp_bills` function employs a series of regular expressions designed to target specific data points within the bills. Some patterns are intended for early pages (like invoice and account numbers), while others are for later pages (such as delivery charges and supplier information). This approach ensures that all relevant billing information, regardless of its location within the document, is accurately captured and recorded.
 
-1. **Account Number**: `r"Account Number\s*([\d-]+)"`
-    - `Account Number`: Literal text that the RegEx searches for.
-    - `\s*`: Matches zero or more whitespace characters.
-    - `([\d-]+)`: Captures one or more digits or dashes.
-    
-    **Purpose**: Captures the account number that follows the literal text "Account Number", allowing for possible whitespace and dashes.
+1. **Amount Due**: `r"Amount Due.*?\$\s*(\d+\.\d{2})"`
+     - `Amount Due`: Literal text that the RegEx searches for.
+     - `.*?`: Lazily matches any number of any characters.
+     - `\$\s*`: Matches the dollar sign followed by any whitespace.
+     - `(\d+\.\d{2})`: Captures a monetary value with two decimal places.
 
-2. **Amount Due**: `r"Amount Due Date Due\s*\d+-\d+-\d+ [A-Z\s]+ \$([\d,]+\.\d{2})"`
-    - `Amount Due Date Due`: Literal text that the RegEx searches for.
-    - `\s*`: Matches zero or more whitespace characters.
-    - `\d+-\d+-\d+`: Captures a date in the format `d+-d+-d+`.
-    - `[A-Z\s]+`: Captures one or more uppercase letters or whitespace.
-    - `\$\s*`: Captures the dollar sign and any following whitespace.
-    - `([\d,]+\.\d{2})`: Captures one or more digits or commas, followed by a decimal and exactly two digits.
+2. **Delivery Tax**: `r"Maine Sales Tax \+\$(\d+\.\d{2})"`
+     - `Maine Sales Tax`: Literal text indicating the start of the tax information.
+     - `\+\$`: Matches the plus sign and dollar sign.
+     - `(\d+\.\d{2})`: Captures a monetary value with two decimal places.
 
-    **Purpose**: Finds the amount due that follows the literal text "Amount Due Date Due", capturing the date and any uppercase letters or whitespace, accounting for optional whitespace, and ensures the amount has two decimal places.
+3. **Delivery Group**: `r"Delivery Charges:.*?\(\s*(\d{2}/\d{2}/\d{4})\s*-\s*(\d{2}/\d{2}/\d{4})\s*\)"`
+     - `Delivery Charges:`: Literal text indicating the start of the delivery charges section.
+     - `.*?`: Lazily matches any number of any characters until the date range.
+     - `\(\s*`: Matches the opening parenthesis and any whitespace.
+     - `(\d{2}/\d{2}/\d{4})`: Captures a date in the format MM/DD/YYYY.
+     - `\s*-\s*`: Matches the dash between dates with any surrounding whitespace.
+     - `(\d{2}/\d{2}/\d{4})`: Captures a second date in the format MM/DD/YYYY.
+     - `\s*\)`: Matches the closing parenthesis and any whitespace.
 
-3. **Service Charge**: `r"Service Charge.*?@\$\s*([+-]?\d+\.\d{2})"`
-    - `Service Charge`: Literal text that the RegEx starts with.
-    - `.*?`: Lazily matches any number of any characters.
-    - `@\$\s*`: Captures the '@$' symbol followed by any number of whitespace characters.
-    - `([+-]?\d+\.\d{2})`: Captures a number that may be positive or negative, followed by a decimal and exactly two digits.
-    
-    **Purpose**: Captures the service charge value found after the term "Service Charge", accounting for both positive and negative values and ensuring two decimal places.
+4. **Service Charge**: `r"Service Charge.*?\+\$(\d+\.\d{2})"`
+     - `Service Charge`: Literal text indicating the start of the service charge.
+     - `.*?`: Lazily matches any number of any characters until the dollar amount.
+     - `\+\$`: Matches the plus sign and dollar sign.
+     - `(\d+\.\d{2})`: Captures a monetary value with two decimal places.
 
-4. **Delivery Service Rate**: `r"Delivery Service[:\s]*\d+,?\d+ KWH @\$(\d+\.\d+)"`
-    - `Delivery Service`: Literal text to start the RegEx.
-    - `[:\s]*`: Captures a colon or any number of whitespace characters.
-    - `\d+,?\d+ KWH`: Captures one or more digits, optionally a comma, and more digits followed by ' KWH'.
-    - `@\$(\d+\.\d+)`: Captures the '@$' symbol followed by one or more digits, a decimal point, and more digits.
-    
-    **Purpose**: Extracts the rate per kilowatt-hour (kWh) for delivery service, following the term "Delivery Service".
+5. **Delivery Service**: `r"Delivery Service: ([\d,]+) KWH (?:@\$\d+\.\d{6} )?\+\$(\d+\.\d{2})"`
+     - `Delivery Service:`: Literal text indicating the start of the delivery service section.
+     - `([\d,]+) KWH`: Captures the kWh amount, which may include commas.
+     - `(?:@\$\d+\.\d{6} )?`: Optionally matches a rate per kWh, followed by whitespace.
+     - `\+\$`: Matches the plus sign and dollar sign.
+     - `(\d+\.\d{2})`: Captures a monetary value with two decimal places.
 
-5. **Meter Details**: `r"Delivery Charges.*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,2}/\d{1,2}/\d{4}).*?(\d{1,4},?\d{0,3}) KWH.*?Total Current Delivery Charges"`
-    - `Delivery Charges.*?`: Starts with the literal text and lazily matches any number of any characters.
-    - `(\d{1,2}/\d{1,2}/\d{4})`: Captures a date in the format MM/DD/YYYY.
-    - `.*?`: Lazily matches any number of any characters.
-    - `(\d{1,4},?\d{0,3}) KWH`: Captures one or more digits, optionally a comma, and more digits followed by ' KWH'.
-    - `.*?Total Current Delivery Charges`: Lazily matches any number of any characters until it finds the text 'Total Current Delivery Charges'.
+6. **Supplier Information**: `r"Prior Balance for ([A-Z\s\w.]+)(?: Supplier)? \$\d+\.\d{2}"`
+     - `Prior Balance for`: Literal text indicating the start of the supplier information section.
+     - `([A-Z\s\w.]+)`: Captures the supplier's name, allowing for uppercase letters, spaces, word characters, and periods.
+     - `(?: Supplier)?`: Optionally matches the word "Supplier".
+     - `\$\d+\.\d{2}`: Matches a monetary value (not captured) with two decimal places.
 
-    **Purpose**: Captures multiple details (interval start, interval end, and kilowatt-hours (kWh) delivered) within the section starting with "Delivery Charges".\
+7. **kWh Supplied**: `r"Energy Charge ([\d,]+) KWH"`
+     - `Energy Charge`: Literal text indicating the start of the energy charge section.
+     - `([\d,]+) KWH`: Captures the kWh amount, which may include commas.
+
+8. **Supply Charge**: `r"Energy Charge.*?\+\$(\d+\.\d{2})"`
+     - `Energy Charge`: Literal text indicating the start of the supply charge.
+     - `.*?`: Lazily matches any number of any characters until the dollar amount.
+     - `\+\$`: Matches the plus sign and dollar sign.
+     - `(\d+\.\d{2})`: Captures a monetary value with two decimal places.
+
+9. **Supply Tax**: `r"Maine Sales Tax \+\$(\d+\.\d{2})"`
+     - `Maine Sales Tax`: Literal text indicating the start of the supply tax.
+     - `\+\$`: Matches the plus sign and dollar sign.
+     - `(\d+\.\d{2})`: Captures a monetary value with two decimal places.
+
 
 ### `scrape_ampion_bills`
  
@@ -119,57 +180,91 @@ This function automates the extraction of specific fields from a collection of P
 
 **Signature** 
 ```python
-def scrape_ampion_bills(raw    : str, 
-                        output : str):
+def scrape_ampion_bills(raw    : str = "./data/ampion/raw/pdf", 
+                        output : str = "./data/ampion/raw/parquet"):
 ```
 
 **Parameters**
 
 - **`raw`**: Path to the directory containing the raw PDF utility bills that need to be processed.
 
-- **`output`**: Path where the extracted data will be saved as CSV files.
+- **`output`**: Path where the extracted data will be saved as a Parquet directory.
 
 #### **Regular Expressions**
 
-The `scrape_ampion_bills` function employs various regular expressions (RegEx) to identify and extract specific pieces of information from the text content within the PDF utility bills. Below, each RegEx is broken down to explain its components and what it aims to capture:
+The `scrape_ampion_bills` function uses various regular expressions to accurately extract specific information from Ampion PDF utility bills. This includes standard charges and conditional "Miscellaneous Charges." The `r_misc` patterns are only used if "Miscellaneous Charges" are present in the content.
 
 1. **Invoice Number**: `r"Invoice:\s(\d+)"`
-   - `Invoice:`: Literal text that the RegEx searches for.
+   - `Invoice:`: Literal text the RegEx searches for.
    - `\s`: Matches a single whitespace character.
    - `(\d+)`: Captures one or more digits.
-   
-   **Purpose**: Extracts the invoice number immediately following the literal text "Invoice:".
 
 2. **Abbreviated Account Number**: `r'\*{5}(\d+)'`
    - `\*{5}`: Matches exactly five asterisk characters.
    - `(\d+)`: Captures one or more digits.
-   
-   **Purpose**: Captures the account number that follows five asterisks, typically representing obfuscated digits in an account number.
 
-3. **Kilowatt-Hour (kWh) Values**: `r'(\d{1,4}(?:,\d{3})*?) kWh'`
-   - `(\d{1,4}(?:,\d{3})*?)`: Captures a numeric value, allowing for comma-separated thousands. The `?` makes the match lazy.
-   - `kWh`: Literal text indicating the unit of energy.
-   
-   **Purpose**: Extracts energy usage values in kilowatt-hours from the bill.
-
-4. **Prices**: `r'allocated\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})'`
-   - `allocated`: Literal text indicating the start of the relevant section.
-   - `\s+`: Matches one or more whitespace characters.
-   - `\$\s*`: Captures the dollar sign followed by optional whitespace.
-   - `(\d+(?:,\d{3})*\.\d{2})`: Captures a monetary value, potentially with comma-separated thousands and exactly two decimal places.
-   
-   **Purpose**: Extracts different price values (allocated prices) from the bill.
-
-5. **Date Ranges**: `r'(\d{2}\.\d{2}\.\d{4})\s*–\s*(\d{2}\.\d{2}\.\d{4})'`
+3. **Date Ranges**: `r'(\d{2}\.\d{2}\.\d{4})\s*–\s*(\d{2}\.\d{2}\.\d{4})'`
    - `(\d{2}\.\d{2}\.\d{4})`: Captures a date in the format DD.MM.YYYY.
    - `\s*–\s*`: Matches a dash surrounded by optional whitespace.
    - Another `(\d{2}\.\d{2}\.\d{4})`: Captures a second date in the same format.
-   
-   **Purpose**: Extracts the start and end dates of the billing period.
+
+4. **Kilowatt-Hour (kWh) Values**: `r'(\d{1,4}(?:,\d{3})*?) kWh'`
+   - `(\d{1,4}(?:,\d{3})*?)`: Captures a numeric value, allowing for comma-separated thousands.
+   - `kWh`: Literal text indicating the unit of energy.
+
+5. **Prices**: `r'allocated\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})\s+\$ (\d+(?:,\d{3})*\.\d{2})'`
+   - `allocated`: Literal text indicating the start of the relevant section.
+   - `\s+`: Matches one or more whitespace characters.
+   - `\$\s*`: Captures the dollar sign followed by optional whitespace.
+   - `(\d+(?:,\d{3})*\.\d{2})`: Captures a monetary value with comma-separated thousands and two decimal places.
+
+6. **Miscellaneous Abbreviated Account Number**: `r"utility acct \*\*\*\*(\d+):"`
+   - `utility acct`: Literal text indicating the start of the account number section.
+   - `\*\*\*\*`: Matches exactly four asterisk characters.
+   - `(\d+)`: Captures one or more digits.
+
+7. **Miscellaneous kWh**: `r"\*{4}(\d+):(\d+)\s*kWh"`
+   - `\*{4}`: Matches exactly four asterisk characters.
+   - `(\d+)`: First capture group for a numeric value (account number).
+   - `(\d+)\s*kWh`: Second capture group for kWh value followed by `kWh`.
+
+8. **Miscellaneous Credits**: `r"\$(\d+(?:,\d{3})*\.\d{2})\s*bill credits"`
+   - `\$(\d+(?:,\d{3})*\.\d{2})`: Captures a monetary value with comma-separated thousands and two decimal places.
+   - `\s*bill credits`: Literal text indicating the end of the bill credits section.
+
+9. **Miscellaneous Prices**: `r'bill credits allocated @ \$\s*(\d+(?:,\d{3})*\.\d{2})\s+\$\s*(\d+(?:,\d{3})*\.\d{2})'`
+   - `bill credits allocated @ \$\s*`: Literal text indicating the start of the price section.
+   - `(\d+(?:,\d{3})*\.\d{2})`: Captures a monetary value with comma-separated thousands and two decimal places.
+   - Another `(\d+(?:,\d{3})*\.\d{2})`: Captures a second monetary value in the same format.
 
 ## [`etl.py`](utils/etl.py)
 
-Reproducibility script for taking all of the landed raw files and passing them through each stage of the landing zone architecture, until the data is ready for analytics. Will add more detail here.
+### Overview
+The `etl.py` script is a comprehensive tool in the Electric Brew project, orchestrating the full spectrum of the ETL (Extract, Transform, Load) process. It integrates all the end-to-end operations from initial data extraction to preparing data for advanced analytics. This script interfaces with the `curation`, `modeling`, and `runtime` modules, ensuring a smooth flow of data through each stage.
+
+### Script Execution Flow
+The script's execution is categorized into distinct directories reflecting each stage of the ETL process:
+
+- **RAW DATA EXTRACTION** (`/raw/parquet/`): Scrapes data from CMP and Ampion.
+- **DATA CURATION** (`/curated/`): Transforms raw data into structured, query-ready formats.
+- **DATA MODELING** (`/modeled/`): Builds the dimensional and fact tables essential for analysis.
+- **DATABASE INTEGRATION** (`/sql/`): Connects to DuckDB, setting up the database environment.
+
+### Detailed Function Descriptions
+- **Raw Data Extraction**: 
+  - `scrape_cmp_bills()`: Captures raw billing data from CMP, including key details such as billing periods and amounts.
+  - `scrape_ampion_bills()`: Retrieves raw billing data from Ampion, with a focus on renewable energy credits.
+
+- **Data Curation**: 
+  - `write_results(load_data_files())`: Executes a dual process of loading and transforming raw data into a curated format. This step is applied across various datasets, including CMP's meter usage and location data, as well as billing information from both CMP and Ampion.
+
+- **Data Modeling**: 
+  - `model_dim_datetimes()`: Breaks down timestamps into date and time components, and classifies periods of the day for peak hour analysis.
+  - `model_dim_meters()`: Collates key meter information and location details, crucial for a comprehensive view of energy consumption across accounts.
+  - `model_dim_bills()`: Merges intricate billing details from CMP and Ampion, vital for a deep dive into energy costs, delivery rates, and supplier nuances.
+  - `model_fct_electric_brew()`: Creates the `fct_electric_brew` fact table, synthesizing electricity usage and costs at a granular level, key for profitability analysis and consumption pattern insights.
+
+Running the `etl.py` script from the project's root directory processes all data through these stages, ensuring the Electric Brew project's data is continuously primed for insightful analytics and reporting.
 
 ## [`modeling.py`](utils/modeling.py)
 
@@ -232,37 +327,39 @@ A `.parquet` file saved in the specified `modeled` directory containing the acco
 |... | ...        | ...              | ...            | ...                  | ...            |
 | 8  | L108607371 | 2300588897       | 35012790198    | 1 INDUSTRIAL WAY U10 | Industrial Way |
 
-
 ### `model_dim_bills`
 
-Creates a bills dimension table, which consolidates billing information from both `cmp_bills` and `ampion_bills` DataFrames into a comprehensive view. This table is instrumental for analyzing combined billing data across various dimensions, such as invoice number, account number, and supplier, and includes metrics like delivered kWh, service charges, delivery rates, and supply rates.
+Creates a comprehensive bills dimension table (`dim_bills`), consolidating detailed billing information from the `cmp_bills` and `ampion_bills` DataFrames. This table is pivotal for analyzing billing data across various dimensions such as invoice number, account number, and supplier, and includes metrics like delivered kWh, service charges, taxes, delivery rates, and supply rates.
 
 **Methodology**
 
 1. Group `cmp_bills` and `ampion_bills` by common dimensions (`invoice_number`, `account_number`, `interval_start`, `interval_end`, `supplier`) and aggregate necessary metrics.
-2. Concatenate the results from both DataFrames and assign a source identifier for each row.
-3. Replace the `interval_start`, `interval_end` fields with a `billing_interval`` field, representing the inclusive range of dates for each billing period.
+2. Concatenate the results from both DataFrames, assigning a source identifier for each row.
+3. Replace `interval_start`, `interval_end` fields with a `billing_interval` field, representing the inclusive range of dates for each billing period.
 4. Create a unique identifier `id` for each row.
 5. Persist the combined DataFrame as a `.parquet` file with `snappy` compression.
 
 **Returns**
 
-A `.parquet` file saved in the specified `modeled` directory containing the combined bills dimension table.
+A `.parquet` file in the specified `modeled` directory containing the `dim_bills` dimensional table.
 
 **Example Output**
 
-| id  | invoice_number      | account_number | supplier              | kwh_delivered | service_charge | delivery_rate | supply_rate | source | billing_interval                                  |
-|-----|---------------------|----------------|-----------------------|---------------|----------------|---------------|-------------|--------|---------------------------------------------------|
-| 1   | 700000396769        | 30010320353    | Mega Energy of Maine  | 4522.0        | 21.47          | 0.077711      | 0.068400    | CMP    | [2021-12-21, 2021-12-22, ..., 2022-01-19]         |
-| 2   | 700000447767        | 30010320361    | Mega Energy of Maine  | 470.0         | 21.47          | 0.077711      | 0.068400    | CMP    | [2022-05-18, 2022-05-19, ..., 2022-06-10]         |
-| 3   | 700000447768        | 30010320353    | Mega Energy of Maine  | 914.0         | 21.47          | 0.077711      | 0.068400    | CMP    | [2022-05-18, 2022-05-19, ..., 2022-06-10]         |
-| ... | ...                 | ...            | ...                   | ...           | ...            | ...           | ...         | ...    | ...                                               |
-| 161 | 2023100000830629    | 30010601281    | Ampion                | 1968.0        | 0.00           | 0.000000      | 0.205066    | Ampion | [2023-07-13, 2023-07-14, ..., 2023-08-13]         |
-| 162 | 2023100000830629    | 30010894035    | Ampion                | 3633.0        | 0.00           | 0.000000      | 0.205070    | Ampion | [2023-07-13, 2023-07-14, ..., 2023-08-13]         |
-| 163 | 2023100000830629    | 35012787137    | Ampion                | 722.0         | 0.00           | 0.000000      | 0.205069    | Ampion | [2023-07-13, 2023-07-14, ..., 2023-08-13]         |
-| ... | ...                 | ...            | ...                   | ...           | ...            | ...           | ...         | ...    | ...                                               |
+| id  | invoice_number    | account_number | supplier              | kwh_delivered | service_charge | taxes  | delivery_rate | supply_rate | source | billing_interval                              |
+|-----|-------------------|----------------|-----------------------|---------------|----------------|--------|---------------|-------------|--------|-----------------------------------------------|
+| 1   | 700000396769      | 30010320353    |                       | 4522          | 21.47          | 20.51  | 0.077711      | NaN         | CMP    | [2021-12-21 ... 2022-01-20]                    |
+| 2   | 700000447768      | 30010320353    | MEGA ENERGY OF MAINE  | 914           | 21.47          | 8.53   | 0.077713      | 0.068403    | CMP    | [2022-05-18 ... 2022-06-17]                    |
+| 3   | 701001427136      | 30010320353    |                       | 2989          | 21.47          | 13.96  | 0.077712      | NaN         | CMP    | [2021-10-19 ... 2021-11-18]                    |
+| 4   | 701001458379      | 30010320353    |                       | 5635          | 21.47          | 25.27  | 0.077711      | NaN         | CMP    | [2021-11-17 ... 2021-12-16]                    |
+| 5   | 701001542641      | 30010320353    |                       | 4439          | 21.47          | 20.15  | 0.077711      | NaN         | CMP    | [2022-02-18 ... 2022-03-19]                    |
+| ... | ...               | ...            | ...                   | ...           | ...            | ...    | ...           | ...         | ...    | ...                                           |
+| 263 | 2023100000830629  | 30010601281    | Ampion                | 1968          | 0.00           | 0.00   | 0.000000      | 0.205066    | Ampion | [2023-07-13 ... 2023-08-12]                    |
+| 264 | 2023100000830629  | 30010894035    | Ampion                | 3633          | 0.00           | 0.00   | 0.000000      | 0.205070    | Ampion | [2023-07-13 ... 2023-08-12]                    |
+| 265 | 2023100000830629  | 35012787137    | Ampion                | 722           | 0.00           | 0.00   | 0.000000      | 0.205069    | Ampion | [2023-07-13 ... 2023-08-12]                    |
+| 266 | 2023100000830629  | 35012787756    | Ampion                | 759           | 0.00           | 0.00   | 0.000000      | 0.205059    | Ampion | [2023-07-13 ... 2023-08-12]                    |
+| 267 | 2023100000830629  | 35012790198    | Ampion                | 2092          | 0.00           | 0.00   | 0.000000      | 0.206902    | Ampion | [2023-07-13 ... 2023-08-12]                    |
 
-**Note**: The 'billing_interval' column is a list of dates, covering the entire duration of the billing period, which provides a detailed view of the billing timeline for each record.
+**Note**: The 'billing_interval' column specifies the inclusive start and end dates for each billing period, providing a detailed timeline for each billing record.
 
 ### `model_fct_electric_brew`
 
@@ -270,14 +367,14 @@ This function constructs the `fct_electric_brew` fact table, a cornerstone of th
 
 **Methodology**
 
-1. Billing intervals from `cmp_bills` and `ampion_bills` are expanded to daily granularity and grouped by their source, aligning them with daily meter usage data from `meter_usage`. This step ensures accurate association of daily charges with usage data.
-2. An intermediary DataFrame is curated by merging the expanded billing data with `meter_usage`, along with dimension tables `dim_meters`, `dim_datetimes`, and billing data segregated by source. This provides a comprehensive dataset combining usage with billing information.
-3. The total kWh recorded for each invoice number and kWh delivered is calculated, allowing for the proportional allocation of service charges based on usage.
-4. For CMP billing, the data is sorted by invoice number and timestamp. Cumulative metrics for remaining and used kWh are calculated in reverse order, starting at the end of each interval.
-5. For Ampion billing, a similar approach is taken, but the calculation starts from the beginning of each interval, computing remaining and used kWh in ascending order.
-6. Delivery, service, and supply costs are calculated based on the used kWh. These metrics reflect the cost components associated with electricity delivery and usage.
-7. The final fact table is assembled with all necessary fields and a unique identifier `id` is assigned to each row, providing a primary key.
-8. The table is saved as a `.parquet` file in the specified `modeled` directory, with `snappy` compression and partitioned by `account_number` for optimized storage and query performance.
+1. Expand billing intervals from `cmp_bills` and `ampion_bills` to daily granularity, grouping them by source and aligning with daily meter usage data from `meter_usage`. This ensures precise association of daily charges with corresponding usage data.
+2. Create an intermediary DataFrame by merging the expanded billing data with `meter_usage`, alongside `dim_meters` and `dim_datetimes`.
+3. Calculate total kWh recorded for each invoice number and kWh delivered, enabling the proportional allocation of service charges and taxes based on actual usage.
+4. Sort CMP billing data by invoice number and timestamp, computing cumulative metrics for remaining and used kWh in reverse order for each interval.
+5. Apply a similar calculation for Ampion billing, but start from the beginning of each interval to determine used and remaining kWh in ascending order.
+6. Calculate delivery, service, and supply costs based on the used kWh, reflecting the various cost components associated with electricity delivery and usage.
+7. Assemble the final fact table with all required fields, assigning a unique identifier `id` to each row as a primary key.
+8. Save the table as a `.parquet` file in the specified `modeled` directory, utilizing `snappy` compression and partitioning by `account_number` for enhanced storage and query efficiency.
 
 **Returns**
 
@@ -285,19 +382,20 @@ A `.parquet` file saved in the specified `modeled` directory containing the `fct
 
 **Example Output**
 
-| id     | dim_datetimes_id | dim_meters_id | dim_bills_id | kwh   | delivery_cost | service_cost | supply_cost | total_cost | account_number |
-|--------|------------------|---------------|--------------|-------|---------------|--------------|-------------|------------|----------------|
-| 1      | 69401            | 1             | 190.0        | 0.594 | 0.000000      | 0.008452     | 0.099173    | 0.107625   | 30010320353    |
-| 2      | 69402            | 1             | 190.0        | 0.101 | 0.000000      | 0.001437     | 0.016863    | 0.018300   | 30010320353    |
-| 3      | 69403            | 1             | 190.0        | 0.104 | 0.000000      | 0.001480     | 0.017364    | 0.018843   | 30010320353    |
-| 4      | 69404            | 1             | 190.0        | 0.106 | 0.000000      | 0.001508     | 0.017697    | 0.019206   | 30010320353    |
-| 5      | 69405            | 1             | 190.0        | 0.099 | 0.000000      | 0.001409     | 0.016529    | 0.017938   | 30010320353    |
-| ...    | ...              | ...           | ...          | ...   | ...           | ...          | ...         | ...        | ...            |
-| 500276 | 34345            | 8             | 153.0        | 1.242 | 0.096517      | 0.025867     | 0.000000    | 0.122384   | 35012790198    |
-| 500277 | 34349            | 8             | 153.0        | 1.202 | 0.093409      | 0.025034     | 0.000000    | 0.118443   | 35012790198    |
-| 500278 | 34353            | 8             | 153.0        | 1.186 | 0.092165      | 0.024701     | 0.000000    | 0.116866   | 35012790198    |
-| 500279 | 34357            | 8             | 153.0        | 1.150 | 0.089368      | 0.023951     | 0.000000    | 0.113319   | 35012790198    |
-| 500280 | 34361            | 8             | 153.0        | 1.120 | 0.087036      | 0.023326     | 0.000000    | 0.110363   | 35012790198    |
+| id     | dim_datetimes_id | dim_meters_id | dim_bills_id | kwh   | delivery_cost | service_cost | supply_cost | tax_cost  | total_cost | account_number |
+|--------|------------------|---------------|--------------|-------|---------------|--------------|-------------|-----------|------------|----------------|
+| 1      | 69401            | 1             | 191.0        | 0.594 | 0.000000      | 0.008452     | 0.099173    | 0.000464  | 0.108089   | 30010320353    |
+| 2      | 69402            | 1             | 191.0        | 0.101 | 0.000000      | 0.001437     | 0.016863    | 0.000079  | 0.018379   | 30010320353    |
+| 3      | 69403            | 1             | 191.0        | 0.104 | 0.000000      | 0.001480     | 0.017364    | 0.000081  | 0.018925   | 30010320353    |
+| 4      | 69404            | 1             | 191.0        | 0.106 | 0.000000      | 0.001508     | 0.017697    | 0.000083  | 0.019289   | 30010320353    |
+| 5      | 69405            | 1             | 191.0        | 0.099 | 0.000000      | 0.001409     | 0.016529    | 0.000077  | 0.018015   | 30010320353    |
+| ...    | ...              | ...           | ...          | ...   | ...           | ...          | ...         | ...       | ...        | ...            |
+| 501330 | 34341            | 8             | 183.0        | 1.284 | 0.098879      | 0.026688     | NaN         | 0.006957  | NaN        | 35012790198    |
+| 501331 | 34343            | 8             | 183.0        | 1.260 | 0.097572      | 0.026360     | NaN         | 0.006867  | NaN        | 35012790198    |
+| 501332 | 34345            | 8             | 183.0        | 1.242 | 0.096517      | 0.025867     | NaN         | 0.006735  | NaN        | 35012790198    |
+| 501333 | 34347            | 8             | 183.0        | 1.220 | 0.095231      | 0.025505     | NaN         | 0.006644  | NaN        | 35012790198    |
+| 501334 | 34349            | 8             | 183.0        | 1.202 | 0.093409      | 0.025034     | NaN         | 0.006518  | NaN        | 35012790198    |
+| ...    | ...              | ...           | ...          | ...   | ...           | ...          | ...         | ...       | ...        | ...            |
 
 ## [`runtime.py`](utils/runtime.py)
 
@@ -361,6 +459,26 @@ A comprehensive Entity-Relationship Diagram (ERD) of the database can be found i
 
 ## [`variables.py`](utils/variables.py)
 
-This section initializes commonly used DataFrames (and their supporting database), making them readily available across different parts of the project. This promotes code reusability and performance optimization.
+### Overview
+This script serves as a central repository for initializing key DataFrames and a DuckDB database connection used throughout the Electric Brew project. By centralizing these data structures, the script promotes efficiency, consistency, and code reusability across various components of the project. It ensures that data is accessed in an optimized manner, leveraging pre-curated and modeled data sets.
 
-For detailed descriptions of the fields, their data types, and the files responsible for thier curation, visit our [**data dictionary**](../docs/data_dictionary.md) document.
+### DataFrames and Database Initialization
+Several `pandas` DataFrames are initialized as variables, each representing a specific aspect of the project's data model. These DataFrames are categorized into 'Curated DataFrames' and 'Modeled DataFrames,' reflecting their stage in the data pipeline. Additionally, a DuckDB database connection is established to facilitate SQL-based data operations on top of all the defined DataFrames below.
+
+#### Curated DataFrames
+- `meter_usage`: Contains kWh readings from Central Maine Power (CMP), offering granular insight into electricity usage in as frequent as 15-minute intervals.
+- `locations`: Enriches the dataset with manually curated CSV entries, detailing Austin Street's account locations and relevant metadata.
+- `cmp_bills`: Houses CMP's billing data, including delivery and supplier rates for various periods, essential for financial analysis.
+- `ampion_bills`: Captures billing data from Austin Street's solar provider, Ampion, detailing kWh supplied and associated pricing.
+
+#### Modeled DataFrames
+- `dim_datetimes`: Breaks down timestamps into individual date and time components, aiding in detailed temporal analysis.
+- `dim_meters`: Consolidates account numbers, service points, and location details into a singular dimensional table.
+- `dim_bills`: Unifies key dimensions and metrics from both `cmp_bills` and `ampion_bills`, providing a comprehensive billing overview.
+- `fct_electric_brew`: The central fact table that encapsulates detailed records of electricity usage, billing, and delivery costs.
+
+#### DuckDB Database Connection
+- `electric_brew`: Establishes a DuckDB database connection, containing pointer views to all the above DataFrames. This connection is instrumental for executing complex SQL queries directly on the DataFrame data, enhancing the project's data handling capabilities.
+
+### Data Dictionary
+For an in-depth understanding of each DataFrame, including field descriptions, data types, and their curation sources, refer to the [**data dictionary**](../docs/data_dictionary.md). This document offers a detailed blueprint of the data structure and schema used in the Electric Brew project.

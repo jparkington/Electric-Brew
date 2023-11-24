@@ -18,18 +18,11 @@ lg.basicConfig(level  = lg.INFO,
 '''
 Contains utility functions that scrape and restructure data from raw sources into columnar, efficient formats.
 
-The first two utility functions are used in `curation.py` to process and generate the following DataFrames without 
-additional transformations needed:
-    - meter_usage
-    - locations
-    - cmp_bills
-    - ampion_bills
-
 Functions:
     - load_data_files     : Load data files from the specified directory. Supports CSV and PDF file types.
     - write_results       : Write curated data to a specified Parquet directory.
-    - scrape_cmp_bills    : 
-    - scrape_ampion_bills :
+    - scrape_cmp_bills    : Automates extraction of billing details from CMP's PDF bills, structuring data for analysis.
+    - scrape_ampion_bills : Automates extraction of billing details from Ampion's PDF bills, structuring data for analysis.
 '''
 
 def load_data_files(path : str, 
@@ -174,7 +167,7 @@ def scrape_cmp_bills(raw    : str = "./data/cmp/raw/bills/pdf",
         1. Load data from PDF files in the `raw` directory using `load_data_files`.
         2. Extract relevant fields from each page of the bill using regular expressions.
         3. Create a list of dictionaries, each representing a record from a single delivery group within a bill.
-        4. Each record contains fields such as invoice number, account number, amount due, delivery tax, and supplier information.
+        4. Records contains fields like invoice numbers, account numbers, amounts due, delivery taxes, and supplier information.
 
     Parameters:
         raw (str): Path to the directory containing CMP bill PDF files.
