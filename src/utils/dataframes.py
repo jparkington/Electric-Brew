@@ -16,13 +16,13 @@ Variables:
 '''
 
 # Curated DataFrames
-meter_usage       = read_data("cmp/curated/meter_usage")
-locations         = read_data("cmp/curated/locations")
-cmp_bills         = read_data("cmp/curated/bills")
-ampion_bills      = read_data("ampion/curated")
+meter_usage       = read_data('./data/cmp/curated/meter_usage')
+locations         = read_data('./data/cmp/curated/locations')
+cmp_bills         = read_data('./data/cmp/curated/bills')
+ampion_bills      = read_data('./data/ampion/curated')
 
 # Modeled DataFrames
-dim_datetimes     = read_data("modeled/dim_datetimes")
-dim_meters        = read_data("modeled/dim_meters")
-dim_bills         = read_data("modeled/dim_bills")
-fct_electric_brew = read_data("modeled/fct_electric_brew")
+dim_datetimes     = read_data('./data/modeled/dim_datetimes')
+dim_meters        = read_data('./data/modeled/dim_meters')
+dim_bills         = read_data('./data/modeled/dim_bills')
+fct_electric_brew = read_data('./data/modeled/fct_electric_brew')

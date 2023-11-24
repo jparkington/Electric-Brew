@@ -71,7 +71,7 @@ def find_project_root(rel_path : str = None,
 
 
     Returns:
-        str : The absolute path to the project root directory.
+        str: The absolute path to the project root directory.
     '''
 
     try:
@@ -108,28 +108,24 @@ def read_data(file_path: str) -> pd.DataFrame:
         pd.DataFrame: DataFrame containing the data read from the .parquet file.
     '''
 
-    # Combine the project root with `data`` directory and the file path
-    full_file_path = os.path.join(find_project_root(), 'data', file_path)
-
     # Read the .parquet file and return as a Pandas DataFrame
-    return pq.read_table(full_file_path).to_pandas()
+    return pq.read_table(find_project_root(file_path)).to_pandas()
 
 def connect_to_db(path : str = './data/sql/electric_brew.db',
-                  vws  : dict = {'meter_usage'       : 'cmp/curated/meter_usage',
-                                 'locations'         : 'cmp/curated/locations',
-                                 'cmp_bills'         : 'cmp/curated/bills',
-                                 'ampion_bills'      : 'ampion/curated',
-                                 'dim_datetimes'     : 'modeled/dim_datetimes',
-                                 'dim_meters'        : 'modeled/dim_meters',
-                                 'dim_bills'         : 'modeled/dim_bills',
-                                 'fct_electric_brew' : 'modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
+                  vws  : dict = {'meter_usage'       : './data/cmp/curated/meter_usage',
+                                 'locations'         : './data/cmp/curated/locations',
+                                 'cmp_bills'         : './data/cmp/curated/bills',
+                                 'ampion_bills'      : './data/ampion/curated',
+                                 'dim_datetimes'     : './data/modeled/dim_datetimes',
+                                 'dim_meters'        : './data/modeled/dim_meters',
+                                 'dim_bills'         : './data/modeled/dim_bills',
+                                 'fct_electric_brew' : './data/modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
     '''
     This function creates views in a DuckDB database for the Electric Brew project by reading data from 
     parquet files. It leverages DuckDB's ability to directly query Parquet files, which simplifies the 
     data loading process compared to a traditional SQL database approach.
 
-    These views will automatically change as the underlying Parquet data changes. If the view already exists
-    at runtime, this function will continue past the view creation step.
+    These views will automatically change as the underlying Parquet data changes.
 
     Methodology:
         1. Establish a connection to the DuckDB database, or create it if it doesn't exist.
@@ -149,12 +145,8 @@ def connect_to_db(path : str = './data/sql/electric_brew.db',
     for k, v in vws.items():
         try:
             # Create SQL view for each parquet file
-            db.execute(f"CREATE VIEW {k} AS SELECT * FROM read_parquet('./data/{v}/**/*.parquet')")
-            lg.info(f"Created view '{k}' from parquet files at '{v}'.")
-
-        except dd.duckdb.CatalogException:
-            # This error occurs if the view already exists
-            continue
+            db.execute(f"DROP VIEW IF EXISTS {k}")
+            db.execute(f"CREATE VIEW {k} AS SELECT * FROM read_parquet('{find_project_root(v)}/**/*.parquet')")
 
         except Exception as e:
             lg.error(f"Error occurred while creating view '{k}': {e}\n")

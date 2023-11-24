@@ -454,7 +454,7 @@ The absolute path to the project root directory plus the optional `rel_path`.
 ### `read_data`
 
 **Purpose**  
-Reads `.parquet` files into Pandas DataFrames. The function resolves the path relative to the `data` directory of the project, no matter where your script is located within the `src` directory or where you've cloned the repo. As such, it expects a file path string that starts from within the `data` directory.
+Reads `.parquet` files into Pandas DataFrames. The function resolves the path relative to the root directory of the project, no matter where your script is located within the `src` directory or where you've cloned the repo.
 
 **Signature** 
 ```python
@@ -471,15 +471,15 @@ Establishes a connection to the `electric_brew` DuckDB database and creates SQL 
 
 **Signature** 
 ```python
-def connect_to_db(db  : dd.DuckDBPyConnection = dd.connect('./data/sql/electric_brew.db'),
-                  vws : dict = {'meter_usage'       : 'cmp/curated/meter_usage',
-                                'locations'         : 'cmp/curated/locations',
-                                'cmp_bills'         : 'cmp/curated/bills',
-                                'ampion_bills'      : 'ampion/curated',
-                                'dim_datetimes'     : 'modeled/dim_datetimes',
-                                'dim_meters'        : 'modeled/dim_meters',
-                                'dim_bills'         : 'modeled/dim_bills',
-                                'fct_electric_brew' : 'modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
+def connect_to_db(path : str = './data/sql/electric_brew.db',,
+                  vws  : dict = {'meter_usage'       : './data/cmp/curated/meter_usage',
+                                 'locations'         : './data/cmp/curated/locations',
+                                 'cmp_bills'         : './data/cmp/curated/bills',
+                                 'ampion_bills'      : './data/ampion/curated',
+                                 'dim_datetimes'     : './data/modeled/dim_datetimes',
+                                 'dim_meters'        : './data/modeled/dim_meters',
+                                 'dim_bills'         : './data/modeled/dim_bills',
+                                 'fct_electric_brew' : './data/modeled/fct_electric_brew'}) -> dd.DuckDBPyConnection:
 ```
 
 **Methodology**

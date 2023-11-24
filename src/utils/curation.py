@@ -48,8 +48,8 @@ def load_data_files(path : str,
         cols (List[str]) : List of column names to be used as headers for CSV files. Defaults to None.
 
     Returns:
-        pd.DataFrame : Loaded data as a DataFrame. For CSV and Parquet files, it concatenates all data;
-                       for PDF files, each row represents a page's content and page number.
+        pd.DataFrame: Loaded data as a DataFrame. For CSV and Parquet files, it concatenates all data;
+                      for PDF files, each row represents a page's content and page number.
     '''
 
     # Step 1: Load all files for a given data `type`.
@@ -275,8 +275,8 @@ def scrape_ampion_bills(raw    : str = "./data/ampion/raw/pdf",
     which requires a different extraction logic for certain fields.
 
     Parameters:
-        raw    (str): Path to the directory containing raw Ampion bill PDF files.
-        output (str): Directory where the scraped data CSV files should be saved.
+        raw    (str) : Path to the directory containing raw Ampion bill PDF files.
+        output (str) : Directory where the scraped data CSV files should be saved.
     '''
 
     try:
