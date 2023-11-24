@@ -50,7 +50,7 @@ eda2:
 # Run the full ETL pipeline for analytical data
 etl:
 	@echo "Initiating the ETL pipeline..."
-	@conda run -n $(ENV_NAME) python -B src/etl.py
+	@conda run -n $(ENV_NAME) python -B src/utils/etl.py
 	@echo "ETL pipeline execution complete. Data is now ready for analytics."
 
 # Create a chain of commands to set up the Conda environment properly
