@@ -30,6 +30,7 @@ The `/src/` directory contains a `utils` directory full of scripts that support 
   - [`model_fct_electric_brew`](#model_fct_electric_brew)
 - [`runtime.py`](#runtimepy)
   - [`set_plot_params`](#set_plot_params)
+  - [`find_project_root`](#find_project_root)
   - [`read_data`](#read_data)
   - [`connect_to_db`](#connect_to_db)
 
@@ -433,6 +434,19 @@ def set_plot_params() -> list:
 
 **Returns**  
 A list containing RGBA color tuples that comprise the custom color palette for plots.
+
+### `find_project_root`
+
+**Purpose**  
+Starts at the directory of the script that calls it, and iteratively moves up the directory tree until it finds a directory containing a specified identifier, usually a unique file or directory like '.git', in order to determine the project root directory in a dynamic and reliable way.
+
+**Signature** 
+```python
+def find_project_root(root_id : str = '.git') -> str:
+```
+
+**Returns**  
+The absolute path to the project root directory.
 
 ### `read_data`
 

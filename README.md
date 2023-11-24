@@ -4,7 +4,6 @@
 
 <!-- omit in toc -->
 ## Table of Contents
-
 - [Quick Links](#quick-links)
 - [Project Team](#project-team)
 - [Stakeholders](#stakeholders)
