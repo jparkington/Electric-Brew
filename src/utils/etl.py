@@ -57,26 +57,26 @@ scrape_ampion_bills()
 
 # CMP meter usage data
 write_results(
-    load_data_files(path="./data/cmp/raw/meter_usage",
-                    cols=["account_number", "service_point_id", "meter_id", "interval_end_datetime", "meter_channel", "kwh"]),
-                    dest="./data/cmp/curated/meter_usage")
+    load_data_files(path = "./data/cmp/raw/meter_usage",
+                    cols = ["account_number", "service_point_id", "meter_id", "interval_end_datetime", "meter_channel", "kwh"]),
+                    dest = "./data/cmp/curated/meter_usage")
 
 # CMP location data
 write_results(
-    load_data_files(path="./data/cmp/raw/locations"),
-                    dest="./data/cmp/curated/locations")
+    load_data_files(path = "./data/cmp/raw/locations"),
+                    dest = "./data/cmp/curated/locations")
 
 # CMP billing data
 write_results(
-    load_data_files(path="./data/cmp/raw/bills/parquet",
-                    type='parquet'),
-                    dest="./data/cmp/curated/bills")
+    load_data_files(path = "./data/cmp/raw/bills/parquet",
+                    type = 'parquet'),
+                    dest = "./data/cmp/curated/bills")
 
 # Ampion billing data
 write_results(
-    load_data_files(path="./data/ampion/raw/parquet", 
-                    type='parquet'), 
-                    dest="./data/ampion/curated")
+    load_data_files(path = "./data/ampion/raw/parquet", 
+                    type = 'parquet'), 
+                    dest = "./data/ampion/curated")
 
 
 # DATA MODELING (`/modeled/`)
