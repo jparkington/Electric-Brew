@@ -135,11 +135,13 @@ A detailed dimensional table that contains the breakdown of timestamps into indi
   
   - `week` (**int**): The week number of the year when the timestamp occurs, according to ISO standards.
   
-  - `week_in_year` (**int**): Duplicate of `week` for legacy support; represents the ISO week number within the year.
+  - `week_start` (**datetime**): The preceding Monday of the week in which the timestamp occurs.
   
   - `month` (**int**): The month number extracted from the timestamp.
   
   - `month_name` (**str**): The full name of the month extracted from the timestamp.
+
+  - `month_start` (**datetime**): The starting date of the month in which the timestamp occurs.
   
   - `quarter` (**int**): The quarter of the year to which the timestamp belongs.
   

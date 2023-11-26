@@ -48,9 +48,10 @@ def model_dim_datetimes(model: str = "./data/modeled/dim_datetimes"):
         df['hour']         = df['timestamp'].dt.hour
         df['date']         = df['timestamp'].dt.normalize()
         df['week']         = df['timestamp'].dt.isocalendar().week
-        df['week_in_year'] = df['timestamp'].dt.isocalendar().week
+        df['week_start']   = df['timestamp'].dt.to_period('W').apply(lambda r: r.start_time)
         df['month']        = df['timestamp'].dt.month
         df['month_name']   = df['timestamp'].dt.month_name()
+        df['month_start']  = df['timestamp'].dt.to_period('M').apply(lambda r: r.start_time)
         df['quarter']      = df['timestamp'].dt.quarter
         df['year']         = df['timestamp'].dt.year
 
