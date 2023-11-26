@@ -113,7 +113,6 @@ A consolidated view of billing data from Ampion, structured to provide easy acce
 - `price` (**float**): The adjusted price charged for energy supply and consumption, after applying renewable energy bill credits, representing the final cost to the customer.
 
 - `account_number` (**str**): A unique identifier originally assigned by CMP for each customer's account, facilitating billing and service interactions. It is a consistent key within `meter_usage`, `cmp_bills`, and `ampion_bills`.
-  
 
 ## `dim_datetimes`
 
