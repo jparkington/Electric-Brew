@@ -205,6 +205,7 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
         int_df['ampion_kwh_left'] = ampion_waterfall.groupby(['invoice_number_amp', 'kwh_delivered_amp'], group_keys = False) \
                                                     .apply(lambda g: (g['kwh_delivered_amp'].iloc[0] - g['kwh'].cumsum()).clip(lower = 0))
         int_df['ampion_kwh_used'] = np.minimum(int_df['kwh'], int_df['ampion_kwh_left']).clip(lower = 0)
+        int_df = int_df.apply(lambda col: col.fillna(0) if col.dtype.kind in 'biufc' else col)
 
         # Step 6: Compute cost metrics
         df = pd.DataFrame(index = int_df.index)
