@@ -1,6 +1,6 @@
-from curation import *
-from modeling import *
-from runtime  import connect_to_db
+from utils.curation import *
+from utils.modeling import *
+from utils.runtime  import connect_to_db
 
 '''
 ETL (Extract, Transform, Load) Script for Electric Brew Project

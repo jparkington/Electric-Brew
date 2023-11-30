@@ -1,4 +1,4 @@
-from curation         import write_results
+from utils.curation         import write_results
 from utils.dataframes import *
 
 import logging as lg
