@@ -170,6 +170,8 @@ A centralized dimensional table that aggregates detailed information specific to
 
   - `label` (**str**): A descriptive name for the location, used for easier categorization and reporting of the service area.
 
+  - `operational_area` (**str**): A succinct label for the series of operations that a particular location/meter is responsible for.
+
 ## `dim_bills`
 
 A comprehensive dimensional table that combines detailed billing information from both Central Maine Power (CMP) and Ampion. This table is pivotal for analyzing overall energy consumption, costs, and understanding the nuances of billing from different energy suppliers. It merges the structured data from CMP's diverse suppliers with the nuanced billing details of Ampion, including renewable energy credits and adjusted pricing.

@@ -16,5 +16,5 @@ dependencies:
   - pyarrow       # Curating data into `.parquet` structures with compression and logical partitioning
   - python-duckdb # In-process SQL OLAP database for direct querying and manipulation of Parquet files
   - seaborn       # Advanced plotting of linear regressions
-  - scikit-learn # For machine learning models, metrics, and preprocessing
+  - scikit-learn  # For machine learning models, metrics, and preprocessing
   - tabulate      # Clean Markdown-friendly table outputs of DataFrames
