@@ -86,7 +86,7 @@ def model_dim_meters(model: str = "./data/modeled/dim_meters"):
     try:
         # Step 1: Extract and join relevant columns
         df = pd.merge(meter_usage[['meter_id', 'service_point_id', 'account_number']].drop_duplicates(), 
-                      locations[['account_number', 'street', 'label']].drop_duplicates(), 
+                      locations[['account_number', 'street', 'label', 'operational_area']].drop_duplicates(), 
                       on  = 'account_number', 
                       how = 'left')
 
