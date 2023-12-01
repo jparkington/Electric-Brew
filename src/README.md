@@ -340,13 +340,13 @@ A `.parquet` file saved in the specified `modeled` directory containing the acco
 
 **Example Output**
 
-| id | meter_id   | service_point_id | account_number | street               | label          |
-|----|------------|------------------|----------------|----------------------|----------------|
-| 1  | L108605388 | 2300822246       | 30010320353    | 115 FOX ST UNIT 115  | Fox Street     |
-| 2  | L108558642 | 2300822209       | 30010320361    | 115 FOX ST UNIT 103  | Fox Street     |
-| 3  | L108557737 | 2300910019       | 30010601281    | 111 FOX ST UNIT 2    | Fox Street     |
-|... | ...        | ...              | ...            | ...                  | ...            |
-| 8  | L108607371 | 2300588897       | 35012790198    | 1 INDUSTRIAL WAY U10 | Industrial Way |
+| id | meter_id   | service_point_id | account_number | street               | label          | operational_area           |
+|----|------------|------------------|----------------|----------------------|----------------|----------------------------|
+| 1  | L108605388 | 2300822246       | 30010320353    | 115 FOX ST UNIT 115  | Fox Street     | Boiler Pump/Patio/Forklift | 
+| 2  | L108558642 | 2300822209       | 30010320361    | 115 FOX ST UNIT 103  | Fox Street     | Brewpump                   |
+| 3  | L108557737 | 2300910019       | 30010601281    | 111 FOX ST UNIT 2    | Fox Street     | Front of House             |
+|... | ...        | ...              | ...            | ...                  | ...            | ...                        |
+| 8  | L108607371 | 2300588897       | 35012790198    | 1 INDUSTRIAL WAY U10 | Industrial Way | TBD                        |
 
 ### `model_dim_bills`
 

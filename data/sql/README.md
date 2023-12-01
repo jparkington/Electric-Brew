@@ -17,16 +17,16 @@ DuckDB comes pre-installed within the `electric-brew` Conda environment, ensurin
 
 ## Accessing the Database
 
-You can interact with the `electric_brew.db` using various tools and programming languages. Here's a quick Python example for connecting to and querying the database with `pandas`:
+You can interact with the `electric_brew.db` using various tools and programming languages. Here's a quick Python example for connecting to and querying the database with the dedicated function in `utils.runtime`:
 
 ```python
-import duckdb
+from utils.runtime import connect_to_db
 
-# Connect to the DuckDB database (or create it if it doesn't exist)
-conn = duckdb.connect('data/sql/electric_brew.db')
+# Use a variable (`electric_brew`) to house the connection to the database
+electric_brew = connect_to_db()
 
 # Directly run a SQL query and read the result into a DataFrame
-df_meter_usage = conn.execute("SELECT * FROM meter_usage").fetchdf()
+df_meter_usage = electric_brew.query("SELECT * FROM meter_usage").to_df()
 
 # Display the first few rows of the DataFrame
 print(df_meter_usage.head())
