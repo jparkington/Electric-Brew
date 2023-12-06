@@ -73,7 +73,7 @@ plt.xticks(rotation=45)
 plt.title('Total kWh Usage by Operational Area (Meter) Over Time')
 plt.xlabel('Year-Month')
 plt.ylabel('Total kWh Usage')
-plt.legend(title='Operational Area')
+plt.legend(title='Operational Area', title_fontproperties = {'weight' : 'bold', 'size' : 10})
 plt.tight_layout()
 plt.show()
 
