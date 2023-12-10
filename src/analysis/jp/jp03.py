@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import pandas  as pd
 import seaborn as sns
 
-from analysis.jp.flat import prepare_data
+from analysis.jp.flat import prepared_data
 from utils.runtime    import find_project_root
 
-def eda3(df: pd.DataFrame):
+def eda3(df: pd.DataFrame = prepared_data):
     '''
     Plots a scatter plot to visualize the average cost by period over time.
 
@@ -44,5 +44,4 @@ def eda3(df: pd.DataFrame):
 
 if __name__ == "__main__":
     
-    df = prepare_data()
-    eda3(df)
+    eda3()

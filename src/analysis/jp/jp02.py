@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import pandas  as pd
 import seaborn as sns
 
-from analysis.jp.flat import prepare_data
+from analysis.jp.flat import prepared_data
 from utils.runtime    import find_project_root
 
-def eda2(df: pd.DataFrame):
+def eda2(df: pd.DataFrame = prepared_data):
     '''
     Plots a heatmap to visualize the hourly variation of kWh usage by month.
 
@@ -51,5 +51,4 @@ def eda2(df: pd.DataFrame):
 
 if __name__ == "__main__":
     
-    df = prepare_data()
-    eda2(df)
+    eda2()

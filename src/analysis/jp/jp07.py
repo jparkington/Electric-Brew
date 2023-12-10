@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from analysis.jp.flat      import prepare_data
+from analysis.jp.flat      import prepared_data
 from analysis.jp.jp04      import remove_anomalies
 from analysis.jp.jp06      import lasso
 from sklearn.cluster       import KMeans

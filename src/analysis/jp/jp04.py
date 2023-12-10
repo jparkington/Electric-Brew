@@ -1,18 +1,17 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from analysis.jp.flat import prepare_data
+from analysis.jp.flat import prepared_data
 from sklearn.ensemble import IsolationForest
 from utils.runtime    import find_project_root
 
-def remove_anomalies(df: pd.DataFrame) -> pd.DataFrame:
+def remove_anomalies(df: pd.DataFrame = prepared_data) -> pd.DataFrame:
     '''
-    Applies anomaly detection on the 'total_cost' column using Isolation Forest and visualizes the results.
+    Applies anomaly detection on the 'total_cost' column using Isolation Forest.
 
     Methodology:
         1. Fit an Isolation Forest model on the 'total_cost' column to detect anomalies.
         2. Filter the dataframe to remove detected anomalies.
-        3. Visualize the data before and after anomaly detection using scatter plots.
 
     Data Science Concepts:
         • Isolation Forest:
@@ -26,10 +25,6 @@ def remove_anomalies(df: pd.DataFrame) -> pd.DataFrame:
 
     Returns:
         pd.DataFrame: The dataframe after removing anomalies.
-
-    Produces:
-        Two scatter plots saved as a PNG file and displayed on the screen, showing the data before and after 
-        anomaly detection.
     '''
 
     # 1: Fitting the Isolation Forest model
@@ -37,11 +32,25 @@ def remove_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     outliers = isolation_forest.fit_predict(df[['total_cost']])
 
     # 2: Filtering the dataframe to remove detected anomalies
-    dfo = df[outliers == 1]
+    return df[outliers == 1]
 
-    # Data for plotting
+without_anomalies = remove_anomalies()
+
+def plot_anomalies(df  : pd.DataFrame = prepared_data,
+                   dfa : pd.DataFrame = without_anomalies):
+    '''
+    Visualizes the data before and after anomaly detection using scatter plots.
+
+    Parameters:
+        df  (pd.DataFrame): The original dataframe before anomaly detection.
+        dfa (pd.DataFrame): The dataframe after anomaly detection and filtering.
+
+    Produces:
+        Two scatter plots saved as a PNG file and displayed on the screen, showing the data before and after anomaly detection.
+    '''
+
     data_for_plotting = {'Before' : df, 
-                         'After'  : dfo}
+                         'After'  : dfa}
 
     # 3: Visualizing the data before and after anomaly detection
     _, axs = plt.subplots(2, 1, figsize = (15, 10), sharex = True, sharey = True)
@@ -70,9 +79,6 @@ def remove_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     plt.savefig(file_path)
     plt.show()
 
-    return dfo
-
 if __name__ == "__main__":
     
-    df = prepare_data()
-    remove_anomalies(df)
+    plot_anomalies()

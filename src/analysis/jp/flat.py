@@ -28,6 +28,4 @@ def prepare_data() -> pd.DataFrame:
 
     return df
 
-if __name__ == "__main__":
-
-    df = prepare_data()
+prepared_data = prepare_data()

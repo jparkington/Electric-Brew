@@ -3,11 +3,10 @@ import numpy   as np
 import pandas  as pd
 import seaborn as sns
 
-from analysis.jp.flat import prepare_data
-from analysis.jp.jp04 import remove_anomalies
+from analysis.jp.jp04 import without_anomalies
 from utils.runtime    import find_project_root
 
-def multicollinearity(df: pd.DataFrame):
+def multicollinearity(df: pd.DataFrame = without_anomalies):
     '''
     Plots a heatmap of the correlation matrix for numeric columns, focusing on high correlations.
 
@@ -58,6 +57,4 @@ def multicollinearity(df: pd.DataFrame):
 
 if __name__ == "__main__":
     
-    df  = prepare_data()
-    dfa = remove_anomalies(df)
-    multicollinearity(dfa)
+    multicollinearity()

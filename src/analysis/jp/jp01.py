@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from analysis.jp.flat import prepare_data
+from analysis.jp.flat import prepared_data
 from utils.runtime    import find_project_root
 
-def eda1(df: pd.DataFrame):
+def eda1(df: pd.DataFrame = prepared_data):
     '''
     Plots a scatter chart to visualize the relationship between kWh and Total Cost.
 
@@ -42,5 +42,4 @@ def eda1(df: pd.DataFrame):
 
 if __name__ == "__main__":
 
-    df = prepare_data()
-    eda1(df)
+    eda1()

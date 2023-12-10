@@ -4,8 +4,7 @@ import pandas  as pd
 import seaborn as sns
 import re
 
-from analysis.jp.flat          import prepare_data
-from analysis.jp.jp04          import remove_anomalies
+from analysis.jp.jp04          import without_anomalies
 from sklearn.compose           import ColumnTransformer
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model      import LassoCV
@@ -15,7 +14,7 @@ from sklearn.preprocessing     import OneHotEncoder, StandardScaler
 from typing                    import List, Tuple
 from utils.runtime             import find_project_root
 
-def lasso(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series, List[str]]:
+def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series, List[str]]:
     '''
     Applies LASSO feature selection to determine important features for predicting 'total_cost'.
 
@@ -106,6 +105,4 @@ def lasso(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Serie
 
 if __name__ == "__main__":
     
-    df  = prepare_data()
-    dfa = remove_anomalies(df)
-    lasso(dfa)
+    lasso()
