@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 from analysis.jp.flat      import prepare_data
 from analysis.jp.jp04      import remove_anomalies
@@ -7,7 +8,7 @@ from sklearn.cluster       import KMeans
 from sklearn.decomposition import PCA
 from utils.runtime         import find_project_root
 
-def kmeans(X):
+def kmeans(X: np.ndarray):
     '''
     Applies K-Means clustering and PCA (Principal Component Analysis) on the dataset for visualization.
 
@@ -27,7 +28,7 @@ def kmeans(X):
               (uncorrelated), with the most important principal components carrying most of the variability in the data.
 
     Parameters:
-        X (pd.DataFrame): The transformed training feature set from LASSO feature selection.
+        X (np.ndarray): The transformed training feature set from LASSO feature selection.
 
     Produces:
         A scatter plot saved as a PNG file and displayed on the screen, showing KMeans clusters in reduced dimensional space.
@@ -61,5 +62,5 @@ if __name__ == "__main__":
     
     df  = prepare_data()
     dfa = remove_anomalies(df)
-    X, _, _, _ = lasso(dfa)
+    X, _, _, _, _ = lasso(dfa)
     kmeans(X)

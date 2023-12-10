@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy  as np
+import pandas as pd
 
 from analysis.jp.flat        import prepare_data
 from analysis.jp.jp04        import remove_anomalies
@@ -8,7 +10,8 @@ from sklearn.metrics         import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from utils.runtime           import find_project_root
 
-def random_forest(X, y):
+def random_forest(X : np.ndarray, 
+                  y : pd.Series) -> RandomForestRegressor:
     '''
     Fits a Random Forest Regressor model using Randomized Search CV for hyperparameter tuning and visualizes predictions.
 
@@ -27,8 +30,8 @@ def random_forest(X, y):
               grid search or randomized search.
 
     Parameters:
-        X (pd.DataFrame) : The transformed training feature set from LASSO feature selection.
-        y (pd.Series)    : The training target variable.
+        X (np.ndarray) : The transformed training feature set from LASSO feature selection.
+        y (pd.Series)  : The training target variable.
 
     Returns:
         RandomForestRegressor: The best-fitted Random Forest model from Randomized Search CV.
@@ -102,5 +105,5 @@ if __name__ == "__main__":
     
     df  = prepare_data()
     dfa = remove_anomalies(df)
-    X, _, y, _ = lasso(dfa)
+    X, _, y, _, _ = lasso(dfa)
     random_forest(X, y)

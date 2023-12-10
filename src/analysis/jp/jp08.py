@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy  as np
+import pandas as pd
 
 from analysis.jp.flat     import prepare_data
 from analysis.jp.jp04     import remove_anomalies
@@ -7,7 +9,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics      import mean_squared_error, r2_score
 from utils.runtime        import find_project_root
 
-def slr(X_train, X_test, y_train, y_test):
+def slr(X_train : np.ndarray, 
+        X_test  : np.ndarray, 
+        y_train : pd.Series, 
+        y_test  : pd.Series):
     '''
     Fits a Linear Regression model and visualizes predictions against actual values.
 
@@ -25,10 +30,10 @@ def slr(X_train, X_test, y_train, y_test):
             - The average squared difference between the estimated values and the actual value.
 
     Parameters:
-        X_train (pd.DataFrame) : The transformed training feature set from LASSO feature selection.
-        X_test  (pd.DataFrame) : The transformed test feature set from LASSO feature selection.
-        y_train (pd.Series)    : The training target variable.
-        y_test  (pd.Series)    : The test target variable.
+        X_train (np.ndarray) : The transformed training feature set from LASSO feature selection.
+        X_test  (np.ndarray) : The transformed test feature set from LASSO feature selection.
+        y_train (pd.Series)  : The training target variable.
+        y_test  (pd.Series)  : The test target variable.
 
     Produces:
         A scatter plot saved as a PNG file and displayed on the screen, showing the comparison between predicted and actual values.
@@ -74,4 +79,5 @@ if __name__ == "__main__":
     
     df  = prepare_data()
     dfa = remove_anomalies(df)
-    slr(*lasso(dfa))
+    X_train, X_test, y_train, y_test, _ = lasso(dfa)
+    slr(X_train, X_test, y_train, y_test)

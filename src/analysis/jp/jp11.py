@@ -1,14 +1,18 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import random
 
 from analysis.jp.flat import prepare_data
 from analysis.jp.jp04 import remove_anomalies
 from analysis.jp.jp06 import lasso
 from analysis.jp.jp09 import random_forest
+from sklearn.ensemble import RandomForestRegressor
 from scipy.optimize   import minimize
+from typing           import List
 from utils.runtime    import find_project_root
 
-def slsqp(X, best):
+def slsqp(X    : np.ndarray, 
+          best : RandomForestRegressor) -> List[np.ndarray]:
     '''
     Performs optimization on feature sets and visualizes the distribution of predicted costs for these optimized sets.
 
@@ -25,8 +29,12 @@ def slsqp(X, best):
             - We use SLSQP to constrain one specific feature (`num__kwh_delivered`) while allowing other features to vary.
 
     Parameters:
-        X    (pd.DataFrame)          : The transformed training feature set from LASSO feature selection.
+        X    (np.ndarray)            : The transformed training feature set from LASSO feature selection.
         best (RandomForestRegressor) : The best-fitted Random Forest model from Randomized Search CV.
+
+    Returns:
+        List[np.ndarray]: A list of optimized feature sets, each represented as an array of feature values. 
+                          These sets are those that meet the specified cost bounds after optimization.
 
     Produces:
         A scatter plot saved as a PNG file and displayed on the screen, showing the distribution of predicted costs.
@@ -78,10 +86,12 @@ def slsqp(X, best):
     plt.savefig(file_path)
     plt.show()
 
+    return optimized_sets
+
 if __name__ == "__main__":
     
     df  = prepare_data()
     dfa = remove_anomalies(df)
-    X, _, y, _ = lasso(dfa)
+    X, _, y, _, _ = lasso(dfa)
     best = random_forest(X, y)
     slsqp(X, best)

@@ -1,15 +1,19 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import numpy  as np
+import pandas as pd
 
 from analysis.jp.flat        import prepare_data
 from analysis.jp.jp04        import remove_anomalies
 from analysis.jp.jp06        import lasso
 from analysis.jp.jp09        import random_forest
+from sklearn.ensemble        import RandomForestRegressor
 from sklearn.linear_model    import LinearRegression
 from sklearn.model_selection import cross_val_score
 from utils.runtime           import find_project_root
 
-def cross_validation(X, y, best):
+def cross_validation(X    : np.ndarray, 
+                     y    : pd.Series, 
+                     best : RandomForestRegressor):
     '''
     Compares the cross-validation R² scores of the Random Forest and Linear Regression models.
 
@@ -18,7 +22,7 @@ def cross_validation(X, y, best):
         2. Visualize the R² scores for each fold in a bar chart.
 
     Parameters:
-        X    (pd.DataFrame)          : The transformed training feature set from LASSO feature selection.
+        X    (pd.np.ndarray)         : The transformed training feature set from LASSO feature selection.
         y    (pd.Series)             : The training target variable.
         best (RandomForestRegressor) : The best-fitted Random Forest model from Randomized Search CV.
 
@@ -70,6 +74,6 @@ if __name__ == "__main__":
     
     df  = prepare_data()
     dfa = remove_anomalies(df)
-    X, _, y, _ = lasso(dfa)
+    X, _, y, _, _ = lasso(dfa)
     best = random_forest(X, y)
     cross_validation(X, y, best)

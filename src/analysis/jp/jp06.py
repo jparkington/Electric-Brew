@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy   as np
 import pandas  as pd
 import seaborn as sns
 import re
@@ -11,9 +12,10 @@ from sklearn.linear_model      import LassoCV
 from sklearn.model_selection   import train_test_split
 from sklearn.pipeline          import Pipeline
 from sklearn.preprocessing     import OneHotEncoder, StandardScaler
+from typing                    import List, Tuple
 from utils.runtime             import find_project_root
 
-def lasso(df: pd.DataFrame):
+def lasso(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series, List[str]]:
     '''
     Applies LASSO feature selection to determine important features for predicting 'total_cost'.
 
@@ -32,10 +34,11 @@ def lasso(df: pd.DataFrame):
         df (pd.DataFrame): The dataframe returned from the `remove_anomalies` function.
 
     Returns:
-        X_train_lasso (pd.DataFrame) : The transformed training feature set.
-        X_test_lasso  (pd.DataFrame) : The transformed test feature set.
-        y_train       (pd.Series)    : The training target variable.
-        y_test        (pd.Series)    : The test target variable.
+        X_train_lasso   (np.ndarray) : The transformed training feature set.
+        X_test_lasso    (np.ndarray) : The transformed test feature set.
+        y_train         (pd.Series)  : The training target variable.
+        y_test          (pd.Series)  : The test target variable.
+        shortened_names (List[str])  : A list of feature names after feature selection and transformation by the LASSO model.
 
     Produces:
         A bar plot saved as a PNG file and displayed on the screen, showing the importance of each feature determined by LASSO.
@@ -65,7 +68,7 @@ def lasso(df: pd.DataFrame):
                                                                            random_state = 0)))])
 
     # 3: Splitting the data, fitting the model, and selecting features
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state = 0)
     model.fit(X_train, y_train)
 
     # Transforming data with the selected features
@@ -99,7 +102,7 @@ def lasso(df: pd.DataFrame):
     plt.savefig(file_path)
     plt.show()
 
-    return X_train_lasso, X_test_lasso, y_train, y_test
+    return X_train_lasso, X_test_lasso, y_train, y_test, shortened_names
 
 if __name__ == "__main__":
     
