@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from flattened_data import df
-from utils.runtime  import find_project_root
+from analysis.jp.flat import prepare_data
+from utils.runtime    import find_project_root
 
-def plot_kwh_vs_total_cost(df: pd.DataFrame):
+def eda1(df: pd.DataFrame):
     '''
     Plots a scatter chart to visualize the relationship between kWh and Total Cost.
 
@@ -29,7 +29,7 @@ def plot_kwh_vs_total_cost(df: pd.DataFrame):
     # 2: Adding a color bar to represent 'total_cost'
     plt.colorbar(label = 'Total Cost')
 
-    # Setting labels and title for the plot
+    # Final plot settings
     plt.xlabel('kWh')
     plt.ylabel('Total Cost')
     plt.title('$01$: kWh vs. Total Cost')
@@ -41,6 +41,6 @@ def plot_kwh_vs_total_cost(df: pd.DataFrame):
     plt.show()
 
 if __name__ == "__main__":
-    
-    # Plotting 'kwh' vs 'total_cost'
-    plot_kwh_vs_total_cost(df)
+
+    df = prepare_data()
+    eda1(df)
