@@ -31,6 +31,12 @@ def lasso(df: pd.DataFrame):
     Parameters:
         df (pd.DataFrame): The dataframe returned from the `remove_anomalies` function.
 
+    Returns:
+        X_train_lasso (pd.DataFrame) : The transformed training feature set.
+        X_test_lasso  (pd.DataFrame) : The transformed test feature set.
+        y_train       (pd.Series)    : The training target variable.
+        y_test        (pd.Series)    : The test target variable.
+
     Produces:
         A bar plot saved as a PNG file and displayed on the screen, showing the importance of each feature determined by LASSO.
     '''
@@ -62,13 +68,17 @@ def lasso(df: pd.DataFrame):
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     model.fit(X_train, y_train)
 
+    # Transforming data with the selected features
+    X_train_lasso = model.transform(X_train)
+    X_test_lasso  = model.transform(X_test)
+
     # Accessing the fitted LassoCV model, getting its feature names, and applying the SelectFromModel mask
     lasso_cv        = model.named_steps['feature_selector'].estimator_
     feature_names   = model.named_steps['preprocessor'].get_feature_names_out()
     selection_mask  = model.named_steps['feature_selector'].get_support()
     shortened_names = [re.split('[: ]', name)[0] for name in feature_names[selection_mask]]
 
-    # Creating a Series for easy plotting
+    # Creating a pandas.Series for easy plotting
     feature_importance = pd.Series(data  = lasso_cv.coef_[selection_mask], 
                                    index = shortened_names).sort_values(ascending = False)
 
@@ -88,6 +98,8 @@ def lasso(df: pd.DataFrame):
     file_path = find_project_root('./fig/analysis/jp/06 - Feature Selection for Determining Total Cost.png')
     plt.savefig(file_path)
     plt.show()
+
+    return X_train_lasso, X_test_lasso, y_train, y_test
 
 if __name__ == "__main__":
     
