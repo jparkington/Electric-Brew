@@ -22,7 +22,6 @@ def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray,
         1. Preprocess the data by dropping irrelevant columns and handling categorical and numerical features.
         2. Split the data into training and test sets.
         3. Fit a LASSO model to the training data.
-        4. Visualize the feature importance determined by LASSO.
 
     Data Science Concepts:
         • LASSO (Least Absolute Shrinkage and Selection Operator):
@@ -38,6 +37,7 @@ def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray,
         y_train         (pd.Series)  : The training target variable.
         y_test          (pd.Series)  : The test target variable.
         shortened_names (List[str])  : A list of feature names after feature selection and transformation by the LASSO model.
+        ft_importance   (pd.Series)  : Maps feature names to their LASSO coefficients, indicating their relative importance.
 
     Produces:
         A bar plot saved as a PNG file and displayed on the screen, showing the importance of each feature determined by LASSO.
@@ -70,10 +70,6 @@ def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray,
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state = 0)
     model.fit(X_train, y_train)
 
-    # Transforming data with the selected features
-    X_train_lasso = model.transform(X_train)
-    X_test_lasso  = model.transform(X_test)
-
     # Accessing the fitted LassoCV model, getting its feature names, and applying the SelectFromModel mask
     lasso_cv        = model.named_steps['feature_selector'].estimator_
     feature_names   = model.named_steps['preprocessor'].get_feature_names_out()
@@ -81,13 +77,24 @@ def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray,
     shortened_names = [re.split('[: ]', name)[0] for name in feature_names[selection_mask]]
 
     # Creating a pandas.Series for easy plotting
-    feature_importance = pd.Series(data  = lasso_cv.coef_[selection_mask], 
-                                   index = shortened_names).sort_values(ascending = False)
+    ft_importance = pd.Series(data  = lasso_cv.coef_[selection_mask], 
+                              index = shortened_names).sort_values(ascending = False)
+    
+    return model.transform(X_train), model.transform(X_test), y_train, y_test, shortened_names, ft_importance
 
-    # 4: Barplot visualization
-    sns.barplot(x       = feature_importance, 
-                y       = feature_importance.index, 
-                hue     = feature_importance, 
+X_train_lasso, X_test_lasso, y_train, y_test, ft_names, ft_importance = lasso()
+
+def plot_lasso(ft_importance: pd.Series = ft_importance):
+    '''
+    Visualizes the feature importance determined by LASSO.
+
+    Parameters:
+        ft_importance (pd.Series): Maps feature names to their LASSO coefficients, indicating their relative importance.
+    '''
+
+    sns.barplot(x       = ft_importance, 
+                y       = ft_importance.index, 
+                hue     = ft_importance, 
                 legend  = False,
                 palette = 'twilight')
 
@@ -101,8 +108,6 @@ def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray,
     plt.savefig(file_path)
     plt.show()
 
-    return X_train_lasso, X_test_lasso, y_train, y_test, shortened_names
-
 if __name__ == "__main__":
     
-    lasso()
+    plot_lasso()

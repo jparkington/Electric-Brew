@@ -24,7 +24,7 @@ def remove_anomalies(df: pd.DataFrame = prepared_data) -> pd.DataFrame:
         df (pd.DataFrame): The dataframe containing the 'total_cost' column.
 
     Returns:
-        pd.DataFrame: The dataframe after removing anomalies.
+        pd.DataFrame: The dataframe after anomaly detection and filtering.
     '''
 
     # 1: Fitting the Isolation Forest model
@@ -52,7 +52,7 @@ def plot_anomalies(df  : pd.DataFrame = prepared_data,
     data_for_plotting = {'Before' : df, 
                          'After'  : dfa}
 
-    # 3: Visualizing the data before and after anomaly detection
+    # Visualizing the data before and after anomaly detection
     _, axs = plt.subplots(2, 1, figsize = (15, 10), sharex = True, sharey = True)
 
     # Loop through data and plot

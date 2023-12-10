@@ -2,17 +2,15 @@ import matplotlib.pyplot as plt
 import numpy  as np
 import pandas as pd
 
-from analysis.jp.flat     import prepared_data
-from analysis.jp.jp04     import remove_anomalies
-from analysis.jp.jp06     import lasso
+from analysis.jp.jp06     import X_train_lasso, X_test_lasso, y_train, y_test
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics      import mean_squared_error, r2_score
 from utils.runtime        import find_project_root
 
-def slr(X_train : np.ndarray, 
-        X_test  : np.ndarray, 
-        y_train : pd.Series, 
-        y_test  : pd.Series):
+def slr(X_train : np.ndarray = X_train_lasso, 
+        X_test  : np.ndarray = X_test_lasso, 
+        y_train : pd.Series  = y_train, 
+        y_test  : pd.Series  = y_test):
     '''
     Fits a Linear Regression model and visualizes predictions against actual values.
 
@@ -77,7 +75,4 @@ def slr(X_train : np.ndarray,
 
 if __name__ == "__main__":
     
-    df  = prepare_data()
-    dfa = remove_anomalies(df)
-    X_train, X_test, y_train, y_test, _ = lasso(dfa)
-    slr(X_train, X_test, y_train, y_test)
+    slr()

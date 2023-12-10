@@ -1,14 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from analysis.jp.flat      import prepared_data
-from analysis.jp.jp04      import remove_anomalies
-from analysis.jp.jp06      import lasso
+from analysis.jp.jp06      import X_train_lasso
 from sklearn.cluster       import KMeans
 from sklearn.decomposition import PCA
 from utils.runtime         import find_project_root
 
-def kmeans(X: np.ndarray):
+def kmeans(X: np.ndarray = X_train_lasso):
     '''
     Applies K-Means clustering and PCA (Principal Component Analysis) on the dataset for visualization.
 
@@ -60,7 +58,4 @@ def kmeans(X: np.ndarray):
 
 if __name__ == "__main__":
     
-    df  = prepare_data()
-    dfa = remove_anomalies(df)
-    X, _, _, _, _ = lasso(dfa)
-    kmeans(X)
+    kmeans()
