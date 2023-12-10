@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
+import numpy   as np
+import pandas  as pd
 import seaborn as sns
 
 from analysis.jp.flat import prepare_data
 from analysis.jp.jp04 import remove_anomalies
 from utils.runtime    import find_project_root
 
-def plot_correlation_heatmap(df: pd.DataFrame):
+def multicollinearity(df: pd.DataFrame):
     '''
     Plots a heatmap of the correlation matrix for numeric columns, focusing on high correlations.
 
@@ -60,4 +60,4 @@ if __name__ == "__main__":
     
     df  = prepare_data()
     dfa = remove_anomalies(df)
-    plot_correlation_heatmap(dfa)
+    multicollinearity(dfa)
