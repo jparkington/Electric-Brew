@@ -31,7 +31,7 @@ def eda3(df: pd.DataFrame):
                         linewidth = 0)
 
     # Adjusting the legend and plot settings
-    plt.legend(title = 'Period', title_fontproperties = {'weight': 'bold', 'size': 10})
+    plt.legend(title = 'Period', title_fontproperties = {'weight' : 'bold',  'size' : 10})
     plt.xlabel('Date')
     plt.ylabel('Average Cost')
     plt.title('$03$: Average Cost by Period Over Time')

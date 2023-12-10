@@ -30,4 +30,4 @@ def prepare_data() -> pd.DataFrame:
 
 if __name__ == "__main__":
 
-    df: pd.DataFrame = prepare_data()
+    df = prepare_data()

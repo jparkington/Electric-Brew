@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics      import mean_squared_error, r2_score
 from utils.runtime        import find_project_root
 
-def slr(X_train_lasso, X_test_lasso, y_train, y_test):
+def slr(X_train, X_test, y_train, y_test):
     '''
     Fits a Linear Regression model and visualizes predictions against actual values.
 
@@ -25,10 +25,10 @@ def slr(X_train_lasso, X_test_lasso, y_train, y_test):
             - The average squared difference between the estimated values and the actual value.
 
     Parameters:
-        X_train_lasso (pd.DataFrame) : The transformed training feature set from LASSO feature selection.
-        X_test_lasso  (pd.DataFrame) : The transformed test feature set from LASSO feature selection.
-        y_train       (pd.Series)    : The training target variable.
-        y_test        (pd.Series)    : The test target variable.
+        X_train (pd.DataFrame) : The transformed training feature set from LASSO feature selection.
+        X_test  (pd.DataFrame) : The transformed test feature set from LASSO feature selection.
+        y_train (pd.Series)    : The training target variable.
+        y_test  (pd.Series)    : The test target variable.
 
     Produces:
         A scatter plot saved as a PNG file and displayed on the screen, showing the comparison between predicted and actual values.
@@ -36,11 +36,11 @@ def slr(X_train_lasso, X_test_lasso, y_train, y_test):
 
     # 1: Fitting the Linear Regression model
     linear_regression = LinearRegression()
-    linear_regression.fit(X_train_lasso, y_train)
-    y_pred = linear_regression.predict(X_test_lasso)
+    linear_regression.fit(X_train, y_train)
+    y_pred = linear_regression.predict(X_test)
 
     # 2: Plotting perfect prediction line
-    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='#545B63', linestyle='--')
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color = '#545B63', linestyle = '--')
 
     # 3: Plotting the scatter plot for actual vs predicted values
     plt.scatter(x = y_test, 
@@ -63,7 +63,7 @@ def slr(X_train_lasso, X_test_lasso, y_train, y_test):
     plt.xlabel('Total Cost')
     plt.ylabel('Predicted Values')
     plt.title('$08$: Linear Regression - Predictions vs. Actual Values')
-    plt.tight_layout(pad=2.0)
+    plt.tight_layout(pad = 2.0)
 
     # Saving the plot to a file
     file_path = find_project_root('./fig/analysis/jp/08 - Linear Regression Predictions vs Actual Values.png')
@@ -74,5 +74,4 @@ if __name__ == "__main__":
     
     df  = prepare_data()
     dfa = remove_anomalies(df)
-    X_train_lasso, X_test_lasso, y_train, y_test = lasso(dfa)
-    slr(X_train_lasso, X_test_lasso, y_train, y_test)
+    slr(*lasso(dfa))

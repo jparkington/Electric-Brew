@@ -1,0 +1,66 @@
+import matplotlib.pyplot as plt
+import pandas  as pd
+import seaborn as sns
+
+from analysis.jp.flat import prepare_data
+from analysis.jp.jp04 import remove_anomalies
+from analysis.jp.jp06 import lasso
+from analysis.jp.jp09 import random_forest
+from utils.runtime    import find_project_root
+
+## Need a way to grab `shortened_names` for this last chart
+## All scripts need typing hints for arguments and returns
+
+def percent_changes(X, best):
+    '''
+    Visualizes the percentage changes in categorical values after optimization.
+
+    Methodology:
+        1. Convert the optimized feature sets into a DataFrame.
+        2. Calculate the mean of each feature for both original and optimized sets.
+        3. Compute and visualize the percentage changes.
+
+    Parameters:
+        X_train_lasso (pd.DataFrame): The transformed training feature set from LASSO feature selection.
+        best_rf (RandomForestRegressor): The best-fitted Random Forest model from Randomized Search CV.
+
+    Produces:
+        A bar chart saved as a PNG file and displayed on the screen, showing the percent change in categorical features after optimization.
+    '''
+
+    # Convert the list of feature arrays into a DataFrame and calculate the means
+    optimized_means = pd.DataFrame(optimized_sets, columns = shortened_names).mean()
+    original_means  = pd.DataFrame(X, columns = shortened_names).mean()
+
+    # Compute and round the percentage changes
+    pct_changes = ((optimized_means - original_means) / original_means).sort_values(ascending=False)
+    pct_changes = pct_changes[~pct_changes.index.str.startswith('num_')]
+
+    # Barplot visualization
+    sns.barplot(x=pct_changes, 
+                y=pct_changes.index, 
+                hue=pct_changes, 
+                legend=False,
+                palette='twilight')
+
+    plt.xlabel('Percentage Change (%)')
+    plt.ylabel('Feature')
+    plt.title('$12$: Percent Change in Categorical Values After Optimization')
+    plt.tight_layout(pad=2.0)
+
+    # Saving the plot to a file
+    file_path = find_project_root('./fig/analysis/jp/12 - Percent Change in Categorical Features After Optimization.png')
+    plt.savefig(file_path)
+    plt.show()
+
+if __name__ == "__main__":
+    
+    df = prepare_data()
+    dfa = remove_anomalies(df)
+    X, _, y, _ = lasso(dfa)
+    best = random_forest(X, y)
+    percent_changes(X, best)
+
+
+    # ptimized_sets, shortened_names = optimize_feature_sets(X_train_lasso, best_rf)
+    # X_train_dense = X_train_lasso.toarray()

@@ -7,7 +7,7 @@ from sklearn.cluster       import KMeans
 from sklearn.decomposition import PCA
 from utils.runtime         import find_project_root
 
-def kmeans(X_train_lasso):
+def kmeans(X):
     '''
     Applies K-Means clustering and PCA (Principal Component Analysis) on the dataset for visualization.
 
@@ -27,25 +27,25 @@ def kmeans(X_train_lasso):
               (uncorrelated), with the most important principal components carrying most of the variability in the data.
 
     Parameters:
-        X_train_lasso (pd.DataFrame): The transformed training feature set from LASSO feature selection.
+        X (pd.DataFrame): The transformed training feature set from LASSO feature selection.
 
     Produces:
         A scatter plot saved as a PNG file and displayed on the screen, showing KMeans clusters in reduced dimensional space.
     '''
 
     # 1: Applying K-Means clustering
-    kmeans = KMeans(n_init = 'auto', random_state = 0)
-    clusters = kmeans.fit_predict(X_train_lasso)
+    kmeans   = KMeans(n_init = 'auto', random_state = 0)
+    clusters = kmeans.fit_predict(X)
 
     # 2: Applying PCA for dimensionality reduction
-    pca = PCA(n_components = 2)
-    reduced = pca.fit_transform(X_train_lasso.toarray())
+    pca     = PCA(n_components = 2)
+    reduced = pca.fit_transform(X.toarray())
 
     # 3: Visualizing the clusters in 2D
     plt.scatter(reduced[:, 0], 
                 reduced[:, 1], 
-                c=clusters, 
-                cmap='viridis')
+                c    = clusters, 
+                cmap = 'viridis')
 
     plt.xlabel('PCA Component 1')
     plt.ylabel('PCA Component 2')
@@ -61,5 +61,5 @@ if __name__ == "__main__":
     
     df  = prepare_data()
     dfa = remove_anomalies(df)
-    X_train_lasso, _, _, _ = lasso(dfa)
-    kmeans(X_train_lasso)
+    X, _, _, _ = lasso(dfa)
+    kmeans(X)
