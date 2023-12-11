@@ -60,6 +60,35 @@ eda2:
 	@echo "Generating 'Scatter Plot of kWh Usage Over Time Colored by Location'."
 	@conda run -n $(ENV_NAME) python -B src/eda/eda_2_kwh_by_location.py
 
+
+# -----------------------------------------------------------------------------
+# Energy Usage Analysis
+# -----------------------------------------------------------------------------
+
+nf01:
+	@echo "Generating Visualization of Total Energy Usage at Austin Street Brewery..."
+	@conda run -n $(ENV_NAME) python -B src/analysis/nf/energy_aggregated_usage.py
+
+nf02:
+	@echo "Creating Visualization of Energy Usage by Time Interval at Austin Street Brewery..."
+	@conda run -n $(ENV_NAME) python -B src/analysis/nf/energy_usage_time_intervals.py
+
+nf03:
+	@echo "Producing Energy Usage Breakdown by Generation Type (Solar vs. Conventional)..."
+	@conda run -n $(ENV_NAME) python -B src/analysis/nf/energy_supplier.py
+
+nf04:
+	@echo "Visualizing Austin Street Brewery's Energy Costs Over Time..."
+	@conda run -n $(ENV_NAME) python -B src/analysis/nf/energy_cost.py
+
+nf05:
+	@echo "Generating Solar Power Cost Projections for Austin Street Brewery..."
+	@conda run -n $(ENV_NAME) python -B src/analysis/nf/solar_projections.py
+
+nf-all: nf01 nf02 nf03 nf04 nf05
+	@echo "All scripts for 'Energy Usage Analysis' executed."
+
+
 # -----------------------------------------------------------------------------
 # Peak Hour & Supplier Modeling
 # -----------------------------------------------------------------------------
@@ -114,3 +143,11 @@ jp12:
 
 jp-all: jp01 jp02 jp03 jp04 jp05 jp06 jp07 jp08 jp09 jp10 jp11 jp12
 	@echo "All scripts for 'Peak Hour & Supplier Modeling' executed."
+
+
+# -----------------------------------------------------------------------------
+# All Analysis
+# -----------------------------------------------------------------------------
+
+analysis: nf-all jp-all
+	@echo "Completed visualization for all project analyses."

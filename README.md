@@ -14,7 +14,7 @@
 - [Analysis](#analysis)
   - [Exploratory Data Analysis](#exploratory-data-analysis)
   - [Operational Cost Mapping](#operational-cost-mapping)
-  - [Usage Analysis](#usage-analysis)
+  - [Energy Usage Analysis](#energy-usage-analysis)
   - [Peak Hour \& Supplier Modeling](#peak-hour--supplier-modeling)
 - [Acknowledgments](#acknowledgments)
 
@@ -96,6 +96,15 @@ Each of these commands can be called from the CLI with the keyword construction 
 - **`eda1`**: Executes EDA scripts for kWh distribution, usage patterns, and energy spikes.
 - **`eda2`**: Runs EDA scripts for visualizing kWh usage by period, time, and location.
 
+**Energy Usage Analysis**
+
+- **`nf01`**: Visualizes total energy usage at Austin Street Brewery over the course of the dataset.
+- **`nf02`**: Visualizes energy usage by different time intervals.
+- **`nf03`**: Produces a breakdown of energy usage by generation type (solar vs. conventional).
+- **`nf04`**: Produces a summary visual of cost per kWh across generation types.
+- **`nf05`**: Generates projections for solar power costs for Austin Street Brewery.
+- **`nf-all`**: Executes all scripts in 'Energy Usage Analysis' sequentially.
+
 **Peak Hour & Supplier Modeling**
 
 - **`jp01`**: Visualizes the relationship between kWh and Total Cost.
@@ -132,9 +141,40 @@ make jp03
 ```
 ![03 - Average Cost by Period Over Time](<./fig/analysis/jp/03 - Average Cost by Period Over Time.png>)
 
+
 ### Operational Cost Mapping
 
-### Usage Analysis
+
+### Energy Usage Analysis
+
+```bash
+make nf01
+```
+![Total Energy Usage](/fig/analysis/nf/aggregated_usage_fig.png)
+
+```bash
+make nf02
+```
+![Usage by Time Interval](/fig/analysis/nf/usage_by_time_interval.png)
+
+
+```bash
+make nf03
+```
+![Energy Usage by Energy Generation Type](/fig/analysis/nf/supplier_fig.png)
+
+
+```bash
+make nf04
+```
+![Energy Costs](/fig/analysis/nf/aggregated_costs_fig.png)
+
+
+```bash
+make nf05
+```
+![Solar Projections](/fig/analysis/nf/projections_fig.png)
+
 
 ### Peak Hour & Supplier Modeling
 
