@@ -2,7 +2,7 @@ import numpy  as np
 import pandas as pd
 
 from utils.dataframes import fct_electric_brew, dim_datetimes, dim_meters, dim_bills
-from utils.runtime    import setup_plot_params
+from utils.runtime    import setup_plot_params, pickle_and_load
 
 def prepare_data() -> pd.DataFrame:
     '''
@@ -16,8 +16,6 @@ def prepare_data() -> pd.DataFrame:
         pd.DataFrame: The prepared dataframe.
     '''
 
-    setup_plot_params() # Setting up consistent plotting colors and sizes for all subsequent scripts
-
     # 1: Merging the fact and dimension tables
     df = fct_electric_brew.merge(dim_datetimes, left_on = 'dim_datetimes_id', right_on = 'id', suffixes = ('', '_dd')) \
                           .merge(dim_meters,    left_on = 'dim_meters_id',    right_on = 'id', suffixes = ('', '_dm')) \
@@ -28,4 +26,4 @@ def prepare_data() -> pd.DataFrame:
 
     return df
 
-prepared_data = prepare_data()
+prepared_data = pickle_and_load(prepare_data, 'flat.pkl')
