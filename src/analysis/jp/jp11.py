@@ -2,17 +2,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
-from analysis.jp.flat import prepared_data
-from analysis.jp.jp04 import remove_anomalies
-from analysis.jp.jp06 import lasso
-from analysis.jp.jp09 import random_forest
+from analysis.jp.jp06 import X_train_lasso
+from analysis.jp.jp09 import best_estimator
 from sklearn.ensemble import RandomForestRegressor
 from scipy.optimize   import minimize
 from typing           import List
 from utils.runtime    import find_project_root
 
-def slsqp(X    : np.ndarray, 
-          best : RandomForestRegressor) -> List[np.ndarray]:
+def slsqp(X    : np.ndarray            = X_train_lasso, 
+          best : RandomForestRegressor = best_estimator) -> List[np.ndarray]:
     '''
     Performs optimization on feature sets and visualizes the distribution of predicted costs for these optimized sets.
 
@@ -88,10 +86,7 @@ def slsqp(X    : np.ndarray,
 
     return optimized_sets
 
+
 if __name__ == "__main__":
     
-    df  = prepare_data()
-    dfa = remove_anomalies(df)
-    X, _, y, _, _ = lasso(dfa)
-    best = random_forest(X, y)
-    slsqp(X, best)
+    slsqp()

@@ -55,6 +55,7 @@ def percent_changes(X    : np.ndarray,
     file_path = find_project_root('./fig/analysis/jp/12 - Percent Change in Categorical Features After Optimization.png')
     plt.savefig(file_path)
     plt.show()
+    
 
 if __name__ == "__main__":
     

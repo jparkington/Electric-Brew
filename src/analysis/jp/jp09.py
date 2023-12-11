@@ -66,9 +66,9 @@ def random_forest(X : np.ndarray = X_train_lasso,
 best_estimator, y_test_rf, y_pred_rf = random_forest()
 
 
-def plot_random_forest(best   : RandomForestRegressor, 
-                       y_test : pd.Series, 
-                       y_pred : np.ndarray):
+def plot_random_forest(best   : RandomForestRegressor = best_estimator, 
+                       y_test : pd.Series             = y_test_rf, 
+                       y_pred : np.ndarray            = y_pred_rf):
     '''
     Visualizes predictions of the Random Forest model compared to actual values. Then calculates R² and MSE.
 
@@ -118,7 +118,7 @@ def plot_random_forest(best   : RandomForestRegressor,
     file_path = find_project_root('./fig/analysis/jp/09 - Random Forest Predictions vs Actual Values.png')
     plt.savefig(file_path)
     plt.show()
-    
+
 
 if __name__ == "__main__":
     
