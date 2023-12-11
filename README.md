@@ -112,7 +112,7 @@ Each of these commands can be called from the CLI with the keyword construction 
 - **`jp10`**: Compares cross-validation R² scores across models.
 - **`jp11`**: Performs SLSQP optimization and visualizes results.
 - **`jp12`**: Visualizes percentage changes in categorical values after optimization.
-- **`run-all-jp`**: Executes all scripts in 'Peak Hour & Supplier Modeling' sequentially.
+- **`jp-all`**: Executes all scripts in 'Peak Hour & Supplier Modeling' sequentially.
 
 
 ## Analysis
