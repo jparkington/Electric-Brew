@@ -36,9 +36,6 @@ def random_forest(X : np.ndarray = X_train_lasso,
         best_estimator (RandomForestRegressor) : The best-fitted Random Forest model.
         y_test_rf      (pd.Series)             : The test target variable for RandomForestRegressor.
         y_pred_rf      (np.ndarray)            : Predicted values by the model on the test set.
-
-    Produces:
-        A scatter plot saved as a PNG file and displayed on the screen, showing the comparison between predicted and actual values.
     '''
 
     # 1: Splitting the data
@@ -78,7 +75,7 @@ def plot_random_forest(best   : RandomForestRegressor = best_estimator,
         y_pred (np.ndarray)            : Predicted values by the model on the test set.
     
     Produces:
-        A scatter plot showing the comparison between predicted and actual values.
+        A scatter plot saved as a PNG file and displayed on the screen, showing the comparison between predicted and actual values.
     '''
     # 4: Visualizing predictions vs. actual values
     plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color = '#545B63', linestyle = '--')

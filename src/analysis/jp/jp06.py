@@ -38,9 +38,6 @@ def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray,
         y_test          (pd.Series)  : The test target variable.
         shortened_names (List[str])  : A list of feature names after feature selection and transformation by the LASSO model.
         ft_importance   (pd.Series)  : Maps feature names to their LASSO coefficients, indicating their relative importance.
-
-    Produces:
-        A bar plot saved as a PNG file and displayed on the screen, showing the importance of each feature determined by LASSO.
     '''
 
     # 1: Preprocessing the data
@@ -91,6 +88,9 @@ def plot_lasso(ft_importance: pd.Series = ft_importance):
 
     Parameters:
         ft_importance (pd.Series): Maps feature names to their LASSO coefficients, indicating their relative importance.
+
+    Produces:
+        A bar plot saved as a PNG file and displayed on the screen, showing the importance of each feature determined by LASSO.
     '''
 
     sns.barplot(x       = ft_importance, 
@@ -108,7 +108,7 @@ def plot_lasso(ft_importance: pd.Series = ft_importance):
     file_path = find_project_root('./fig/analysis/jp/06 - Feature Selection for Determining Total Cost.png')
     plt.savefig(file_path)
     plt.show()
-    
+
 
 if __name__ == "__main__":
     

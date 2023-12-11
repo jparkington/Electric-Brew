@@ -34,9 +34,6 @@ def slsqp(X    : np.ndarray            = X_train_lasso,
         all_sets       (List[np.ndarray])    : All feature sets evaluated during the optimization.
         optimized_sets (List[np.ndarray])    : Feature sets that meet the specified cost bounds.
         cost_bounds    (Tuple[float, float]) : Lower and upper bounds for the optimized cost range.
-
-    Produces:
-        A scatter plot saved as a PNG file and displayed on the screen, showing the distribution of predicted costs.
     '''
 
     # 1: Set constants and prepare data
@@ -81,7 +78,7 @@ def plot_slsqp(best        : RandomForestRegressor = best_estimator,
         cost_bounds (Tuple[float, float])   : Lower and upper bounds for the optimized cost range.
 
     Produces:
-        A scatter plot showing the distribution of predicted costs.
+        A scatter plot saved as a PNG file and displayed on the screen, showing the distribution of predicted costs.
     '''
 
     predicted_costs = best.predict(all_sets)
