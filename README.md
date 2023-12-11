@@ -11,13 +11,11 @@
 - [Installation \& Usage](#installation--usage)
   - [Setting Up the Environment](#setting-up-the-environment)
   - [All Makefile Commands](#all-makefile-commands)
-    - [Environment Management with Conda](#environment-management-with-conda)
-    - [ETL Pipeline](#etl-pipeline)
-    - [Initial Exploratory Data Analysis (EDA)](#initial-exploratory-data-analysis-eda)
-    - [Peak Hour \& Supplier Modeling](#peak-hour--supplier-modeling)
 - [Analysis](#analysis)
   - [Exploratory Data Analysis](#exploratory-data-analysis)
-  - [Peak Hour \& Supplier Modeling](#peak-hour--supplier-modeling-1)
+  - [Operational Cost Mapping](#operational-cost-mapping)
+  - [Usage Analysis](#usage-analysis)
+  - [Peak Hour \& Supplier Modeling](#peak-hour--supplier-modeling)
 - [Acknowledgments](#acknowledgments)
 
 ## Quick Links
@@ -51,10 +49,10 @@ As a forward-thinking establishment, Austin Street Brewery has already made stri
 
 In collaboration with Luke Truman from the New England Environmental Finance Center (NEEFC), whom has a proven track record in aiding craft beverage producers in enhancing energy efficiency and environmental sustainability, Austin Street Brewery aims to leverage data science for the following objectives:
 
-1. Operational cost mapping to understand which meters should power which equipment.
+1. [**Operational cost mapping**](#exploratory-data-analysis) to understand which meters should power which equipment.
 2. Benchmarking against industry standards to identify areas for improvement.
-3. Analysis of total energy usage to compare the cost-efficiency of solar versus conventional suppliers.
-4. Unbiased peak hour and supplier recommendations based on unsupervised machine learning models.
+3. Analysis of total [**energy usage**](#usage-analysis) to compare the cost-efficiency of solar versus conventional suppliers.
+4. Unbiased [**peak hour and supplier**](#peak-hour--supplier-modeling) recommendations based on unsupervised machine learning models.
 
 
 ## Installation & Usage
@@ -81,7 +79,7 @@ make etl
 
 Each of these commands can be called from the CLI with the keyword construction `make {command}`.
 
-#### Environment Management with Conda
+**Environment Management with Conda**
 
 - **`create-env`**: Creates a new Conda environment using the `environment.yml` file.
 - **`remove-env`**: Removes the Conda environment, deleting all installed packages and dependencies.
@@ -89,16 +87,16 @@ Each of these commands can be called from the CLI with the keyword construction 
 - **`setup`**: Composite command that creates the environment and sets PYTHONPATH.
 - **`update-env`**: Updates the Conda environment as per the `environment.yml` file.
 
-#### ETL Pipeline
+**ETL Pipeline**
 
 - **`etl`**: Initiates the ETL pipeline, preparing the data for analytics.
 
-#### Initial Exploratory Data Analysis (EDA)
+**Initial Exploratory Data Analysis (EDA)**
 
 - **`eda1`**: Executes EDA scripts for kWh distribution, usage patterns, and energy spikes.
 - **`eda2`**: Runs EDA scripts for visualizing kWh usage by period, time, and location.
 
-#### Peak Hour & Supplier Modeling
+**Peak Hour & Supplier Modeling**
 
 - **`jp01`**: Visualizes the relationship between kWh and Total Cost.
 - **`jp02`**: Visualizes hourly variation of kWh usage by month.
@@ -133,6 +131,10 @@ make jp02
 make jp03
 ```
 ![03 - Average Cost by Period Over Time](<./fig/analysis/jp/03 - Average Cost by Period Over Time.png>)
+
+### Operational Cost Mapping
+
+### Usage Analysis
 
 ### Peak Hour & Supplier Modeling
 
