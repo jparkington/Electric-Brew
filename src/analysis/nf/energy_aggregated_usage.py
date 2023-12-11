@@ -42,7 +42,7 @@ def usage_fig_b(df: pd.DataFrame) -> None:
 
     save_path = ('fig/analysis/nf/aggregated_usage_fig.png')
     plt.savefig(save_path, dpi = 300, bbox_inches = 'tight')
-    plt.close()
+    plt.show()
 
 #####################################################################################################
 ######################################## main #######################################################

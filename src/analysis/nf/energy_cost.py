@@ -113,7 +113,7 @@ def generate_cost_fig(total_cost_df: pd.DataFrame, cost_df: pd.DataFrame, kwh_df
 
     save_path = ('fig/analysis/nf/aggregated_costs_fig.png')
     plt.savefig(save_path, dpi = 300, bbox_inches = 'tight')
-    plt.close()
+    plt.show()
 
 #####################################################################################################
 ######################################## main #######################################################

@@ -54,7 +54,7 @@ def usage_fig(df: pd.DataFrame) -> None:
 
     save_path = ('fig/analysis/nf/usage_by_time_interval.png')
     plt.savefig(save_path, dpi = 300, bbox_inches = 'tight')
-    plt.close()
+    plt.show()
 
 #####################################################################################################
 ######################################## main #######################################################

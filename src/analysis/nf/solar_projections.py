@@ -60,7 +60,16 @@ def generate_solor_projections_fig(cost_df: pd.DataFrame) -> None:
     # annotate percent difference
     for idx, val in percent_diff.items():
         x_val = idx.to_timestamp().to_pydatetime()
-        y_val = (cost_df.loc[idx]['total_cost_2'] + cost_df.loc[idx]['projected_costs']) / 2
+        total_cost_val = cost_df.loc[idx, 'total_cost_2']
+        projected_cost_val = cost_df.loc[idx, 'projected_costs']
+        
+        # Ensure that the values are single elements, not Series
+        if isinstance(total_cost_val, pd.Series):
+            total_cost_val = float(total_cost_val.iloc[0])
+        if isinstance(projected_cost_val, pd.Series):
+            projected_cost_val = float(projected_cost_val.iloc[0])
+
+        y_val = (total_cost_val + projected_cost_val) / 2
         plt.annotate(f"{val:.2f}%",
                     (x_val, y_val),
                     textcoords="offset points",
@@ -91,7 +100,7 @@ def generate_solor_projections_fig(cost_df: pd.DataFrame) -> None:
     # save fig
     save_path = ('fig/analysis/nf/projections_fig.png')
     plt.savefig(save_path, dpi = 300, bbox_inches = 'tight')
-    plt.close()
+    plt.show()
 
 #####################################################################################################
 ######################################## main #######################################################

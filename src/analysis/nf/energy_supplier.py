@@ -11,6 +11,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from utils.runtime import setup_plot_params
 
+import logging
+
+# Set logging level for matplotlib to WARNING to suppress INFO messages
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+
 #####################################################################################################
 ##################################### supplier fig function #########################################
 #####################################################################################################
@@ -105,7 +110,7 @@ def generate_supplier_fig(usage_df: pd.DataFrame, energy_percent_df: pd.DataFram
 
     save_path = ('fig/analysis/nf/supplier_fig.png')
     plt.savefig(save_path, dpi = 300, bbox_inches = 'tight')
-    plt.close()
+    plt.show()
 
 #####################################################################################################
 ######################################## main #######################################################
