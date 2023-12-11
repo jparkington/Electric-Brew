@@ -112,5 +112,5 @@ jp12:
 	@echo "Visualizing Percentage Changes in Categorical Values After Optimization..."
 	@conda run -n $(ENV_NAME) python -B src/analysis/jp/jp12.py
 
-run-all-jp: jp01 jp02 jp03 jp04 jp05 jp06 jp07 jp08 jp09 jp10 jp11 jp12
+jp-all: jp01 jp02 jp03 jp04 jp05 jp06 jp07 jp08 jp09 jp10 jp11 jp12
 	@echo "All scripts for 'Peak Hour & Supplier Modeling' executed."
