@@ -8,18 +8,8 @@
 ## Finally, it plots the data using matplotlib to generate a line chart showing the peaks and valleys of kWh usage over time for each operational area.
 ## OUTPUT: Line chart showing the total kWh usage by operational area (meter) over time.
 
-
-import sys
-import os
-
-# Adding the src directory to the Python path to ensure that modules can be imported
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-
-
-from utils.dataframes import fct_electric_brew, dim_meters, dim_datetimes, dim_bills, meter_usage
 from utils.runtime import connect_to_db, setup_plot_params
 import pandas as pd
-import duckdb
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from utils.runtime import find_project_root
@@ -44,8 +34,6 @@ ORDER BY dm.meter_id, dd.year, dd.month, dm.operational_area
 """
 
 df_total_usage_by_ops_area = fct_electric_brew.execute(query3).fetch_df()
-
-conn = duckdb.connect(database=':memory:')  # Connect to DuckDB
 df = fct_electric_brew.execute(query3).fetch_df() 
 
 # Preprocessing the data
@@ -55,15 +43,14 @@ df['year_month'] = pd.to_datetime(df['year'].astype(str) + '-' + df['month'].ast
 pivot_df = df.pivot_table(index='year_month', columns='operational_area', values='total_kWh_usage')
 
 # Plotting
-plt.figure(figsize=(12, 6))
 for column in pivot_df.columns:
-    plt.plot(pivot_df.index, pivot_df[column], label=column)
+    plt.plot(pivot_df.index, pivot_df[column], label=column, linestyle='--')
 
 # Adding dashed lines at the start of each year
 for year in range(df['year'].min(), df['year'].max() + 1):
     start_of_year = pd.to_datetime(str(year) + '-01-01')
     if start_of_year in pivot_df.index:
-        plt.axvline(start_of_year, color='gray', linestyle='--', linewidth=1)
+        plt.axvline(start_of_year, color='gray', linestyle='--', linewidth=0.75)
 
 # Formatting x-axis labels
 plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
@@ -75,6 +62,8 @@ plt.xlabel('Year-Month')
 plt.ylabel('Total kWh Usage')
 plt.legend(title='Operational Area', title_fontproperties = {'weight' : 'bold', 'size' : 10})
 plt.tight_layout()
+file_path = find_project_root('./fig/analysis/ss/Total kWh Usage by Operational Area Over Time.png')
+plt.savefig(file_path)
 plt.show()
 
 

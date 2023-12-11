@@ -8,14 +8,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import calendar
 
-import sys
-import os
-
-# Adding the src directory to the Python path to ensure that modules can be imported
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-
-from utils.dataframes import fct_electric_brew, dim_meters, dim_datetimes, dim_bills, meter_usage
-from utils.runtime import connect_to_db, setup_plot_params
+from utils.runtime import connect_to_db, setup_plot_params, find_project_root
 
 # set plot params to align with all electric_brew plots
 setup_plot_params()
@@ -36,7 +29,7 @@ ORDER BY dd.hour, dd.month, dm.operational_area
 """
 
 # Get the list of unique operational areas
-unique_areas = pd.read_sql("SELECT DISTINCT operational_area FROM dim_meters", fct_electric_brew)
+unique_areas = fct_electric_brew.execute("SELECT DISTINCT operational_area FROM dim_meters").fetch_df()
 
 # Loop through each operational area and generate a heatmap
 for area in unique_areas['operational_area']:
@@ -50,7 +43,6 @@ for area in unique_areas['operational_area']:
     heatmap_data = df_area.pivot_table(index='hour', columns='month', values='avg_kWh_usage', aggfunc='mean')
 
     # Create the heatmap
-    plt.figure(figsize=(12, 6))
     p = sns.heatmap(heatmap_data, cmap='cividis', cbar_kws={'label': 'Avg. kWh Used'})
 
     # Set the month names as labels
@@ -63,4 +55,6 @@ for area in unique_areas['operational_area']:
     p.set_ylabel('Hour of Day')
 
     plt.tight_layout(pad=2.0)
+    file_path = find_project_root(f"./fig/analysis/ss/Avg. kWh Usage by Hour for {area.replace('/', '-')}.png")
+    plt.savefig(file_path)
     plt.show()

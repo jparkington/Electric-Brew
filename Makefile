@@ -62,6 +62,22 @@ eda2:
 
 
 # -----------------------------------------------------------------------------
+# Operational Cost Mapping
+# -----------------------------------------------------------------------------
+
+ss01:
+	@echo "Generating Line Chart of Total kWh Usage by Operational Area Over Time..."
+	@conda run -n $(ENV_NAME) python -B src/analysis/ss/ops_area_month.py
+
+ss02:
+	@echo "Creating Heatmaps for kWh Usage by Hour and Month for Each Operational Area..."
+	@conda run -n $(ENV_NAME) python -B src/analysis/ss/heatmap_usage.py
+
+ss-all: ss01 ss02
+	@echo "All scripts for 'Operational Cost Mapping' executed."
+
+
+# -----------------------------------------------------------------------------
 # Energy Usage Analysis
 # -----------------------------------------------------------------------------
 
@@ -149,5 +165,5 @@ jp-all: jp01 jp02 jp03 jp04 jp05 jp06 jp07 jp08 jp09 jp10 jp11 jp12
 # All Analysis
 # -----------------------------------------------------------------------------
 
-analysis: nf-all jp-all
-	@echo "Completed visualization for all project analyses."
+analysis: ss-all nf-all jp-all
+	@echo "Completed visualizations for all project analyses."

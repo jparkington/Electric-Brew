@@ -96,6 +96,12 @@ Each of these commands can be called from the CLI with the keyword construction 
 - **`eda1`**: Executes EDA scripts for kWh distribution, usage patterns, and energy spikes.
 - **`eda2`**: Runs EDA scripts for visualizing kWh usage by period, time, and location.
 
+**Operational Cost Mapping**
+
+- **`ss01`**: Generates a line chart of total kWh usage by operational area over time.
+- **`ss02`**: Creates heatmaps for kWh usage by hour and month for each operational area.
+- **`ss-all`**: Executes all scripts in 'Operational Cost Mapping' sequentially.
+
 **Energy Usage Analysis**
 
 - **`nf01`**: Visualizes total energy usage at Austin Street Brewery over the course of the dataset.
@@ -121,6 +127,9 @@ Each of these commands can be called from the CLI with the keyword construction 
 - **`jp12`**: Visualizes percentage changes in categorical values after optimization.
 - **`jp-all`**: Executes all scripts in 'Peak Hour & Supplier Modeling' sequentially.
 
+**All Analysis**
+- **`analysis`**: Executes each of the analysis sections in order of the project's objectives.
+
 
 ## Analysis
 
@@ -143,6 +152,22 @@ make jp03
 
 
 ### Operational Cost Mapping
+
+```bash
+make ss01
+```
+![Total kWh Usage by Operational Area Over Time](<./fig/analysis/ss/Total kWh Usage by Operational Area Over Time.png>)
+
+```bash
+make ss02
+```
+![Avg. kWh Usage by Hour for Boiler Pump-Patio-Forklift](<./fig/analysis/ss/Avg. kWh Usage by Hour for Boiler Pump-Patio-Forklift.png>)
+![Avg. kWh Usage by Hour for Brewpump](<./fig/analysis/ss/Avg. kWh Usage by Hour for Brewpump.png>)
+![Avg. kWh Usage by Hour for Front of House](<./fig/analysis/ss/Avg. kWh Usage by Hour for Front of House.png>)
+![Avg. kWh Usage by Hour for Industrial-1](<./fig/analysis/ss/Avg. kWh Usage by Hour for Industrial-1.png>)
+![Avg. kWh Usage by Hour for Industrial-2](<./fig/analysis/ss/Avg. kWh Usage by Hour for Industrial-2.png>)
+![Avg. kWh Usage by Hour for Industrial-3](<./fig/analysis/ss/Avg. kWh Usage by Hour for Industrial-3.png>)
+![Avg. kWh Usage by Hour for Package-Hot-Chill](<./fig/analysis/ss/Avg. kWh Usage by Hour for Package-Hot-Chill.png>)
 
 
 ### Energy Usage Analysis
