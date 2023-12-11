@@ -4,17 +4,9 @@
 
 ENV_NAME := electric-brew
 
-set-pythonpath:
-	@echo "Setting PYTHONPATH..."
-	@conda env config vars set PYTHONPATH="$(PWD)/src" --name $(ENV_NAME)
-
 create-env:
 	@echo "Creating Conda environment..."
 	@conda env create -f environment.yml || echo "Environment already exists."
-
-update-env: set-pythonpath
-	@echo "Updating Conda environment..."
-	@conda env update -f environment.yml || echo "Failed to update environment."
 
 remove-env:
 	@echo "Removing Conda environment..."
@@ -22,6 +14,14 @@ remove-env:
 
 setup: create-env set-pythonpath
 	@echo "Environment setup complete."
+
+set-pythonpath:
+	@echo "Setting PYTHONPATH..."
+	@conda env config vars set PYTHONPATH="$(PWD)/src" --name $(ENV_NAME)
+
+update-env: set-pythonpath
+	@echo "Updating Conda environment..."
+	@conda env update -f environment.yml || echo "Failed to update environment."
 
 
 # -----------------------------------------------------------------------------

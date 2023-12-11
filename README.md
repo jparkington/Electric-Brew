@@ -10,7 +10,11 @@
 - [Story](#story)
 - [Installation \& Usage](#installation--usage)
   - [Setting Up the Environment](#setting-up-the-environment)
-  - [Other Makefile Commands](#other-makefile-commands)
+  - [All Makefile Commands](#all-makefile-commands)
+    - [Environment Management with Conda](#environment-management-with-conda)
+    - [ETL Pipeline](#etl-pipeline)
+    - [Initial Exploratory Data Analysis (EDA)](#initial-exploratory-data-analysis-eda)
+    - [Peak Hour \& Supplier Modeling](#peak-hour--supplier-modeling)
 - [Analysis](#analysis)
 - [Acknowledgments](#acknowledgments)
 
@@ -71,15 +75,42 @@ The entire ETL process is ready for you upon cloning the repo. However, you can 
 make etl
 ```
 
-### Other Makefile Commands
+### All Makefile Commands
 
 Each of these commands can be called from the CLI with the keyword construction `make {command}`.
 
-- **`create-env`**: Creates a new Conda environment using the `environment.yml` file, installing all necessary Python packages and dependencies for the project.
-- **`remove-env`**: Removes the Conda environment, deleting all Python packages and dependencies that were installed.
-- **`run-all`**: A convenience command that sequentially executes `q1` through `q5` to perform all analyses in one command.
-- **`setup`**: A composite command that creates the environment with `create-env` and then runs all analysis scripts with `run-all`.
-- **`update-env`**: Updates the Conda environment according to the `environment.yml` file, ensuring all Python packages and dependencies are current.
+#### Environment Management with Conda
+
+- **`create-env`**: Creates a new Conda environment using the `environment.yml` file.
+- **`remove-env`**: Removes the Conda environment, deleting all installed packages and dependencies.
+- **`set-pythonpath`**: Sets the PYTHONPATH environment variable for the current Conda environment.
+- **`setup`**: Composite command that creates the environment and sets PYTHONPATH.
+- **`update-env`**: Updates the Conda environment as per the `environment.yml` file.
+
+#### ETL Pipeline
+
+- **`etl`**: Initiates the ETL pipeline, preparing the data for analytics.
+
+#### Initial Exploratory Data Analysis (EDA)
+
+- **`eda1`**: Executes EDA scripts for kWh distribution, usage patterns, and energy spikes.
+- **`eda2`**: Runs EDA scripts for visualizing kWh usage by period, time, and location.
+
+#### Peak Hour & Supplier Modeling
+
+- **`jp01`**: Visualizes the relationship between kWh and Total Cost.
+- **`jp02`**: Visualizes hourly variation of kWh usage by month.
+- **`jp03`**: Visualizes average cost by period over time.
+- **`jp04`**: Applies anomaly detection using Isolation Forest.
+- **`jp05`**: Visualizes heatmap of high correlations among numeric columns.
+- **`jp06`**: Applies feature selection using LASSO.
+- **`jp07`**: Performs K-Means clustering and PCA visualization.
+- **`jp08`**: Fits a Linear Regression model and visualizes results.
+- **`jp09`**: Fits a Random Forest model and visualizes predictions.
+- **`jp10`**: Compares cross-validation R² scores across models.
+- **`jp11`**: Performs SLSQP optimization and visualizes results.
+- **`jp12`**: Visualizes percentage changes in categorical values after optimization.
+- **`run-all-jp`**: Executes all scripts in 'Peak Hour & Supplier Modeling' sequentially.
 
 
 ## Analysis
