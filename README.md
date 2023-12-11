@@ -10,7 +10,7 @@
 - [Story](#story)
 - [Installation \& Usage](#installation--usage)
   - [Setting Up the Environment](#setting-up-the-environment)
-- [Available Makefile Commands](#available-makefile-commands)
+  - [Other Makefile Commands](#other-makefile-commands)
 - [Analysis](#analysis)
 - [Acknowledgments](#acknowledgments)
 
@@ -63,12 +63,15 @@ For the shortest path to getting up and running, you can simply run the command 
 make setup
 ```  
 
-Note that each script containing a plot saves a PNG file in the `.fig` directory after being closed by the user. 
+Note that each script containing a plot saves a PNG file in the `.fig` directory after being closed by the user.
 
-For a more detailed breakdown of the available commands to you, please see the [**Available Makefile Commands**](#available-makefile-commands) section.
+The entire ETL process is ready for you upon cloning the repo. However, you can reproduce the scraping, curating, and modeling steps with the command below.
 
+```bash
+make etl
+```
 
-## Available Makefile Commands
+### Other Makefile Commands
 
 Each of these commands can be called from the CLI with the keyword construction `make {command}`.
 
