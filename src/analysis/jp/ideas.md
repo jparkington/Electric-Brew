@@ -1,2 +1,0 @@
-- Use `pickle` for potential faster recall
-- Use `alive_bar` to show actively working function calls
