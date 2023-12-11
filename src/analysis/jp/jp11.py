@@ -2,15 +2,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
-from analysis.jp.jp06 import X_train_lasso
-from analysis.jp.jp09 import best_estimator
+from analysis.jp.jp06 import lasso_outputs
+from analysis.jp.jp09 import random_forest_outputs
 from sklearn.ensemble import RandomForestRegressor
 from scipy.optimize   import minimize
 from typing           import List, Tuple
-from utils.runtime    import find_project_root
+from utils.runtime    import find_project_root, pickle_and_load
 
-def slsqp(X    : np.ndarray            = X_train_lasso, 
-          best : RandomForestRegressor = best_estimator) -> Tuple[List[np.ndarray], List[np.ndarray], Tuple[float, float]]:
+def slsqp(X    : np.ndarray            = lasso_outputs['X_train'], 
+          best : RandomForestRegressor = random_forest_outputs['best']) -> Tuple[List[np.ndarray], List[np.ndarray], Tuple[float, float]]:
     '''
     Performs optimization on feature sets and visualizes the distribution of predicted costs for these optimized sets.
 
@@ -61,14 +61,16 @@ def slsqp(X    : np.ndarray            = X_train_lasso,
         if cost_bounds[0] <= objective_function(result.x) <= cost_bounds[1]:
             optimized_sets.append(result.x)
 
-    return all_sets, optimized_sets, cost_bounds
+    return {'all_sets'       : all_sets, 
+            'optimized_sets' : optimized_sets, 
+            'cost_bounds'    : cost_bounds}
 
-all_sets, optimized_sets, cost_bounds = slsqp()
+slsqp_outputs = pickle_and_load(slsqp, 'jp11.pkl')
 
 
-def plot_slsqp(best        : RandomForestRegressor = best_estimator, 
-               all_sets    : List[np.ndarray]      = all_sets,
-               cost_bounds : Tuple[float, float]   = cost_bounds):
+def plot_slsqp(best        : RandomForestRegressor = random_forest_outputs['best'], 
+               all_sets    : List[np.ndarray]      = slsqp_outputs['all_sets'],
+               cost_bounds : Tuple[float, float]   = slsqp_outputs['cost_bounds']):
     '''
     Visualizes the distribution of predicted costs for all and optimized feature sets.
 
@@ -101,8 +103,6 @@ def plot_slsqp(best        : RandomForestRegressor = best_estimator,
     file_path = find_project_root('./fig/analysis/jp/11 - Distribution of Predicted Costs in Optimized Feature Sets.png')
     plt.savefig(file_path)
     plt.show()
-
-    return optimized_sets
 
 
 if __name__ == "__main__":
