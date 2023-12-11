@@ -1,3 +1,4 @@
+from alive_progress    import alive_bar
 from matplotlib.pyplot import rcParams
 from typing            import Any, Callable
 
@@ -187,11 +188,15 @@ def pickle_and_load(fun  : Callable,
         
     except (FileNotFoundError, EOFError):
 
-        data = fun(*args, **kwargs)
-
-        # Add generic `alive_progress` here with a friendly dialog box about "Running `fun` and pickling to `pkl_path`"
-
         os.makedirs(os.path.dirname(pkl_path), exist_ok = True) # Create the base directory if it doesn't exist
+
+        with alive_bar(title   = f"Generating data using `{fun.__name__}` and pickling",
+                       bar     = None,
+                       monitor = False,
+                       stats   = False) as bar:
+            
+            data = fun(*args, **kwargs)
+            bar()
 
         # Pickle the new data for future use
         with open(pkl_path, 'wb') as file:
