@@ -36,6 +36,7 @@ def remove_anomalies(df: pd.DataFrame = prepared_data) -> pd.DataFrame:
 
 without_anomalies = remove_anomalies()
 
+
 def plot_anomalies(df  : pd.DataFrame = prepared_data,
                    dfa : pd.DataFrame = without_anomalies):
     '''
@@ -78,6 +79,7 @@ def plot_anomalies(df  : pd.DataFrame = prepared_data,
     file_path = find_project_root('./fig/analysis/jp/04 - Applying Anomaly Detection with Total Cost.png')
     plt.savefig(file_path)
     plt.show()
+    
 
 if __name__ == "__main__":
     

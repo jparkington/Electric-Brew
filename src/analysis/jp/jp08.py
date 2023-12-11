@@ -72,6 +72,7 @@ def slr(X_train : np.ndarray = X_train_lasso,
     file_path = find_project_root('./fig/analysis/jp/08 - Linear Regression Predictions vs Actual Values.png')
     plt.savefig(file_path)
     plt.show()
+    
 
 if __name__ == "__main__":
     

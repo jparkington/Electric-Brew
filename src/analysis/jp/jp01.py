@@ -39,6 +39,7 @@ def eda1(df: pd.DataFrame = prepared_data):
     file_path = find_project_root('./fig/analysis/jp/01 - kWh vs. Total Cost.png')
     plt.savefig(file_path)
     plt.show()
+    
 
 if __name__ == "__main__":
 

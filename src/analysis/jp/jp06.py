@@ -14,7 +14,7 @@ from sklearn.preprocessing     import OneHotEncoder, StandardScaler
 from typing                    import List, Tuple
 from utils.runtime             import find_project_root
 
-def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series, List[str]]:
+def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series, List[str], pd.Series]:
     '''
     Applies LASSO feature selection to determine important features for predicting 'total_cost'.
 
@@ -84,6 +84,7 @@ def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray,
 
 X_train_lasso, X_test_lasso, y_train, y_test, ft_names, ft_importance = lasso()
 
+
 def plot_lasso(ft_importance: pd.Series = ft_importance):
     '''
     Visualizes the feature importance determined by LASSO.
@@ -107,6 +108,7 @@ def plot_lasso(ft_importance: pd.Series = ft_importance):
     file_path = find_project_root('./fig/analysis/jp/06 - Feature Selection for Determining Total Cost.png')
     plt.savefig(file_path)
     plt.show()
+    
 
 if __name__ == "__main__":
     

@@ -6,10 +6,11 @@ from analysis.jp.jp06        import X_train_lasso, y_train
 from sklearn.ensemble        import RandomForestRegressor
 from sklearn.metrics         import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from typing                  import Tuple
 from utils.runtime           import find_project_root
 
 def random_forest(X : np.ndarray = X_train_lasso, 
-                  y : pd.Series  = y_train) -> RandomForestRegressor:
+                  y : pd.Series  = y_train) -> Tuple[RandomForestRegressor, pd.Series, np.ndarray]:
     '''
     Fits a Random Forest Regressor model using Randomized Search CV for hyperparameter tuning and visualizes predictions.
 
@@ -32,14 +33,16 @@ def random_forest(X : np.ndarray = X_train_lasso,
         y (pd.Series)  : The training target variable.
 
     Returns:
-        RandomForestRegressor: The best-fitted Random Forest model from Randomized Search CV.
+        best_estimator (RandomForestRegressor) : The best-fitted Random Forest model.
+        y_test_rf      (pd.Series)             : The test target variable for RandomForestRegressor.
+        y_pred_rf      (np.ndarray)            : Predicted values by the model on the test set.
 
     Produces:
         A scatter plot saved as a PNG file and displayed on the screen, showing the comparison between predicted and actual values.
     '''
 
     # 1: Splitting the data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state = 0)
+    X_train_rf, X_test_rf, y_train_rf, y_test_rf = train_test_split(X, y, random_state = 0)
 
     # 2: Initialize the Random Forest Regressor
     rf = RandomForestRegressor(random_state = 0)
@@ -52,12 +55,31 @@ def random_forest(X : np.ndarray = X_train_lasso,
 
     # 3: # Randomized Search with Cross-Validation
     random_search = RandomizedSearchCV(rf, hyperparameter_grid, n_jobs = -1, random_state = 0)
-    random_search.fit(X_train, y_train)
+    random_search.fit(X_train_rf, y_train_rf)
 
     # Predictions using the best model
     best_estimator = random_search.best_estimator_
-    y_pred = best_estimator.predict(X_test)
+    y_pred_rf = best_estimator.predict(X_test_rf)
 
+    return best_estimator, y_test_rf, y_pred_rf
+
+best_estimator, y_test_rf, y_pred_rf = random_forest()
+
+
+def plot_random_forest(best   : RandomForestRegressor, 
+                       y_test : pd.Series, 
+                       y_pred : np.ndarray):
+    '''
+    Visualizes predictions of the Random Forest model compared to actual values. Then calculates R² and MSE.
+
+    Parameters:
+        best   (RandomForestRegressor) : The fitted Random Forest model.
+        y_test (pd.Series)             : The test target variable for RandomForestRegressor.
+        y_pred (np.ndarray)            : Predicted values by the model on the test set.
+    
+    Produces:
+        A scatter plot showing the comparison between predicted and actual values.
+    '''
     # 4: Visualizing predictions vs. actual values
     plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color = '#545B63', linestyle = '--')
     plt.scatter(x = y_test, 
@@ -78,10 +100,10 @@ def random_forest(X : np.ndarray = X_train_lasso,
 
     # Second text annotation for hyperparameters (top left)
     plt.text(0.05, 0.95, 
-             (f"Max Depth         ${best_estimator.get_params()['max_depth']}$\n"
-              f"Min Samples Split ${best_estimator.get_params()['min_samples_split']}$\n"
-              f"Min Samples Leaf  ${best_estimator.get_params()['min_samples_leaf']}$\n"
-              f"# of Estimators   ${best_estimator.get_params()['n_estimators']}$"), 
+             (f"Max Depth         ${best.get_params()['max_depth']}$\n"
+              f"Min Samples Split ${best.get_params()['min_samples_split']}$\n"
+              f"Min Samples Leaf  ${best.get_params()['min_samples_leaf']}$\n"
+              f"# of Estimators   ${best.get_params()['n_estimators']}$"), 
              fontsize = 9, fontweight = 'bold', linespacing = 1.3,
              bbox = dict(facecolor = '0.3', edgecolor = '0.3', boxstyle = 'round,pad = 0.75', alpha = 0.5),
              ha = 'left', va = 'top', transform = plt.gca().transAxes)
@@ -96,9 +118,8 @@ def random_forest(X : np.ndarray = X_train_lasso,
     file_path = find_project_root('./fig/analysis/jp/09 - Random Forest Predictions vs Actual Values.png')
     plt.savefig(file_path)
     plt.show()
-
-    return best_estimator
+    
 
 if __name__ == "__main__":
     
-    random_forest()
+    plot_random_forest()

@@ -41,6 +41,7 @@ def eda3(df: pd.DataFrame = prepared_data):
     file_path = find_project_root('./fig/analysis/jp/03 - Average Cost by Period Over Time.png')
     plt.savefig(file_path)
     plt.show()
+    
 
 if __name__ == "__main__":
     

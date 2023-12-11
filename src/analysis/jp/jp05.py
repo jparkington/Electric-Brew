@@ -54,6 +54,7 @@ def multicollinearity(df: pd.DataFrame = without_anomalies):
     file_path = find_project_root('./fig/analysis/jp/05 - Multicollinear Facts with High Correlations.png')
     plt.savefig(file_path)
     plt.show()
+    
 
 if __name__ == "__main__":
     

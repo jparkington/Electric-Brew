@@ -48,6 +48,7 @@ def eda2(df: pd.DataFrame = prepared_data):
     file_path = find_project_root('./fig/analysis/jp/02 - Hourly Variation of kWh by Month.png')
     plt.savefig(file_path)
     plt.show()
+    
 
 if __name__ == "__main__":
     

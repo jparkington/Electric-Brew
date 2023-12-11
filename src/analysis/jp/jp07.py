@@ -55,6 +55,7 @@ def kmeans(X: np.ndarray = X_train_lasso):
     file_path = find_project_root('./fig/analysis/jp/07 - KMeans Clusters in Reduced Dimensional Space.png')
     plt.savefig(file_path)
     plt.show()
+    
 
 if __name__ == "__main__":
     
