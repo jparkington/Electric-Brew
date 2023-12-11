@@ -2,15 +2,15 @@ import matplotlib.pyplot as plt
 import numpy  as np
 import pandas as pd
 
-from analysis.jp.jp06        import X_train_lasso, y_train
+from analysis.jp.jp06        import lasso_outputs
 from sklearn.ensemble        import RandomForestRegressor
 from sklearn.metrics         import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from typing                  import Tuple
-from utils.runtime           import find_project_root
+from utils.runtime           import find_project_root, pickle_and_load
 
-def random_forest(X : np.ndarray = X_train_lasso, 
-                  y : pd.Series  = y_train) -> Tuple[RandomForestRegressor, pd.Series, np.ndarray]:
+def random_forest(X : np.ndarray = lasso_outputs['X_train'], 
+                  y : pd.Series  = lasso_outputs['y_train']) -> Tuple[RandomForestRegressor, pd.Series, np.ndarray]:
     '''
     Fits a Random Forest Regressor model using Randomized Search CV for hyperparameter tuning and visualizes predictions.
 
@@ -39,7 +39,7 @@ def random_forest(X : np.ndarray = X_train_lasso,
     '''
 
     # 1: Splitting the data
-    X_train_rf, X_test_rf, y_train_rf, y_test_rf = train_test_split(X, y, random_state = 0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state = 0)
 
     # 2: Initialize the Random Forest Regressor
     rf = RandomForestRegressor(random_state = 0)
@@ -52,20 +52,22 @@ def random_forest(X : np.ndarray = X_train_lasso,
 
     # 3: # Randomized Search with Cross-Validation
     random_search = RandomizedSearchCV(rf, hyperparameter_grid, n_jobs = -1, random_state = 0)
-    random_search.fit(X_train_rf, y_train_rf)
+    random_search.fit(X_train, y_train)
 
     # Predictions using the best model
-    best_estimator = random_search.best_estimator_
-    y_pred_rf = best_estimator.predict(X_test_rf)
+    best   = random_search.best_estimator_
+    y_pred = best.predict(X_test)
 
-    return best_estimator, y_test_rf, y_pred_rf
+    return {'best'   : best, 
+            'y_test' : y_test, 
+            'y_pred' : y_pred}
 
-best_estimator, y_test_rf, y_pred_rf = random_forest()
+random_forest_outputs = pickle_and_load(random_forest, 'jp09.pkl')
 
 
-def plot_random_forest(best   : RandomForestRegressor = best_estimator, 
-                       y_test : pd.Series             = y_test_rf, 
-                       y_pred : np.ndarray            = y_pred_rf):
+def plot_random_forest(best   : RandomForestRegressor = random_forest_outputs['best'], 
+                       y_test : pd.Series             = random_forest_outputs['y_test'], 
+                       y_pred : np.ndarray            = random_forest_outputs['y_pred']):
     '''
     Visualizes predictions of the Random Forest model compared to actual values. Then calculates R² and MSE.
 

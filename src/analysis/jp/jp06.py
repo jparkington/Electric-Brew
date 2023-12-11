@@ -12,7 +12,7 @@ from sklearn.model_selection   import train_test_split
 from sklearn.pipeline          import Pipeline
 from sklearn.preprocessing     import OneHotEncoder, StandardScaler
 from typing                    import List, Tuple
-from utils.runtime             import find_project_root
+from utils.runtime             import find_project_root, pickle_and_load
 
 def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series, List[str], pd.Series]:
     '''
@@ -48,7 +48,7 @@ def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray,
                    'delivery_cost', 'supply_cost', 'tax_cost', 'service_charge'], axis = 1) \
             .dropna()
 
-    X = dff.drop(['total_cost'], axis=1)
+    X = dff.drop(['total_cost'], axis = 1)
     y = dff['total_cost']
 
     # Define features to engineer
@@ -77,12 +77,17 @@ def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray,
     ft_importance = pd.Series(data  = lasso_cv.coef_[selection_mask], 
                               index = shortened_names).sort_values(ascending = False)
     
-    return model.transform(X_train), model.transform(X_test), y_train, y_test, shortened_names, ft_importance
+    return {'X_train'       : model.transform(X_train),
+            'X_test'        : model.transform(X_test),
+            'y_train'       : y_train,
+            'y_test'        : y_test,
+            'ft_names'      : shortened_names,
+            'ft_importance' : ft_importance}
 
-X_train_lasso, X_test_lasso, y_train, y_test, ft_names, ft_importance = lasso()
+lasso_outputs = pickle_and_load(lasso, 'jp06.pkl')
 
 
-def plot_lasso(ft_importance: pd.Series = ft_importance):
+def plot_lasso(ft_importance: pd.Series = lasso_outputs['ft_importance']):
     '''
     Visualizes the feature importance determined by LASSO.
 

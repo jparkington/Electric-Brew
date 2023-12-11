@@ -3,7 +3,7 @@ import pandas as pd
 
 from analysis.jp.flat import prepared_data
 from sklearn.ensemble import IsolationForest
-from utils.runtime    import find_project_root
+from utils.runtime    import find_project_root, pickle_and_load
 
 def remove_anomalies(df: pd.DataFrame = prepared_data) -> pd.DataFrame:
     '''
@@ -34,7 +34,7 @@ def remove_anomalies(df: pd.DataFrame = prepared_data) -> pd.DataFrame:
     # 2: Filtering the dataframe to remove detected anomalies
     return df[outliers == 1]
 
-without_anomalies = remove_anomalies()
+without_anomalies = pickle_and_load(remove_anomalies, 'jp04.pkl')
 
 
 def plot_anomalies(df  : pd.DataFrame = prepared_data,

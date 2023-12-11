@@ -3,14 +3,14 @@ import numpy   as np
 import pandas  as pd
 import seaborn as sns
 
-from analysis.jp.jp06 import X_train_lasso, ft_names
-from analysis.jp.jp11 import optimized_sets
+from analysis.jp.jp06 import lasso_outputs
+from analysis.jp.jp11 import slsqp_outputs
 from typing           import List
 from utils.runtime    import find_project_root
 
-def percent_changes(X    : np.ndarray       = X_train_lasso, 
-                    sets : List[np.ndarray] = optimized_sets, 
-                    fts  : List[str]        = ft_names):
+def percent_changes(X    : np.ndarray       = lasso_outputs['X_train'], 
+                    sets : List[np.ndarray] = slsqp_outputs['optimized_sets'], 
+                    fts  : List[str]        = lasso_outputs['ft_names']):
     '''
     Visualizes the percentage changes in categorical values after optimization.
 
