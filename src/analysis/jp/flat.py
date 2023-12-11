@@ -4,7 +4,7 @@ import pandas as pd
 from utils.dataframes import fct_electric_brew, dim_datetimes, dim_meters, dim_bills
 from utils.runtime    import setup_plot_params
 
-def prepare_electric_brew_data() -> pd.DataFrame:
+def prepare_data() -> pd.DataFrame:
     '''
     Prepares and returns a flat, slightly engineered dataframe by merging 'fct_electric_brew' with dimension tables.
 
@@ -19,15 +19,13 @@ def prepare_electric_brew_data() -> pd.DataFrame:
     setup_plot_params() # Setting up consistent plotting colors and sizes for all subsequent scripts
 
     # 1: Merging the fact and dimension tables
-    df = fct_electric_brew.merge(dim_datetimes, left_on='dim_datetimes_id', right_on='id', suffixes=('', '_dd')) \
-                          .merge(dim_meters,    left_on='dim_meters_id',    right_on='id', suffixes=('', '_dm')) \
-                          .merge(dim_bills,     left_on='dim_bills_id',     right_on='id', suffixes=('', '_db'))
+    df = fct_electric_brew.merge(dim_datetimes, left_on = 'dim_datetimes_id', right_on = 'id', suffixes = ('', '_dd')) \
+                          .merge(dim_meters,    left_on = 'dim_meters_id',    right_on = 'id', suffixes = ('', '_dm')) \
+                          .merge(dim_bills,     left_on = 'dim_bills_id',     right_on = 'id', suffixes = ('', '_db'))
 
     # 2: Handling missing values in 'supplier'
     df['supplier'] = df['supplier'].replace([np.nan, ''], 'Unspecified')
 
     return df
 
-if __name__ == "__main__":
-
-    df: pd.DataFrame = prepare_electric_brew_data()
+prepared_data = prepare_data()

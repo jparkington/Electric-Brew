@@ -8,13 +8,14 @@
 - [Project Team](#project-team)
 - [Stakeholders](#stakeholders)
 - [Story](#story)
-- [Proposed Deliverables](#proposed-deliverables)
-- [Data Sources](#data-sources)
-  - [Operational Cost Mapping](#operational-cost-mapping)
-  - [Industry Benchmarking](#industry-benchmarking)
-  - [Peak Hour Optimization](#peak-hour-optimization)
-  - [ROI Analysis](#roi-analysis)
-  - [Additional Sources to Consider](#additional-sources-to-consider)
+- [Installation \& Usage](#installation--usage)
+  - [Setting Up the Environment](#setting-up-the-environment)
+  - [All Makefile Commands](#all-makefile-commands)
+    - [Environment Management with Conda](#environment-management-with-conda)
+    - [ETL Pipeline](#etl-pipeline)
+    - [Initial Exploratory Data Analysis (EDA)](#initial-exploratory-data-analysis-eda)
+    - [Peak Hour \& Supplier Modeling](#peak-hour--supplier-modeling)
+- [Analysis](#analysis)
 - [Acknowledgments](#acknowledgments)
 
 ## Quick Links
@@ -28,71 +29,91 @@ Welcome to the Electric Brew Project! Below you'll find quick links to key docum
 3. **[ERD and DuckDB Usage](/data/sql/README.md)**: Access our Entity-Relationship Diagram (ERD) for a visual representation of our data model, along with guidelines for leveraging DuckDB for your data queries and storage needs.
 
 4. **[Data Pipeline Functions](/src/README.md)**: Explore the comprehensive list of functions utilized in our data pipeline, detailing their purposes and usage.
+  
 
 ## Project Team
 - **Sean Sullivan** ([@seanmainer](https://github.com/seanmainer))
 - **Joseph Nelson Farrell** ([@nfarrell011](https://github.com/nfarrell011))
 - **James Parkington** ([@jparkington](https://github.com/jparkington))
 
+
 ## Stakeholders
 - [**Luke Truman**](https://neefc.org/our-team/): New England Environmental Finance Center (NEEFC), Sustainability Coordinator
 - [**Will Fisher**](https://www.austinstreetbrewery.com/about): Austin Street Brewery, Co-founder & CEO
+
 
 ## Story
 Austin Street Brewery, a thriving craft beer brewery situated in Maine, is at an exciting stage of its growth trajectory. With expansion comes opportunities for innovation, and the brewery's energy infrastructure is a prime example. Currently, energy consumption is measured through seven different electricity meters, each tied to various operational facets of the brewery, from brewing and packaging to maintaining a welcoming atmosphere in the tasting room.
 
 As a forward-thinking establishment, Austin Street Brewery has already made strides towards sustainability by sourcing 15% of their energy from solar power and are keen to understand how they might increase this proportion effectively. With multiple supplier contracts and the complexity that comes with sustainable energy sources, there exists a unique opportunity to streamline their energy management practices.
 
-In collaboration with Luke Truman from the New England Environmental Finance Center (NEEFC), whom has a proven track record in aiding craft beverage producers in enhancing energy efficiency and environmental sustainability, Austin Street Brewery aims to leverage data science to:
-- Understand and optimize their current energy consumption patterns,
-- Evaluate the financial and environmental gains of scaling up their reliance on community solar power,
-- Benchmark their practices against industry standards, such as the Brewers Association Benchmarking Index, and
-- Develop a solid analytics foundation that will support both current optimization and future growth.
+In collaboration with Luke Truman from the New England Environmental Finance Center (NEEFC), whom has a proven track record in aiding craft beverage producers in enhancing energy efficiency and environmental sustainability, Austin Street Brewery aims to leverage data science for the following objectives:
 
-Through this strategic partnership, Austin Street Brewery aspires not only to enhance operational efficiency but also to set new benchmarks in sustainable practices for the craft brewing industry.
+1. Operational cost mapping to understand which meters should power which equipment.
+2. Benchmarking against industry standards to identify areas for improvement.
+3. Analysis of total energy usage to compare the cost-efficiency of solar versus conventional suppliers.
+4. Unbiased peak hour and supplier recommendations based on unsupervised machine learning models.
 
-## Proposed Deliverables
-1. **Operational Cost Mapping**: A comprehensive analysis to map electricity consumption costs to specific operational areas. This will answer critical questions like which meters should be powering which machines to optimize costs.
 
-2. **Industry Benchmarking**: An in-depth analysis comparing Austin Street Brewery's energy consumption and costs to industry benchmarks sourced from the Brewers Association Benchmarking Index. This will identify areas for improvement and potential cost savings.
+## Installation & Usage
 
-3. **Peak Hour Optimization**: Data-driven recommendations focusing on energy consumption during peak hours. The aim is to suggest strategies for reducing energy costs and consumption during these high-usage periods.
+This project utilizes [**Conda**](https://docs.conda.io/en/latest/) for managing dependencies and environments. Conda enables the creation of isolated environments that can house specific versions of packages, making it easier to manage complex projects. It's particularly well-suited for Python-based data science projects, ensuring that all dependencies are compatible and can be easily installed or removed.
 
-4. **Stretch Goal - ROI Analysis**: A profitability analysis exploring various thresholds of upfront energy investment. This will provide insights into the long-term financial and environmental benefits of different energy optimization strategies.
+### Setting Up the Environment
 
-## Data Sources
+For the shortest path to getting up and running, you can simply run the command below, which will create the Conda environment and ensure the pathing is set up properly for subsequent commands and ad hoc querying.
 
-### Operational Cost Mapping
-- **Electricity Usage Data**: Detailed consumption data from 7 separate meters within Austin Street Brewery's two locations, stored in .csv format. Each meter corresponds to different operational facets of the brewery.
-  
-- **Operational Process Data**: Information on the specific machines or processes powered by each of the 7 meters. This could be obtained through internal documentation or asset management software like [IBM Maximo](https://www.ibm.com/products/maximo).
+```bash
+make setup
+```  
 
-### Industry Benchmarking
-- **Utility Bills**: Invoices from electric utility companies like [Central Maine Power (CMP)](https://www.cmpco.com/) and [Unitil](https://unitil.com/).
-  
-- **Sustainability Benchmarking Data**: Metrics and key performance indicators sourced from the [Brewers Association Benchmarking Survey](https://www.brewersassociation.org/).
+Note that each script containing a plot saves a PNG file in the `.fig` directory after being closed by the user.
 
-### Peak Hour Optimization
-- **Granular Energy Data**: Data from [CMP's smart meter system](https://www.cmpco.com/).
-  
-- **Time-of-Use Rates**: Information on variable electricity rates can be obtained from utility companies or through Maine's [Public Utilities Commission](https://www.maine.gov/mpuc/).
+The entire ETL process is ready for you upon cloning the repo. However, you can reproduce the scraping, curating, and modeling steps with the command below.
 
-### ROI Analysis
-- **Solar Energy Data**: Statistics on the brewery's 15% energy sourcing from community solar power.
-  
-- **Investment Cost Data**: Data on the costs associated with various energy optimization strategies could be sourced from academic research or governmental reports focused on renewable energy. For Maine-specific data, we'll start by looking at publications from the [U.S. Energy Information Administration](https://www.eia.gov/) or [Database of State Incentives for Renewables & Efficiency (DSIRE)](https://www.dsireusa.org/).
+```bash
+make etl
+```
 
-### Additional Sources to Consider
-- **Weather Data**: Historical weather data can be sourced from platforms like [NOAA's Climate Data Records](https://www.ncei.noaa.gov/products/climate-data-records).
-  
-- **Production Volume Data**: Information on the brewery's output can be sourced from the [Brewers Association Benchmarking Survey](https://www.brewersassociation.org/), which includes production volume metrics.
+### All Makefile Commands
 
-- **Reporting Requirements Data**: Information that aligns with [City of Portland's](https://www.portlandmaine.gov/) reporting requirements could be accessed through municipal databases or direct correspondence with city officials.
+Each of these commands can be called from the CLI with the keyword construction `make {command}`.
 
-- **Brewery-Specific Case Studies on Energy Efficiency**: Reviews of key case studies from other breweries that have effectively reduced energy consumption and carbon footprint. Examples of such breweries and potential sources for these case studies include:
-  - [New Belgium Brewing Company's](https://www.newbelgium.com/company/mission/climate/) sustainability reports, which detail their water and energy-saving initiatives.
-  - [Sierra Nevada Brewing Co.'s](https://sierranevada.com/sustainability/) annual sustainability report that includes data on renewable energy usage.
-  - [BrewDog's](https://www.brewdog.com/uk/tomorrow) "Make Earth Great Again" report, outlining their carbon-negative status and sustainability initiatives.
+#### Environment Management with Conda
+
+- **`create-env`**: Creates a new Conda environment using the `environment.yml` file.
+- **`remove-env`**: Removes the Conda environment, deleting all installed packages and dependencies.
+- **`set-pythonpath`**: Sets the PYTHONPATH environment variable for the current Conda environment.
+- **`setup`**: Composite command that creates the environment and sets PYTHONPATH.
+- **`update-env`**: Updates the Conda environment as per the `environment.yml` file.
+
+#### ETL Pipeline
+
+- **`etl`**: Initiates the ETL pipeline, preparing the data for analytics.
+
+#### Initial Exploratory Data Analysis (EDA)
+
+- **`eda1`**: Executes EDA scripts for kWh distribution, usage patterns, and energy spikes.
+- **`eda2`**: Runs EDA scripts for visualizing kWh usage by period, time, and location.
+
+#### Peak Hour & Supplier Modeling
+
+- **`jp01`**: Visualizes the relationship between kWh and Total Cost.
+- **`jp02`**: Visualizes hourly variation of kWh usage by month.
+- **`jp03`**: Visualizes average cost by period over time.
+- **`jp04`**: Applies anomaly detection using Isolation Forest.
+- **`jp05`**: Visualizes heatmap of high correlations among numeric columns.
+- **`jp06`**: Applies feature selection using LASSO.
+- **`jp07`**: Performs K-Means clustering and PCA visualization.
+- **`jp08`**: Fits a Linear Regression model and visualizes results.
+- **`jp09`**: Fits a Random Forest model and visualizes predictions.
+- **`jp10`**: Compares cross-validation R² scores across models.
+- **`jp11`**: Performs SLSQP optimization and visualizes results.
+- **`jp12`**: Visualizes percentage changes in categorical values after optimization.
+- **`run-all-jp`**: Executes all scripts in 'Peak Hour & Supplier Modeling' sequentially.
+
+
+## Analysis
 
 ## Acknowledgments
 
