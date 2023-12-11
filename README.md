@@ -16,6 +16,8 @@
     - [Initial Exploratory Data Analysis (EDA)](#initial-exploratory-data-analysis-eda)
     - [Peak Hour \& Supplier Modeling](#peak-hour--supplier-modeling)
 - [Analysis](#analysis)
+  - [Exploratory Data Analysis](#exploratory-data-analysis)
+  - [Peak Hour \& Supplier Modeling](#peak-hour--supplier-modeling-1)
 - [Acknowledgments](#acknowledgments)
 
 ## Quick Links
@@ -114,6 +116,71 @@ Each of these commands can be called from the CLI with the keyword construction 
 
 
 ## Analysis
+
+### Exploratory Data Analysis
+
+```bash
+make jp01
+```
+![01 - kWh vs. Total Cost](<./fig/analysis/jp/01 - kWh vs. Total Cost.png>)
+
+```bash
+make jp02
+```
+![02 - Hourly Variation of kWh by Month](<./fig/analysis/jp/02 - Hourly Variation of kWh by Month.png>)
+
+```bash
+make jp03
+```
+![03 - Average Cost by Period Over Time](<./fig/analysis/jp/03 - Average Cost by Period Over Time.png>)
+
+### Peak Hour & Supplier Modeling
+
+```bash
+make jp04
+```
+![04 - Applying Anomaly Detection with Total Cost](<./fig/analysis/jp/04 - Applying Anomaly Detection with Total Cost.png>)
+
+```bash
+make jp05
+```
+![05 - Multicollinear Facts with High Correlations](<./fig/analysis/jp/05 - Multicollinear Facts with High Correlations.png>)
+
+```bash
+make jp06
+```
+![06 - Feature Selection for Determining Total Cost](<./fig/analysis/jp/06 - Feature Selection for Determining Total Cost.png>)
+
+```bash
+make jp07
+```
+![07 - KMeans Clusters in Reduced Dimensional Space](<./fig/analysis/jp/07 - KMeans Clusters in Reduced Dimensional Space.png>)
+
+```bash
+make jp08
+```
+![08 - Linear Regression Predictions vs Actual Values](<./fig/analysis/jp/08 - Linear Regression Predictions vs Actual Values.png>)
+
+```bash
+make jp09
+```
+![09 - Random Forest Predictions vs Actual Values](<./fig/analysis/jp/09 - Random Forest Predictions vs Actual Values.png>)
+
+```bash
+make jp10
+```
+![10 - Cross-Validation R2 Scores Comparison](<./fig/analysis/jp/10 - Cross-Validation R2 Scores Comparison.png>)
+
+```bash
+make jp11
+```
+![11 - Distribution of Predicted Costs in Optimized Feature Sets](<./fig/analysis/jp/11 - Distribution of Predicted Costs in Optimized Feature Sets.png>)
+
+```bash
+make jp12
+```
+![12 - Percent Change in Categorical Features After Optimization](<./fig/analysis/jp/12 - Percent Change in Categorical Features After Optimization.png>)
+
 
 ## Acknowledgments
 
