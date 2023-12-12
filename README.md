@@ -169,11 +169,14 @@ Strategically, these insights offer Austin Street Brewery tangible opportunities
 
 <br>
 
-
 ```bash
 make jp03
 ```
 ![03 - Average Cost by Period Over Time](<./fig/analysis/jp/03 - Average Cost by Period Over Time.png>)
+
+Building on our earlier analyses, the scatter plot depicting average cost by period over time at Austin Street Brewery underscores the nuances in their energy usage, particularly under the lens of peak and off-peak hours. A key observation from the data is the brewery's tendency towards higher energy usage during peak hours, as reflected in the average costs: **$0.14** for mid-peak, **$0.09** for off-peak, and **$0.13** for on-peak hours. This pattern is pivotal, as it suggests that a straightforward transition to a variable rate plan, without adjusting operational practices, might not be as beneficial as hoped.
+
+In short, the concentration of data points during peak hours in the scatter plot indicates that the brewery's current energy-intensive activities align with generally more expensive energy periods. This presents an opportunity for strategic operational adjustments, such as rescheduling certain activities to off-peak hours, which could lead to more substantial cost savings. This approach, however, needs to be balanced with the practicalities of brewery operations, ensuring that any changes do not adversely affect productivity or product quality.
 
 <br>
 

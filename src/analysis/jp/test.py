@@ -1,30 +1,26 @@
 import pandas as pd
 from analysis.jp.flat import prepared_data
 
-def print_heatmap_data_details(df: pd.DataFrame = prepared_data):
+def print_eda3_data_details(df: pd.DataFrame = prepared_data):
     '''
-    Prints details for the heatmap data used in the eda2 function.
+    Prints details for the data used in the eda3 function.
 
     Outputs:
-        - Basic statistics for each month.
-        - Sample of the pivoted table for the heatmap.
+        - Basic statistics for 'total_cost' grouped by 'period'.
+        - Sample of the grouped data for visual inspection.
     '''
 
-    # Pivoting the data for the heatmap
-    hourly_kwh_by_month = df.pivot_table(index   = 'hour', 
-                                         columns = 'month', 
-                                         values  = 'kwh', 
-                                         aggfunc = 'mean')
+    # Grouping the data and calculating mean total_cost
+    dfg = df.groupby(['period', 'date'])['total_cost'].mean().reset_index()
 
-    # Print basic statistics for each month
-    print("Basic Statistics for Each Month:")
-    for month in range(1, 13):
-        month_data = df[df['month'] == month]['kwh']
-        print(f"\nMonth {month} - Avg: {month_data.mean():.2f}, Min: {month_data.min():.2f}, Max: {month_data.max():.2f}, Std: {month_data.std():.2f}")
+    # Print basic statistics for each period
+    print("Basic Statistics for Each Period:")
+    period_stats = dfg.groupby('period')['total_cost'].describe()
+    print(period_stats)
 
-    # Print a sample of the pivoted table
-    print("\nSample of the Pivoted Table for the Heatmap:")
-    print(hourly_kwh_by_month)  # Adjust the number based on your dataset size
+    # Print a sample of the grouped data
+    print("\nSample of the Grouped Data:")
+    print(dfg.sample(5))  # Adjust the number based on your dataset size
 
 if __name__ == "__main__":
-    print_heatmap_data_details()
+    print_eda3_data_details()
