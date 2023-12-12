@@ -135,7 +135,9 @@ Each of these commands can be called from the CLI with the keyword construction 
 
 In the Analysis section, we delve into the interconnected themes of operational efficiency, cost management, and sustainable energy use at Austin Street Brewery. Our approach reveals the complex interplay between energy consumption patterns, cost implications, and the potential of renewable energy sources. We uncover insights into how different operational areas contribute to overall energy usage, identifying specific periods and practices that drive up costs. 
 
-This analysis is not just about pinpointing areas of high consumption but also understanding the underlying factors contributing to these patterns. We then explore the financial and environmental aspects of the brewery's energy mix, evaluating the current balance between conventional and solar energy and projecting future scenarios. The culmination of our analysis offers strategic recommendations, leveraging advanced modeling to propose optimizations in energy usage and supplier relationships. Throughout, our focus remains on providing a holistic view that blends operational practicality with a vision for sustainable growth, offering Austin Street Brewery a roadmap to not only reduce costs but also enhance their environmental footprint.
+This analysis is not just about pinpointing areas of high consumption but also understanding the underlying factors contributing to these patterns. We then explore the financial and environmental aspects of the brewery's energy mix, evaluating the current balance between conventional and solar energy and projecting future scenarios. The culmination of our analysis offers strategic recommendations, leveraging advanced modeling to propose optimizations in energy usage and supplier relationships. 
+
+Throughout this section, our focus remains on providing a holistic view that blends operational practicality with a vision for sustainable growth, offering Austin Street Brewery a roadmap to not only reduce costs but also enhance their environmental footprint.
 
 
 ### Exploratory Data Analysis
@@ -149,7 +151,7 @@ Our analysis of the relationship between kilowatt-hours (kWh) and total cost is 
 
 A key insight from this analysis is the strong positive correlation of **0.846** between kWh and total cost. This correlation, while indicative of a general trend where increased energy usage leads to higher costs, also reveals the intricacies of this relationship due to the static rates from CMP, suppliers, and Ampion. The pattern-driven, striated nature observed in the scatter plot underscores that the cost dynamics are not simply linear but are influenced by these structured rate tiers.
 
-These insights are instrumental for Austin Street Brewery. They suggest a huge opportunity for strategic operational adjustments, specifically targeting periods where high energy usage does not proportionally equate to high costs. Identifying these cost-efficient periods, possibly due to favorable rate structures or operational efficiencies, can lead to significant savings.
+These insights suggest a huge opportunity for strategic operational adjustments, specifically targeting periods where high energy usage does not proportionally equate to high costs. Identifying these cost-efficient periods, possibly due to favorable rate structures or operational efficiencies, can lead to significant savings.
 
 <br>
 
@@ -162,7 +164,7 @@ Following our examination of the kWh versus total cost relationship, the analysi
 
 From the data, we observe that the energy usage peaks in the winter months, with January and December recording the highest average kWh usage at **0.94** and **0.96** respectively. This trend is indicative of increased heating requirements and possibly a higher operational pace during the holiday season. In contrast, the milder months of April and May show the lowest energy consumption, averaging at **0.75** and **0.73** kWh. The hourly breakdown within each month further reveals a consistent pattern of energy usage ramping up during the morning hours, peaking in the midday to early afternoon, and then gradually declining towards the night. This pattern aligns with typical operational hours and suggests that most energy-intensive activities occur during the day, tapering off as the brewery closes for the night.
 
-Strategically, these insights offer Austin Street Brewery tangible opportunities for energy optimization. Aligning energy-intensive processes with periods of lower kWh usage, especially during off-peak hours, could result in significant cost savings. Implementing energy storage solutions could also be beneficial, allowing the brewery to store energy during off-peak hours for use during peak demand times.
+Aligning energy-intensive processes with periods of lower kWh usage, especially during off-peak hours, could save on operational costs, assuming variables rates are available for Austin Street to opt into. Implementing energy storage solutions could also be beneficial, allowing the brewery to store energy during off-peak hours for use during peak demand times.
 
 <br>
 
