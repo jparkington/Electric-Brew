@@ -21,7 +21,6 @@ def usage_fig_b(df: pd.DataFrame) -> None:
         Returns: None
     '''
     # create fig
-    plt.figure(figsize = (15, 5))
     plt.plot_date(df['month'], df['kwh'], '-o')
 
     # vline for ampion start

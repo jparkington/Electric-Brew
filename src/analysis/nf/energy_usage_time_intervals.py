@@ -22,8 +22,8 @@ def usage_fig(df: pd.DataFrame) -> None:
     '''
     period = ['M', 'W', 'D']
 
-    fig, axes = plt.subplots(3, 1, figsize = (15, 15))
-    fig.suptitle('Energy Usage (kWh) Summary: \n ~ Day, Week, & Month', weight = 'bold', style = 'italic', fontsize = 24, y = 1)
+    fig, axes = plt.subplots(3, 1, figsize = (15, 10))
+    fig.suptitle('Energy Usage (kWh) Summary: \n ~ Day, Week, & Month', weight = 'bold', style = 'italic', fontsize = 20, y = 1)
     fig.supxlabel('Year-Month', weight = 'bold', fontsize = 16)
     fig.supylabel('Total Energy Usage (kWh)', weight = 'bold', fontsize = 16)
     for i, j in enumerate(period):

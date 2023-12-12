@@ -26,8 +26,8 @@ def generate_supplier_fig(usage_df: pd.DataFrame, energy_percent_df: pd.DataFram
         Returns: None
     '''
     # create fig
-    fig, axes = plt.subplots(2, 1, figsize = (10, 10))
-    fig.suptitle('Energy Supply by Generation Type', weight = 'bold', fontsize = 24, y = 1)
+    fig, axes = plt.subplots(2, 1, figsize = (15, 10))
+    fig.suptitle('Energy Supply by Generation Type', weight = 'bold', fontsize = 20, y = 1)
 
     # line plot
     ax = axes[0]

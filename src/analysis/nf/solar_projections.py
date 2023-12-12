@@ -22,7 +22,6 @@ def generate_solor_projections_fig(cost_df: pd.DataFrame) -> None:
         Returns: None
     '''
     # create fig
-    plt.figure(figsize = (15, 7))
 
     # plot costs 
     plt.plot_date(cost_df.index, cost_df.total_cost_2, '-o', color = 'b', alpha = .7, label = 'Actual Costs')
