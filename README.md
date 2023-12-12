@@ -218,14 +218,15 @@ make ss02
 
 Building upon our previous analysis, which highlighted significant power usage in areas associated with heating and cooling, the newly generated heatmaps for each operational area provide a deeper understanding of average hourly kWh usage patterns by month, further substantiating some of our initial observations. They also showcase how inter-related operational patterns can be for different areas of the business.
 
-1. **Boiler Pump/Patio/Forklift Area**: Consistent with our previous findings, the heatmap for this area shows pronounced energy usage in the winter months, especially during evenings. This aligns with the operational hours of patio heaters used during the COVID-19 period, when outdoor seating was essential.
+1. **Boiler Pump/Patio/Forklift**: Consistent with our previous findings, the heatmap for this area shows pronounced energy usage in the winter months, especially during evenings. This aligns with the operational hours of patio heaters used during the COVID-19 period, when outdoor seating was essential.
 
-2. **Front of House Area**: Also echoing our earlier observation, this area's energy consumption peaks in the summer, highlighting the significant use of air conditioning. The focused usage during these warmer months, particularly in business hours, emphasizes the need for cooling systems to maintain a comfortable environment, and presents an opportunity for exploring more energy-efficient cooling solutions.
+2. **Front of House**: Also echoing our earlier observation, this area's energy consumption peaks in the summer, highlighting the significant use of air conditioning. The focused usage during these warmer months, particularly in business hours, emphasizes the need for cooling systems to maintain a comfortable environment, and presents an opportunity for exploring more energy-efficient cooling solutions.
 
-3. **Package/Hot/Chill Area**: This area demonstrates a relatively stable energy usage throughout the year with a notable decrease in late summer, assumedly due to the installation of a walk-in cooler at Industrial Street no longer necessitating the same degree of chilling for this Fox Street meter.
+3. **Package/Hot/Chill**: This area demonstrates a relatively stable energy usage throughout the year with a notable decrease in late summer, assumedly due to the installation of a walk-in cooler at Industrial Street no longer necessitating the same degree of chilling for this Fox Street meter.
 
-4. **Industrial-3 Area**: A marked increase in energy usage is observed during the summer months. This surge corresponds with our previous finding of the new walk-in cooler installation at the Industrial Way location, underscoring the impact of such capital improvements on the brewery's energy needs.
+4. **Industrial-3**: A marked increase in energy usage is observed during the summer months. This surge corresponds with our previous finding of the new walk-in cooler installation at the Industrial Way location, underscoring the impact of such capital improvements on the brewery's energy needs.
 
+<br>
 
 ### Energy Usage Analysis
 
