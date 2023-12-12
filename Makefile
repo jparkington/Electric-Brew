@@ -86,22 +86,18 @@ nf01:
 	@conda run -n $(ENV_NAME) python -B src/analysis/nf/energy_aggregated_usage.py
 
 nf02:
-	@echo "Creating Visualization of Energy Usage by Time Interval at Austin Street Brewery..."
-	@conda run -n $(ENV_NAME) python -B src/analysis/nf/energy_usage_time_intervals.py
-
-nf03:
 	@echo "Producing Energy Usage Breakdown by Generation Type (Solar vs. Conventional)..."
 	@conda run -n $(ENV_NAME) python -B src/analysis/nf/energy_supplier.py
 
-nf04:
+nf03:
 	@echo "Visualizing Austin Street Brewery's Energy Costs Over Time..."
 	@conda run -n $(ENV_NAME) python -B src/analysis/nf/energy_cost.py
 
-nf05:
+nf04:
 	@echo "Generating Solar Power Cost Projections for Austin Street Brewery..."
 	@conda run -n $(ENV_NAME) python -B src/analysis/nf/solar_projections.py
 
-nf-all: nf01 nf02 nf03 nf04 nf05
+nf-all: nf01 nf02 nf03 nf04
 	@echo "All scripts for 'Energy Usage Analysis' executed."
 
 

@@ -246,26 +246,19 @@ A key observation is the notable increase in average energy usage following the 
 ```bash
 make nf02
 ```
-![Usage by Time Interval](/fig/analysis/nf/usage_by_time_interval.png)
+![Energy Usage by Energy Generation Type](/fig/analysis/nf/supplier_fig.png)
 
 <br>
 
 ```bash
 make nf03
 ```
-![Energy Usage by Energy Generation Type](/fig/analysis/nf/supplier_fig.png)
-
-<br>
-
-```bash
-make nf04
-```
 ![Energy Costs](/fig/analysis/nf/aggregated_costs_fig.png)
 
 <br>
 
 ```bash
-make nf05
+make nf04
 ```
 ![Solar Projections](/fig/analysis/nf/projections_fig.png)
 
