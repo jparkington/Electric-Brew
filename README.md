@@ -186,16 +186,45 @@ make ss01
 ```
 ![Total kWh Usage by Operational Area Over Time](<./fig/analysis/ss/Total kWh Usage by Operational Area Over Time.png>)
 
+A standout observation in this chart is the significant power usage in areas associated with heating and cooling. The 'Boiler Pump/Patio/Forklift' area at Fox St. (represented in blue) shows marked spikes in power consumption during winter months. These spikes correlate with periods of COVID-19 when outdoor seating was prevalent, necessitating the use of patio heaters. Despite a reduction in outdoor seating, the energy usage remains high, likely driven by the boiler's continued operation for brewing processes.
+
+Similarly, the 'Front of House' area (shown in green) exhibits increased energy usage during peak summer months, an interesting inverse to the Patio line. This trend likely reflects the heightened demand for air conditioning during this period. And finally, in the 'Industrial-3' line (highlighted in brown), there is a significant uptick in kWh usage starting in the summer of 2022. Upon consultation with stakeholders, we learned that this increase was due to the installation of a large walk-in cooler at the Industrial Way location. This kind of operational change underscores the dynamic nature of the brewery's energy requirements and the impact of capital improvements on overall energy consumption.
+
+These insights point to potential areas for energy efficiency improvements and cost savings. For instance, exploring more energy-efficient heating solutions for the patio area and optimizing the usage of cooling systems in the Front of House could yield some benefits, since they seem to be the major drivers of energy consumption at these two locations.
+
+<br>
+
 ```bash
 make ss02
 ```
-![Avg. kWh Usage by Hour for Boiler Pump-Patio-Forklift](<./fig/analysis/ss/Avg. kWh Usage by Hour for Boiler Pump-Patio-Forklift.png>)
-![Avg. kWh Usage by Hour for Brewpump](<./fig/analysis/ss/Avg. kWh Usage by Hour for Brewpump.png>)
-![Avg. kWh Usage by Hour for Front of House](<./fig/analysis/ss/Avg. kWh Usage by Hour for Front of House.png>)
-![Avg. kWh Usage by Hour for Industrial-1](<./fig/analysis/ss/Avg. kWh Usage by Hour for Industrial-1.png>)
-![Avg. kWh Usage by Hour for Industrial-2](<./fig/analysis/ss/Avg. kWh Usage by Hour for Industrial-2.png>)
-![Avg. kWh Usage by Hour for Industrial-3](<./fig/analysis/ss/Avg. kWh Usage by Hour for Industrial-3.png>)
-![Avg. kWh Usage by Hour for Package-Hot-Chill](<./fig/analysis/ss/Avg. kWh Usage by Hour for Package-Hot-Chill.png>)
+<table>
+  <tr>
+    <td>
+      <img src="./fig/analysis/ss/Avg. kWh Usage by Hour for Boiler Pump-Patio-Forklift.png" alt="Avg. kWh Usage by Hour for Boiler Pump-Patio-Forklift" style="width:100%">
+    </td>
+    <td>
+      <img src="./fig/analysis/ss/Avg. kWh Usage by Hour for Package-Hot-Chill.png" alt="Avg. kWh Usage by Hour for Package-Hot-Chill" style="width:100%">
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="./fig/analysis/ss/Avg. kWh Usage by Hour for Front of House.png" alt="Avg. kWh Usage by Hour for Front of House" style="width:100%">
+    </td>
+    <td>
+      <img src="./fig/analysis/ss/Avg. kWh Usage by Hour for Industrial-3.png" alt="Avg. kWh Usage by Hour for Industrial-3" style="width:100%">
+    </td>
+  </tr>
+</table>
+
+Building upon our previous analysis, which highlighted significant power usage in areas associated with heating and cooling, the newly generated heatmaps for each operational area provide a deeper understanding of average hourly kWh usage patterns by month, further substantiating some of our initial observations. They also showcase how inter-related operational patterns can be for different areas of the business.
+
+1. **Boiler Pump/Patio/Forklift Area**: Consistent with our previous findings, the heatmap for this area shows pronounced energy usage in the winter months, especially during evenings. This aligns with the operational hours of patio heaters used during the COVID-19 period, when outdoor seating was essential.
+
+2. **Front of House Area**: Also echoing our earlier observation, this area's energy consumption peaks in the summer, highlighting the significant use of air conditioning. The focused usage during these warmer months, particularly in business hours, emphasizes the need for cooling systems to maintain a comfortable environment, and presents an opportunity for exploring more energy-efficient cooling solutions.
+
+3. **Package/Hot/Chill Area**: This area demonstrates a relatively stable energy usage throughout the year with a notable decrease in late summer, assumedly due to the installation of a walk-in cooler at Industrial Street no longer necessitating the same degree of chilling for this Fox Street meter.
+
+4. **Industrial-3 Area**: A marked increase in energy usage is observed during the summer months. This surge corresponds with our previous finding of the new walk-in cooler installation at the Industrial Way location, underscoring the impact of such capital improvements on the brewery's energy needs.
 
 
 ### Energy Usage Analysis
