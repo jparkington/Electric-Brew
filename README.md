@@ -316,12 +316,28 @@ make jp05
 ```
 ![05 - Multicollinear Facts with High Correlations](<./fig/analysis/jp/05 - Multicollinear Facts with High Correlations.png>)
 
+Following the outlier removal, our next analytical step involves addressing multicollinearity among the features. This step is crucial in avoiding preconceived notions or biases from influencing the selection of numeric fields for our upcoming analyses. By systematically identifying highly correlated variables, we aim to let the data guide our insights, rather than making arbitrary choices that could skew our understanding.
+
+The presence of multicollinearity in our dataset is not unexpected. In our model, cost components such as `total_cost` are calculated using a variety of other variables, like `delivery_cost`, `supply_cost`, and rate multiplications involving `kwh`. However, while these relationships are expected, they can pose challenges in predictive modeling. High multicollinearity can lead to unstable estimates of regression coefficients, making it difficult to ascertain the true effect of each independent variable on the dependent variable, which is `total_cost` in this case.
+
+In that sense, addressing and removing multicollinear fields is not just about statistical accuracy, but rather ensuring that the insights we gain are reflective of the true drivers of energy costs.
+
 <br>
 
 ```bash
 make jp06
 ```
 ![06 - Feature Selection for Determining Total Cost](<./fig/analysis/jp/06 - Feature Selection for Determining Total Cost.png>)
+
+With the dataset cleaned of anomalies and problematic fields, our primary objective is now to select the most relevant features from a broad range of possibilities, both categorical and numeric. Given the complex nature of our dataset, this selection process is crucial and must be approached with a method that is both unbiased and effective.
+
+This is where LASSO (Least Absolute Shrinkage and Selection Operator) regression becomes an invaluable tool. LASSO is ideally suited for scenarios like ours, where the dataset contains a large number of potential predictors. It adeptly handles any missed multicollinearity and further simplifies the model by excluding less important features, making it more interpretable and manageable. Additionally, LASSO's regularization guards against overfitting, maintaining the model's effectiveness on both training data and new, unseen data.
+
+The LASSO model has identified several key features, with operational areas, especially those linked to heating and cooling, emerging as top predictors. This finding is consistent with our previous analyses, underscoring the significant impact of these areas on overall energy costs. 
+
+The model's output also sheds light on the time-sensitive aspects of energy consumption. While it attributes some level of importance to specific months and hours, the coefficients related to each hour are relatively minor. This could be indicative of the static nature of delivery and supply rates, set on a monthly basis, making it challenging for the model to discern significant differences in costs across different hours.
+
+The presence of multiple supplier features in the selected set indicates their tangible impact on energy costs as well. Specifically, supplier structures like those with the 'Standard Offer' and 'MEGA ENERGY' have positive coefficients, suggesting a direct correlation with increased total costs. Conversely, the supplier 'CONSTELLATION' has a negative coefficient, implying that when this supplier is chosen, there's a tendency towards lower total costs.
 
 <br>
 

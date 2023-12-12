@@ -1,34 +1,25 @@
 import pandas as pd
-from analysis.jp.flat import prepared_data
-from sklearn.ensemble import IsolationForest
+from analysis.jp.jp06 import lasso_outputs
 
-def print_anomaly_detection_stats(df: pd.DataFrame = prepared_data):
+def print_lasso_analysis_details(lasso_data: dict = lasso_outputs):
     '''
-    Prints statistics for the data before and after applying anomaly detection.
+    Prints detailed information about the features selected by the LASSO model.
 
     Outputs:
-        - Basic statistics of 'total_cost' before and after anomaly detection.
-        - Count of detected anomalies.
+        - List of selected features and their corresponding LASSO coefficients.
+        - Basic statistics of the LASSO coefficients.
     '''
 
-    # Fitting the Isolation Forest model
-    isolation_forest = IsolationForest(contamination=0.001, n_jobs=-1, random_state=0)
-    outliers = isolation_forest.fit_predict(df[['total_cost']])
+    # Extracting the feature importance data
+    ft_importance = lasso_data['ft_importance']
 
-    # Filtering the dataframe to remove detected anomalies
-    df_without_anomalies = df[outliers == 1]
+    # Print the selected features and their coefficients
+    print("Selected Features and LASSO Coefficients:")
+    print(ft_importance)
 
-    # Print basic statistics before anomaly detection
-    print("Before Anomaly Detection - 'total_cost' Statistics:")
-    print(df['total_cost'].describe())
-
-    # Print basic statistics after anomaly detection
-    print("\nAfter Anomaly Detection - 'total_cost' Statistics:")
-    print(df_without_anomalies['total_cost'].describe())
-
-    # Count of detected anomalies
-    anomaly_count = len(df) - len(df_without_anomalies)
-    print("\nNumber of Detected Anomalies:", anomaly_count)
+    # Print basic statistics of the coefficients
+    print("\nLASSO Coefficients Statistics:")
+    print(ft_importance.describe())
 
 if __name__ == "__main__":
-    print_anomaly_detection_stats()
+    print_lasso_analysis_details()
