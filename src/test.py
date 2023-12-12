@@ -1,47 +1,34 @@
-from utils.runtime import connect_to_db
+import pandas as pd
+from analysis.jp.flat import prepared_data
+from sklearn.ensemble import IsolationForest
 
-def print_solar_projection_data():
+def print_anomaly_detection_stats(df: pd.DataFrame = prepared_data):
     '''
-    Prints statistics and samples for solar projection data.
+    Prints statistics for the data before and after applying anomaly detection.
 
     Outputs:
-        - Summary statistics for actual and projected energy costs.
-        - Cost per kWh for solar energy.
-        - Sample data showing percentage difference between actual and projected costs.
+        - Basic statistics of 'total_cost' before and after anomaly detection.
+        - Count of detected anomalies.
     '''
 
-    # Connect to the database
-    electric_brew = connect_to_db()
+    # Fitting the Isolation Forest model
+    isolation_forest = IsolationForest(contamination=0.001, n_jobs=-1, random_state=0)
+    outliers = isolation_forest.fit_predict(df[['total_cost']])
 
-    # Query for actual and projected costs
-    query = """ SELECT supplier, date, kwh, total_cost
-                FROM fct_electric_brew
-                LEFT JOIN dim_datetimes ON fct_electric_brew.dim_datetimes_id = dim_datetimes.id
-                LEFT JOIN dim_bills ON fct_electric_brew.dim_bills_id = dim_bills.id
-                WHERE date >= '2022-09-01' AND date <= '2023-07-31';
-             """
-    cost_df = electric_brew.query(query).to_df()
-    cost_df['month'] = cost_df['date'].dt.to_period('M')
-    cost_df.sort_values('date', inplace=True)
-    cost_df['energy_type'] = cost_df['supplier'].apply(lambda x: 'Solar' if x == 'Ampion' else 'conventional_supplier')
-    grouped_cost_df = cost_df.groupby(['month', 'energy_type']).agg({'total_cost': 'sum', 'kwh': 'sum'}).unstack(fill_value=0)
-    grouped_cost_df['solar_cost_per_kwh'] = grouped_cost_df.total_cost.Solar / grouped_cost_df.kwh.Solar
-    grouped_cost_df['total_kwh'] = grouped_cost_df.kwh.Solar + grouped_cost_df.kwh.conventional_supplier
-    grouped_cost_df['total_cost_2'] = grouped_cost_df.total_cost.Solar + grouped_cost_df.total_cost.conventional_supplier
-    grouped_cost_df['projected_costs'] = grouped_cost_df.solar_cost_per_kwh * grouped_cost_df.total_kwh
+    # Filtering the dataframe to remove detected anomalies
+    df_without_anomalies = df[outliers == 1]
 
-    # Print summary statistics for actual and projected costs
-    print("Actual vs. Projected Energy Costs:")
-    print(grouped_cost_df[['total_cost_2', 'projected_costs']].describe())
+    # Print basic statistics before anomaly detection
+    print("Before Anomaly Detection - 'total_cost' Statistics:")
+    print(df['total_cost'].describe())
 
-    # Print cost per kWh for solar energy
-    print("\nSolar Cost per kWh:")
-    print(grouped_cost_df['solar_cost_per_kwh'].describe())
+    # Print basic statistics after anomaly detection
+    print("\nAfter Anomaly Detection - 'total_cost' Statistics:")
+    print(df_without_anomalies['total_cost'].describe())
 
-    # Print sample data for percentage difference
-    percent_diff = ((grouped_cost_df['projected_costs'] - grouped_cost_df['total_cost_2']) / grouped_cost_df['total_cost_2']) * 100
-    print("\nPercentage Difference Between Actual and Projected Costs:")
-    print(percent_diff)
+    # Count of detected anomalies
+    anomaly_count = len(df) - len(df_without_anomalies)
+    print("\nNumber of Detected Anomalies:", anomaly_count)
 
 if __name__ == "__main__":
-    print_solar_projection_data()
+    print_anomaly_detection_stats()

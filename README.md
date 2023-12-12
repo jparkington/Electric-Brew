@@ -285,10 +285,29 @@ In summary, while the transition to solar energy aligns with sustainability goal
 
 ### Peak Hour & Supplier Modeling
 
+Based on our previous sections, some patterns have started to emerge:
+- Heating and cooling processes incur significant energy costs.
+- Partnership with Ampion, though sustainable, appears financially steeper compared to conventional energy sources.
+- Austin Street Brewery's main operational activities are concentrated within specific hours.
+
+However, the complexity and intentional obscurity in the data from energy providers necessitate a deeper dive. To carry this out, we apply a series of unsupervised machine learning models to the data, including anomaly detection, multicollinearity analysis, feature selection, regression techniques, and optimization techniques. These models serve a dual purpose: 
+1. To rip through the intricate layers of the dataset, revealing underlying patterns and inefficiencies
+2. To validate and enhance our initial insights by identifying the most impactful variables, uncovering hidden operational patterns, and ensuring robust and generalizable predictions.
+
+<br>
+
 ```bash
 make jp04
 ```
 ![04 - Applying Anomaly Detection with Total Cost](<./fig/analysis/jp/04 - Applying Anomaly Detection with Total Cost.png>)
+
+The first step in our series of unsupervised models is to apply an Isolation Forest algorithm to trim the outliers from our `total_cost` data, removing the top 0.1% of readings. This is crucial because these outliers can muddle our analysis, especially considering the clear patterns we've started to see, like the high costs associated with heating, cooling, and solar energy from Ampion.
+
+- **Before Anomaly Detection**: The initial dataset, with nearly a **half-million** entries, shows a wide range of `total_cost` values (min: **$0.00**, max: **$4.38**) with a mean of **$0.1246** and a relatively high standard deviation of **$0.2313**. This high variance indicates significant fluctuations in energy costs, possibly reflecting occasional spikes in energy usage or pricing anomalies from Austin Street's suppliers.
+
+- **After Anomaly Detection**: After `IsolationForest`, the mean `total_cost` slightly decreases to **$0.1222**, and the standard deviation is reduced to **$0.2173**, indicating a more uniform dataset. The maximum cost value notably drops to **$2.23**, suggesting that the removed anomalies were indeed significantly higher than typical cost values.
+
+- **Number of Detected Anomalies**: With 305 anomalies detected and removed, the dataset becomes more representative of the brewery's regular energy cost patterns. This reduction in extreme values should allow for more accurate analysis in subsequent machine learning models.
 
 <br>
 
