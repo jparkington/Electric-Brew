@@ -237,29 +237,35 @@ make nf01
 ```
 ![Total Energy Usage](/fig/analysis/nf/aggregated_usage_fig.png)
 
+<br>
+
 ```bash
 make nf02
 ```
 ![Usage by Time Interval](/fig/analysis/nf/usage_by_time_interval.png)
 
+<br>
 
 ```bash
 make nf03
 ```
 ![Energy Usage by Energy Generation Type](/fig/analysis/nf/supplier_fig.png)
 
+<br>
 
 ```bash
 make nf04
 ```
 ![Energy Costs](/fig/analysis/nf/aggregated_costs_fig.png)
 
+<br>
 
 ```bash
 make nf05
 ```
 ![Solar Projections](/fig/analysis/nf/projections_fig.png)
 
+<br>
 
 ### Peak Hour & Supplier Modeling
 
@@ -268,46 +274,63 @@ make jp04
 ```
 ![04 - Applying Anomaly Detection with Total Cost](<./fig/analysis/jp/04 - Applying Anomaly Detection with Total Cost.png>)
 
+<br>
+
 ```bash
 make jp05
 ```
 ![05 - Multicollinear Facts with High Correlations](<./fig/analysis/jp/05 - Multicollinear Facts with High Correlations.png>)
+
+<br>
 
 ```bash
 make jp06
 ```
 ![06 - Feature Selection for Determining Total Cost](<./fig/analysis/jp/06 - Feature Selection for Determining Total Cost.png>)
 
+<br>
+
 ```bash
 make jp07
 ```
 ![07 - KMeans Clusters in Reduced Dimensional Space](<./fig/analysis/jp/07 - KMeans Clusters in Reduced Dimensional Space.png>)
+
+<br>
 
 ```bash
 make jp08
 ```
 ![08 - Linear Regression Predictions vs Actual Values](<./fig/analysis/jp/08 - Linear Regression Predictions vs Actual Values.png>)
 
+<br>
+
 ```bash
 make jp09
 ```
 ![09 - Random Forest Predictions vs Actual Values](<./fig/analysis/jp/09 - Random Forest Predictions vs Actual Values.png>)
+
+<br>
 
 ```bash
 make jp10
 ```
 ![10 - Cross-Validation R2 Scores Comparison](<./fig/analysis/jp/10 - Cross-Validation R2 Scores Comparison.png>)
 
+<br>
+
 ```bash
 make jp11
 ```
 ![11 - Distribution of Predicted Costs in Optimized Feature Sets](<./fig/analysis/jp/11 - Distribution of Predicted Costs in Optimized Feature Sets.png>)
+
+<br>
 
 ```bash
 make jp12
 ```
 ![12 - Percent Change in Categorical Features After Optimization](<./fig/analysis/jp/12 - Percent Change in Categorical Features After Optimization.png>)
 
+<br>
 
 ## Acknowledgments
 
