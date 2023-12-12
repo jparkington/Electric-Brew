@@ -1,43 +1,47 @@
-import pandas as pd
 from utils.runtime import connect_to_db
-import matplotlib.pyplot as plt
 
+def print_solar_projection_data():
+    '''
+    Prints statistics and samples for solar projection data.
 
-# Define the SQL query
-query = """
-    SELECT date,
-           kwh
-    FROM fct_electric_brew fe
-    LEFT JOIN dim_datetimes dd ON fe.dim_datetimes_id = dd.id
-"""
+    Outputs:
+        - Summary statistics for actual and projected energy costs.
+        - Cost per kWh for solar energy.
+        - Sample data showing percentage difference between actual and projected costs.
+    '''
 
-# Connect to the database
-electric_brew = connect_to_db()
+    # Connect to the database
+    electric_brew = connect_to_db()
 
-# Execute the query and save to a DataFrame
-df = electric_brew.query(query).to_df()
+    # Query for actual and projected costs
+    query = """ SELECT supplier, date, kwh, total_cost
+                FROM fct_electric_brew
+                LEFT JOIN dim_datetimes ON fct_electric_brew.dim_datetimes_id = dim_datetimes.id
+                LEFT JOIN dim_bills ON fct_electric_brew.dim_bills_id = dim_bills.id
+                WHERE date >= '2022-09-01' AND date <= '2023-07-31';
+             """
+    cost_df = electric_brew.query(query).to_df()
+    cost_df['month'] = cost_df['date'].dt.to_period('M')
+    cost_df.sort_values('date', inplace=True)
+    cost_df['energy_type'] = cost_df['supplier'].apply(lambda x: 'Solar' if x == 'Ampion' else 'conventional_supplier')
+    grouped_cost_df = cost_df.groupby(['month', 'energy_type']).agg({'total_cost': 'sum', 'kwh': 'sum'}).unstack(fill_value=0)
+    grouped_cost_df['solar_cost_per_kwh'] = grouped_cost_df.total_cost.Solar / grouped_cost_df.kwh.Solar
+    grouped_cost_df['total_kwh'] = grouped_cost_df.kwh.Solar + grouped_cost_df.kwh.conventional_supplier
+    grouped_cost_df['total_cost_2'] = grouped_cost_df.total_cost.Solar + grouped_cost_df.total_cost.conventional_supplier
+    grouped_cost_df['projected_costs'] = grouped_cost_df.solar_cost_per_kwh * grouped_cost_df.total_kwh
 
-# Process the DataFrame
-df['month'] = df['date'].dt.to_period('M')
-df = df.groupby('month')['kwh'].sum().reset_index()
-df['month_name'] = df['month'].dt.strftime('%B')
+    # Print summary statistics for actual and projected costs
+    print("Actual vs. Projected Energy Costs:")
+    print(grouped_cost_df[['total_cost_2', 'projected_costs']].describe())
 
-# Print the DataFrame structure
-print("DataFrame Head:\n", df.head())
-print("DataFrame Tail:\n", df.tail())
+    # Print cost per kWh for solar energy
+    print("\nSolar Cost per kWh:")
+    print(grouped_cost_df['solar_cost_per_kwh'].describe())
 
-# Print summary statistics for kWh
-print("\nSummary Statistics for kWh:\n", df['kwh'].describe())
+    # Print sample data for percentage difference
+    percent_diff = ((grouped_cost_df['projected_costs'] - grouped_cost_df['total_cost_2']) / grouped_cost_df['total_cost_2']) * 100
+    print("\nPercentage Difference Between Actual and Projected Costs:")
+    print(percent_diff)
 
-# Find the months with the highest and lowest energy usage
-max_usage_month = df.loc[df['kwh'].idxmax()]
-min_usage_month = df.loc[df['kwh'].idxmin()]
-print("\nMonth with Maximum Energy Usage:\n", max_usage_month)
-print("\nMonth with Minimum Energy Usage:\n", min_usage_month)
-
-# Analyze energy usage before and after the introduction of the solar power supply (October 2022)
-solar_start_date = pd.to_datetime('2022-10').to_period('M')
-pre_solar_df = df[df['month'] <= solar_start_date]
-post_solar_df = df[df['month'] > solar_start_date]
-print("\nAverage Energy Usage Before Solar Power Supply Start:\n", pre_solar_df['kwh'].mean())
-print("\nAverage Energy Usage After Solar Power Supply Start:\n", post_solar_df['kwh'].mean())
+if __name__ == "__main__":
+    print_solar_projection_data()

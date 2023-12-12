@@ -16,6 +16,7 @@
   - [Operational Cost Mapping](#operational-cost-mapping)
   - [Energy Usage Analysis](#energy-usage-analysis)
   - [Peak Hour \& Supplier Modeling](#peak-hour--supplier-modeling)
+  - [Major Takeaways](#major-takeaways)
 - [Acknowledgments](#acknowledgments)
 
 ## Quick Links
@@ -248,12 +249,22 @@ make nf02
 ```
 ![Energy Usage by Energy Generation Type](/fig/analysis/nf/supplier_fig.png)
 
+In looking more closely at the energy supply by generation type, the data distinctly shows that during summer months, the brewery derives a substantial portion of its energy from solar power, with peaks in solar energy usage notably in September and July, at **87.4%** and **70.5%** respectively. This trend is a testament to the brewery's successful implementation of solar power through its partnership with Ampion initiated in September 2022.
+
+However, during winter months, the reliance on solar energy diminishes significantly, with the lowest solar energy usage recorded in December at merely **8.5%**. This seasonal variance is characteristic of Maine's climate, where solar energy generation is less efficient during shorter, cloudier winter days. The stark contrast in energy sourcing between summer and winter months reflects the natural limitations of solar power in the northeastern United States but also highlights an opportunity for Austin Street to optimize its energy management.
+
+Given the higher solar energy production in summer, if the brewery were ability to bank energy credits, perhaps by enhancing solar energy storage capabilities, that could potentially yield better performance even in less ideal conditions.
+
 <br>
 
 ```bash
 make nf03
 ```
-![Energy Costs](/fig/analysis/nf/aggregated_costs_fig.png)
+![Energy Costs Summary](/fig/analysis/nf/aggregated_costs_fig.png)
+
+While embracing solar energy is a significant step towards sustainability, it currently comes at a higher monetary cost. The total energy costs over time show considerable variability, with a mean monthly cost of about **$1,175**. Breaking down the costs by generation type, solar energy consistently incurs higher expenses (mean: **$1,362**) compared to conventional sources (mean: **$923**). This consistent trend, despite the variability in costs, might be influenced by the efficiency and technology of solar power, particularly in Maine's seasonal climate.
+
+The cost per kWh analysis sheds more light on this. Solar energy, across the analyzed period, has a higher per kWh cost compared to conventional sources. It's essential to consider the broader context of solar power's higher initial costs, including the assumed tax credits and long-term savings expected as part of its implementation. These factors, beyond the immediate financial comparison, may influence the overall viability of solar energy for the brewery. However, without in-depth knowledge of these incentives and the long-term economic impact, it's challenging to conclusively assess solar power's financial feasibility for Austin Street Brewery.
 
 <br>
 
@@ -261,6 +272,14 @@ make nf03
 make nf04
 ```
 ![Solar Projections](/fig/analysis/nf/projections_fig.png)
+
+In this analysis, we explore a hypothetical scenario where all of Austin Street's power is sourced from solar energy. The actual vs. projected energy costs reveal a clear trend that follows from the previous charts—switching entirely to solar power would have led to higher expenses for the brewery. Over the analyzed period, the average actual cost per month stands at about **$2,285**, whereas the projected costs under a full solar regime average around **$2,870**.
+
+Interestingly, the cost per kWh for solar energy averages at **$0.234**, which, while relatively stable (std. dev.: **$0.027**), contributes to higher projected costs. This reaffirms that, under current conditions and pricing models, solar energy is more expensive per unit than the brewery's existing energy mix.
+
+The percentage differences between actual and projected costs provide a nuanced perspective. In certain months like December 2022 and January 2023, the cost difference is strikingly high, reaching up to **74.58%** and **43.63%**, underscoring the substantial financial impact that a full shift to solar energy could have during months with higher energy demands.
+
+In summary, while the transition to solar energy aligns with sustainability goals, it currently presents a significant cost increase for Austin Street Brewery. This analysis highlights the importance of a balanced approach, where solar energy complements rather than completely replaces conventional energy sources. It also emphasizes the need for further exploration into cost-effective solar solutions, potential subsidies, and incentives that could make a full transition more financially viable in the future.
 
 <br>
 
@@ -328,6 +347,16 @@ make jp12
 ![12 - Percent Change in Categorical Features After Optimization](<./fig/analysis/jp/12 - Percent Change in Categorical Features After Optimization.png>)
 
 <br>
+
+### Major Takeaways
+
+1. **Solar is more expensive**, but that said, you can bank credits in the summer and use them in the winter.
+   
+2. **Heating and cooling dominate** the cost profile for the company, and should be a focus for cost optimization.
+  
+3. Because energy usage is greatest during peak hours, a **shift to a variable rate** (Mid/On/Off Peak) would be **more costly**.
+
+4. **The structure of the data** lends itself well to prediction and an opportunity to revisit as the business changes.
 
 ## Acknowledgments
 
