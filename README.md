@@ -237,6 +237,10 @@ make nf01
 ```
 ![Total Energy Usage](/fig/analysis/nf/aggregated_usage_fig.png)
 
+The data on total energy usage shows a gradual increase in kilowatt-hours over the years, with the lowest monthly usage recorded in October 2020 at **6,966** kWh and the peak in August 2023 at **15,244** kWh. This trend suggests a growing operational scale that mimics the brewery's expansion into more space over that period.
+
+A key observation is the notable increase in average energy usage following the introduction of solar power in September 2022. Before the Ampion partnership, the average monthly energy usage was around **11,024** kWh. Post the solar power transition, this average rose to approximately **12,721** kWh. This increase can be attributed to several factors, including expanded operations, more energy-intensive processes, and some seasonal variation. 
+
 <br>
 
 ```bash
