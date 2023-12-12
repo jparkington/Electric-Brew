@@ -188,7 +188,9 @@ make ss01
 
 A standout observation in this chart is the significant power usage in areas associated with heating and cooling. The 'Boiler Pump/Patio/Forklift' area at Fox St. (represented in blue) shows marked spikes in power consumption during winter months. These spikes correlate with periods of COVID-19 when outdoor seating was prevalent, necessitating the use of patio heaters. Despite a reduction in outdoor seating, the energy usage remains high, likely driven by the boiler's continued operation for brewing processes.
 
-Similarly, the 'Front of House' area (shown in green) exhibits increased energy usage during peak summer months, an interesting inverse to the Patio line. This trend likely reflects the heightened demand for air conditioning during this period. And finally, in the 'Industrial-3' line (highlighted in brown), there is a significant uptick in kWh usage starting in the summer of 2022. Upon consultation with stakeholders, we learned that this increase was due to the installation of a large walk-in cooler at the Industrial Way location. This kind of operational change underscores the dynamic nature of the brewery's energy requirements and the impact of capital improvements on overall energy consumption.
+Similarly, the 'Front of House' area (shown in green) exhibits increased energy usage during peak summer months, an interesting inverse to the Patio line. This trend likely reflects the heightened demand for air conditioning during this period. 
+
+And finally, in the 'Industrial-3' line (highlighted in brown), there is a significant uptick in kWh usage starting in the summer of 2022. Upon consultation with stakeholders, we learned that this increase was due to the installation of a large walk-in cooler at the Industrial Way location.
 
 These insights point to potential areas for energy efficiency improvements and cost savings. For instance, exploring more energy-efficient heating solutions for the patio area and optimizing the usage of cooling systems in the Front of House could yield some benefits, since they seem to be the major drivers of energy consumption at these two locations.
 
@@ -216,7 +218,7 @@ make ss02
   </tr>
 </table>
 
-Building upon our previous analysis, which highlighted significant power usage in areas associated with heating and cooling, the newly generated heatmaps for each operational area provide a deeper understanding of average hourly kWh usage patterns by month, further substantiating some of our initial observations. They also showcase how inter-related operational patterns can be for different areas of the business.
+Building upon our previous analysis, which highlighted significant power usage in areas associated with heating and cooling, the newly generated heatmaps not only further substantiate some of those initial observations, but they also showcase how inter-related operational patterns can be for different areas of the business.
 
 1. **Boiler Pump/Patio/Forklift**: Consistent with our previous findings, the heatmap for this area shows pronounced energy usage in the winter months, especially during evenings. This aligns with the operational hours of patio heaters used during the COVID-19 period, when outdoor seating was essential.
 
