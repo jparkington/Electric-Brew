@@ -12,7 +12,6 @@
   - [Setting Up the Environment](#setting-up-the-environment)
   - [All Makefile Commands](#all-makefile-commands)
 - [Analysis](#analysis)
-- [Analysis Introduction](#analysis-introduction)
   - [Exploratory Data Analysis](#exploratory-data-analysis)
   - [Operational Cost Mapping](#operational-cost-mapping)
   - [Energy Usage Analysis](#energy-usage-analysis)
@@ -133,8 +132,6 @@ Each of these commands can be called from the CLI with the keyword construction 
 
 
 ## Analysis
-
-## Analysis Introduction
 
 In the Analysis section, we delve into the interconnected themes of operational efficiency, cost management, and sustainable energy use at Austin Street Brewery. Our approach reveals the complex interplay between energy consumption patterns, cost implications, and the potential of renewable energy sources. We uncover insights into how different operational areas contribute to overall energy usage, identifying specific periods and practices that drive up costs. 
 
