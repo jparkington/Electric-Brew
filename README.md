@@ -374,6 +374,12 @@ make jp09
 ```
 ![09 - Random Forest Predictions vs Actual Values](<./fig/analysis/jp/09 - Random Forest Predictions vs Actual Values.png>)
 
+Given the presence of those prediction errors, which hint at complexities beyond linear associations, this was our cue to explore a more sophisticated model, capable of unraveling the intricate, potentially non-linear interplays within the data.
+
+For this step, we chose Random Forest, an ensemble learning method that combines multiple decision trees to improve predictive accuracy and control over-fitting. This model is particularly adept at handling datasets with complex structures, like ours, where linear models might fall short.
+
+Our implementation of Random Forest achieved a high Coefficient of Determination (R²) of **0.906** and a low Mean Squared Error (MSE) of **0.006**. Residual analysis shows a very low mean, indicating no systematic bias in predictions. This improvement in the metrics signals a substantial leap in our model's ability to capture the nuances of the brewery's energy costs, which we'll use as a canvas for our final unsupervised recommendations.
+
 <br>
 
 ```bash
