@@ -346,12 +346,26 @@ make jp07
 ```
 ![07 - KMeans Clusters in Reduced Dimensional Space](<./fig/analysis/jp/07 - KMeans Clusters in Reduced Dimensional Space.png>)
 
+Purely out of curiosity, we turn to K-Means Clustering on the Principal Components of the selected features to evaluate how pattern-driven the emerging LASSO data is. K-Means Clustering is a method used to group data points into clusters based on similarity. Because there are still 30+ features to evaluate, we pair that clustering process with PCA, which simplifies the data by reducing its dimensions while retaining the most important information.
+
+In our case, we have eight distinct, slash-like clusters, all pointing towards the top-right, implying a directional trend in the data. This could be indicative of a relationship between the operational variables under consideration – possibly the kWh and total costs, which were central to our initial analysis.
+
+Notably, the clusters are long and narrow, with some appearing as multiple slashes in close proximity. This could suggest varying degrees of a similar operational characteristic within the brewery's data. For instance, different clusters might represent varying levels of energy consumption or cost patterns that are fundamentally similar but differ in magnitude or frequency. The concentration of data points in certain areas of these slashes might also point to more common operational scenarios, while the sparser regions could indicate less frequent or more unique situations.
+
+The fact that these patterns re-emerge in a PCA-reduced and clustered visualization is a promising sign. It suggests that the underlying data, despite being simplified and grouped into clusters, retains a core structural integrity that mirrors our initial observations.
+
 <br>
 
 ```bash
 make jp08
 ```
 ![08 - Linear Regression Predictions vs Actual Values](<./fig/analysis/jp/08 - Linear Regression Predictions vs Actual Values.png>)
+
+We now have everything we need to start predictive modeling with Linear Regression, a logical step following our previous efforts in refining the dataset.
+
+The Linear Regression model, applied to this curated dataset, achieved a Coefficient of Determination (R²) of **0.677** and a Mean Squared Error (MSE) of **0.023**. These results indicate that the model successfully captures a substantial portion of the variance in the energy cost data. The R² value reflects the model's effectiveness in explaining the relationship between the selected features and energy costs, a testament to the relevance of the features identified by LASSO. That said, the MSE, while relatively low, suggests that there is still some prediction error, possibly due to complex, non-linear relationships in the data or other influential factors not captured by the current model.
+
+The residual analysis, which examines the differences between the actual and predicted values, shows a mean close to zero. This indicates no significant bias in the model's predictions. However, the standard deviation of the residuals (0.150) and the range of minimum and maximum residuals (-1.170 to 1.540) highlight the presence of some large prediction errors, suggesting that certain specific scenarios or outliers are not fully captured by the model. The model's predictions also show a slightly narrower spread than the actual values, hinting at a conservative estimation in some cases.
 
 <br>
 
