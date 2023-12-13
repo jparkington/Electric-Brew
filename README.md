@@ -291,7 +291,7 @@ Based on our previous sections, some patterns have started to emerge:
 - Austin Street Brewery's main operational activities are concentrated within specific hours.
 
 However, the complexity and intentional obscurity in the data from energy providers necessitate a deeper dive. To carry this out, we apply a series of unsupervised machine learning models to the data, including anomaly detection, multicollinearity analysis, feature selection, regression techniques, and optimization techniques. These models serve a dual purpose: 
-1. To rip through the intricate layers of the dataset, revealing underlying patterns and inefficiencies
+1. To rip through the intricate layers of the dataset, revealing underlying patterns and inefficiencies.
 2. To validate and enhance our initial insights by identifying the most impactful variables, uncovering hidden operational patterns, and ensuring robust and generalizable predictions.
 
 <br>
