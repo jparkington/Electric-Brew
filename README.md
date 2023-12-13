@@ -1,23 +1,5 @@
-<!-- omit in toc -->
 # Electric Brew
 *NEEFC Energy Efficiency Project for Austin Street Brewery*
-
-<!-- omit in toc -->
-## Table of Contents
-- [Quick Links](#quick-links)
-- [Project Team](#project-team)
-- [Stakeholders](#stakeholders)
-- [Story](#story)
-- [Installation \& Usage](#installation--usage)
-  - [Setting Up the Environment](#setting-up-the-environment)
-  - [All Makefile Commands](#all-makefile-commands)
-- [Analysis](#analysis)
-  - [Exploratory Data Analysis](#exploratory-data-analysis)
-  - [Operational Cost Mapping](#operational-cost-mapping)
-  - [Energy Usage Analysis](#energy-usage-analysis)
-  - [Peak Hour \& Supplier Modeling](#peak-hour--supplier-modeling)
-  - [Major Takeaways](#major-takeaways)
-- [Acknowledgments](#acknowledgments)
 
 ## Quick Links
 
