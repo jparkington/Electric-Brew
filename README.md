@@ -2,7 +2,6 @@
 *NEEFC Energy Efficiency Project for Austin Street Brewery*
 
 ## Quick Links
-
 Welcome to the Electric Brew Project! Below you'll find quick links to key documents and resources that provide in-depth information about various aspects of our data pipeline and infrastructure:
 
 1. **[Data Dictionary](/docs/data_dictionary.md)**: Delve into our detailed data dictionary, which offers a complete overview of all the tables, fields, and their data types within the project.
@@ -398,6 +397,37 @@ By filtering out the extremes and focusing on the middle ground - scenarios that
 make jp12
 ```
 ![12 - Percent Change in Categorical Features After Optimization](<./fig/analysis/jp/12 - Percent Change in Categorical Features After Optimization.png>)
+
+
+For the concluding phase of our unsupervised analysis, we turn our attention to understanding the impact of our optimization efforts on various operational features picked by LASSO and amplified in predictive power by Random Forest.
+
+**Understanding the Final Metric**
+
+The percent changes we observe are a measure of how much more or less frequently (or intensely) a particular feature appears in the optimized scenarios compared to the original dataset. A positive percentage indicates an increase in the feature's influence in the optimized cost-efficient scenarios, while a negative percentage suggests a decrease. 
+
+These changes don't directly describe costs, but rather how each operational feature contributes to achieving the desired cost-efficiency.
+
+**Seasonal Impact on Energy Costs**
+
+The significant rise in features like 'cat__month_name_March', 'January', and 'February' suggests that winter months are much more prevalent in the optimized, cost-efficient scenarios. 
+
+This could be attributed to the lower reliance on expensive solar energy during these months, as solar generation is less effective in Maine's winter. Consequently, electricity costs are generally lower during these times.
+
+**Daily Business as Usual**
+
+The appearance of specific hours like 'cat__hour_16', '11', '12', and '13' in the optimization outcomes might not indicate a significant shift in operational strategy but rather a reinforcement of existing practices.
+
+Given that LASSO initially showed no specific hour as significantly impactful and considering that these hours are peak times, it could be that the optimization is suggesting a 'business as usual' approach, where operations continue as they are, especially if the energy rates remain constant across all hours. The decrease in intensity of off-hours like '1', '2', '3', and '5' further underscores that notion.
+
+**Focus on Specific Operational Areas**
+
+The increase in features such as 'cat__operational_area_Industrial-2' and 'Front' may indicate areas where slight operational adjustments could lead to outsized cost benefits compared to the other areas.
+
+On the other hand, seeing 'Industrial-3' as the most intense detractor to cost-efficiency validates our earlier finding that shifting the operational focus (installing an energy-intense cooler) in the middle of the analytical timeframe sticks out when predicting costs.
+
+**Influence of Supplier Selection**
+
+The changes seen in 'cat__supplier_Standard' and 'MEGA' emphasize the significant role that supplier choice plays in energy cost management. The optimization suggests that careful selection of suppliers with preferable rates or even renegotiating terms could be effective in controlling operational costs.
 
 <br>
 
