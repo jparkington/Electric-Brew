@@ -391,7 +391,7 @@ From here, it is essential that we run cross-validation exercises on each of the
 
 Both models exhibit similar performance consistency across different folds, as shown by their respective standard deviations in R² scores. However, the Random Forest model consistently achieves higher R² scores in each fold, indicating its superior predictive ability compared to the Linear Regression model.
 
-The decision to utilize more than the standard five folds, in this case, eight, was intentional to rigorously test the models' integrity against random data splits. This approach strengthens our confidence in the models' performance, ensuring that the results are not skewed by specific data partitions.
+The decision to utilize more than the standard five folds (eight in this case) was intentional to rigorously test the models' integrity against random data splits. This approach strengthens our confidence in the models' performance, ensuring that the results are not skewed by specific data partitions.
 
 <br>
 
