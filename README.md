@@ -159,7 +159,6 @@ Building on our earlier analyses, the scatter plot depicting average cost by per
 
 In short, the concentration of data points during peak hours in the scatter plot indicates that the brewery's current energy-intensive activities align with generally more expensive energy periods. This presents an opportunity for strategic operational adjustments, such as rescheduling certain activities to off-peak hours, which could lead to more substantial cost savings. This approach, however, needs to be balanced with the practicalities of brewery operations, ensuring that any changes do not adversely affect productivity or product quality.
 
-<br>
 
 ### Operational Cost Mapping
 
@@ -209,8 +208,7 @@ Building upon our previous analysis, which highlighted significant power usage i
 3. **Package/Hot/Chill**: This area demonstrates a relatively stable energy usage throughout the year with a notable decrease in late summer, assumedly due to the installation of a walk-in cooler at Industrial Street no longer necessitating the same degree of chilling for this Fox Street meter.
 
 4. **Industrial-3**: A marked increase in energy usage is observed during the summer months. This surge corresponds with our previous finding of the new walk-in cooler installation at the Industrial Way location, underscoring the impact of such capital improvements on the brewery's energy needs.
-
-<br>
+   
 
 ### Energy Usage Analysis
 
@@ -261,8 +259,6 @@ Interestingly, the cost per kWh for solar energy averages at **$0.234**, which, 
 The percentage differences between actual and projected costs provide a nuanced perspective. In certain months like December 2022 and January 2023, the cost difference is strikingly high, reaching up to **74.58%** and **43.63%**, underscoring the substantial financial impact that a full shift to solar energy could have during months with higher energy demands.
 
 In summary, while the transition to solar energy aligns with sustainability goals, it currently presents a significant cost increase for Austin Street Brewery. This analysis highlights the importance of a balanced approach, where solar energy complements rather than completely replaces conventional energy sources. It also emphasizes the need for further exploration into cost-effective solar solutions, potential subsidies, and incentives that could make a full transition more financially viable in the future.
-
-<br>
 
 ### Peak Hour & Supplier Modeling
 
@@ -429,7 +425,6 @@ On the other hand, seeing 'Industrial-3' as the most intense detractor to cost-e
 
 The changes seen in 'cat__supplier_Standard' and 'MEGA' emphasize the significant role that supplier choice plays in energy cost management. The optimization suggests that careful selection of suppliers with preferable rates or even renegotiating terms could be effective in controlling operational costs.
 
-<br>
 
 ### Major Takeaways
 
