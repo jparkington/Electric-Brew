@@ -33,7 +33,7 @@ In collaboration with Luke Truman from the New England Environmental Finance Cen
 
 1. [**Operational cost mapping**](#exploratory-data-analysis) to understand which meters should power which equipment.
 2. Benchmarking against industry standards to identify areas for improvement.
-3. Analysis of total [**energy usage**](#usage-analysis) to compare the cost-efficiency of solar versus conventional suppliers.
+3. Analysis of total [**energy usage**](#energy-usage-analysis) to compare the cost-efficiency of solar versus conventional suppliers.
 4. Unbiased [**peak hour and supplier**](#peak-hour--supplier-modeling) recommendations based on unsupervised machine learning models.
 
 
