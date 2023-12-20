@@ -201,18 +201,19 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
         int_df['delivered_kwh_left'] = cmp_waterfall.groupby(['invoice_number', 'kwh_delivered'], group_keys = False) \
                                                     .apply(lambda g: (g['kwh_delivered'].iloc[0] - g['kwh'].iloc[::-1].cumsum()).clip(lower = 0))
         int_df['delivered_kwh_used'] = np.minimum(int_df['kwh'], int_df['delivered_kwh_left']).clip(lower = 0)
+        int_df['kwh_remaining']      = int_df['kwh'] - int_df['delivered_kwh_used']
 
         ampion_waterfall = int_df.sort_values(by = ['invoice_number_amp', 'timestamp'])
         int_df['ampion_kwh_left'] = ampion_waterfall.groupby(['invoice_number_amp', 'kwh_delivered_amp'], group_keys = False) \
-                                                    .apply(lambda g: (g['kwh_delivered_amp'].iloc[0] - g['kwh'].cumsum()).clip(lower = 0))
-        int_df['ampion_kwh_used'] = np.minimum(int_df['kwh'], int_df['ampion_kwh_left']).clip(lower = 0)
+                                                    .apply(lambda g: (g['kwh_delivered_amp'].iloc[0] - g['kwh_remaining'].cumsum()).clip(lower = 0))
+        int_df['ampion_kwh_used'] = np.minimum(int_df['kwh_remaining'], int_df['ampion_kwh_left']).clip(lower = 0)
         int_df = int_df.apply(lambda col: col.fillna(0) if col.dtype.kind in 'biufc' else col)
 
         # Step 6: Compute cost metrics
         df = pd.DataFrame(index = int_df.index)
         df['dim_datetimes_id']  = int_df['id']
         df['dim_meters_id']     = int_df['id_met']
-        df['dim_bills_id']      = np.where(int_df['ampion_kwh_used'] > 0, int_df['id_amp'], int_df['id_cmp'])
+        df['dim_bills_id']      = np.where(int_df['delivered_kwh_used'] >= int_df['ampion_kwh_used'], int_df['id_cmp'], int_df['id_amp'])
         df['account_number']    = int_df['account_number']
         df['kwh']               = int_df['kwh']
         df['delivery_cost']     = int_df['delivered_kwh_used'] * int_df['delivery_rate']
