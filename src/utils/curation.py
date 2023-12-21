@@ -71,7 +71,7 @@ def load_data_files(path : str,
                                 if cols else pd.read_csv(file) 
                     for file in files]
             
-            return pd.concat(csvs, ignore_index = True)
+            return pd.concat(csvs, ignore_index = True).drop_duplicates()
 
         # Step 3: For PDF files
         elif type == 'pdf':
