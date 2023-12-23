@@ -128,11 +128,11 @@ make jp01
 ```
 ![01 - kWh vs. Total Cost](<./fig/analysis/jp/01 - kWh vs. Total Cost.png>)
 
-Our analysis of the relationship between kilowatt-hours (kWh) and total cost is pivotal in strategizing for maximum energy efficiency at the lowest possible cost, a relationship that underpins each of our project's objectives. The data, encompassing over 335,000 entries, indicates considerable variability in both energy usage and cost, as evidenced by the average kWh usage of **0.845** with a standard deviation of **1.295**, and an average total cost of **$0.13** per reading with a standard deviation of **$0.23**. This variability is further underscored by the right-skewed distribution for both metrics, pointing to infrequent but significant spikes in energy usage and cost.
+Our analysis of the relationship between kilowatt-hours (kWh) and total cost is pivotal in strategizing for maximum energy efficiency at the lowest possible cost, a relationship that underpins each of our project's objectives. The data, encompassing over 301,281 entries, indicates considerable variability in both energy usage and cost. The average kWh usage is **0.849** with a standard deviation of **1.309**, and the average total cost is **$0.14** per reading with a standard deviation of **$0.23**. This variability is underscored by the right-skewed distribution for both metrics, pointing to infrequent but significant spikes in energy usage and cost.
 
-A key insight from this analysis is the strong positive correlation of **0.846** between kWh and total cost. This correlation, while indicative of a general trend where increased energy usage leads to higher costs, also reveals the intricacies of this relationship due to the static rates from CMP, suppliers, and Ampion. The pattern-driven, striated nature observed in the scatter plot underscores that the cost dynamics are not simply linear but are influenced by these structured rate tiers.
+A key insight from this analysis is the strong positive correlation of **0.926** between kWh and total cost. This correlation suggests a general trend where increased energy usage leads to higher costs. It also reveals the intricacies of this relationship, influenced by the static rates from CMP, suppliers, and Ampion. The pattern-driven, striated nature observed in the scatter plot indicates that the cost dynamics are not simply linear but are affected by these structured rate tiers.
 
-These insights suggest a huge opportunity for strategic operational adjustments, specifically targeting periods where high energy usage does not proportionally equate to high costs. Identifying these cost-efficient periods, possibly due to favorable rate structures or operational efficiencies, can lead to significant savings.
+These insights offer a significant opportunity for strategic operational adjustments, particularly in targeting periods where high energy usage does not proportionally equate to high costs. Identifying these cost-efficient periods, possibly due to favorable rate structures or operational efficiencies, can lead to substantial savings.
 
 <br>
 
@@ -141,11 +141,11 @@ make jp02
 ```
 ![02 - Hourly Variation of kWh by Month](<./fig/analysis/jp/02 - Hourly Variation of kWh by Month.png>)
 
-Following our examination of the kWh versus total cost relationship, the analysis of hourly kWh usage by month uncovers its stark seasonal variations, reflecting the brewery's heightened energy demands during the colder months, likely exacerbated by the need for heating during Maine's harsh winters. That necessity had become even more pronounced in the context of COVID-19, whcih we'll explore in later charts.
+Following our examination of the kWh versus total cost relationship, the analysis of hourly kWh usage by month uncovers its stark seasonal variations, reflecting the brewery's heightened energy demands during the colder months, likely exacerbated by the need for heating during Maine's harsh winters. That necessity had become even more pronounced in the context of COVID-19, which we'll explore in later charts.
 
-From the data, we observe that the energy usage peaks in the winter months, with January and December recording the highest average kWh usage at **0.94** and **0.96** respectively. This trend is indicative of increased heating requirements and possibly a higher operational pace during the holiday season. In contrast, the milder months of April and May show the lowest energy consumption, averaging at **0.75** and **0.73** kWh. The hourly breakdown within each month further reveals a consistent pattern of energy usage ramping up during the morning hours, peaking in the midday to early afternoon, and then gradually declining towards the night. This pattern aligns with typical operational hours and suggests that most energy-intensive activities occur during the day, tapering off as the brewery closes for the night.
+From the data, we observe that the energy usage peaks in the winter months, with January and December recording the highest average kWh usage at **0.99** and **1.01** respectively. This trend is indicative of increased heating requirements and possibly a higher operational pace during the holiday season. In contrast, the milder months of April and May show lower energy consumption, averaging at **0.78** and **0.73** kWh. The hourly breakdown within each month further reveals a consistent pattern of energy usage ramping up during the morning hours, peaking in the midday to early afternoon, and then gradually declining towards the night. This pattern aligns with typical operational hours and suggests that most energy-intensive activities occur during the day, tapering off as the brewery closes for the night.
 
-Aligning energy-intensive processes with periods of lower kWh usage, especially during off-peak hours, could save on operational costs, assuming variables rates are available for Austin Street to opt into. Implementing energy storage solutions could also be beneficial, allowing the brewery to store energy during off-peak hours for use during peak demand times.
+Aligning energy-intensive processes with periods of lower kWh usage, especially during off-peak hours, could save on operational costs, assuming variable rates are available for Austin Street to opt into. Implementing energy storage solutions could also be beneficial, allowing the brewery to store energy during off-peak hours for use during peak demand times.
 
 <br>
 
@@ -154,7 +154,7 @@ make jp03
 ```
 ![03 - Average Cost by Period Over Time](<./fig/analysis/jp/03 - Average Cost by Period Over Time.png>)
 
-Building on our earlier analyses, the scatter plot depicting average cost by period over time at Austin Street Brewery underscores the nuances in their energy usage, particularly under the lens of peak and off-peak hours. A key observation from the data is the brewery's tendency towards higher energy usage during peak hours, as reflected in the average costs: **$0.14** for mid-peak, **$0.09** for off-peak, and **$0.13** for on-peak hours. This pattern is pivotal, as it suggests that a straightforward transition to a variable rate plan, without adjusting operational practices, might not be as beneficial as hoped.
+Building on our earlier analyses, the scatter plot depicting average cost by period over time at Austin Street Brewery underscores the nuances in their energy usage, particularly under the lens of peak and off-peak hours. A key observation from the data is the brewery's tendency towards higher energy usage during peak hours, as reflected in the average costs: **$0.16** for mid-peak, **$0.10** for off-peak, and **$0.15** for on-peak hours. This pattern is pivotal, as it suggests that a straightforward transition to a variable rate plan, without adjusting operational practices, might not be as beneficial as hoped.
 
 In short, the concentration of data points during peak hours in the scatter plot indicates that the brewery's current energy-intensive activities align with generally more expensive energy periods. This presents an opportunity for strategic operational adjustments, such as rescheduling certain activities to off-peak hours, which could lead to more substantial cost savings. This approach, however, needs to be balanced with the practicalities of brewery operations, ensuring that any changes do not adversely affect productivity or product quality.
 
@@ -216,9 +216,10 @@ make nf01
 ```
 ![Total Energy Usage](/fig/analysis/nf/aggregated_usage_fig.png)
 
-The data on total energy usage shows a gradual increase in kilowatt-hours over the years, with the lowest monthly usage recorded in October 2020 at **6,966** kWh and the peak in August 2023 at **15,244** kWh. This trend suggests a growing operational scale that mimics the brewery's expansion into more space over that period.
+The data on total energy usage shows a gradual increase in kilowatt-hours over the years, with the lowest monthly usage recorded in October 2020 at **6,966.84** kWh and the peak in August 2023 at **15,031.38** kWh. This trend suggests a growing operational scale that mimics the brewery's expansion into more space over that period.
 
-A key observation is the notable increase in average energy usage following the introduction of solar power in September 2022. Before the Ampion partnership, the average monthly energy usage was around **11,024** kWh. Post the solar power transition, this average rose to approximately **12,721** kWh. This increase can be attributed to several factors, including expanded operations, more energy-intensive processes, and some seasonal variation. 
+A key observation is the notable increase in average energy usage following the introduction of solar power in September 2022. Before the Ampion partnership, the average monthly energy usage was around **11,003.24** kWh. Post the solar power transition, this average rose to approximately **12,216.07** kWh. This increase can be attributed to several factors, including expanded operations, more energy-intensive processes, and some seasonal variation.
+
 
 <br>
 
@@ -227,7 +228,7 @@ make nf02
 ```
 ![Energy Usage by Energy Generation Type](/fig/analysis/nf/supplier_fig.png)
 
-In looking more closely at the energy supply by generation type, the data distinctly shows that during summer months, the brewery derives a substantial portion of its energy from solar power, with peaks in solar energy usage notably in September and July, at **87.4%** and **70.5%** respectively. This trend is a testament to the brewery's successful implementation of solar power through its partnership with Ampion initiated in September 2022.
+In looking more closely at the energy supply by generation type, the data distinctly shows that during summer months, the brewery derives a substantial portion of its energy from solar power, with peaks in solar energy usage notably in September at **87.4%**. The surrounding months approximate a **75%** distribution, which is in alignment with the brewery's original apportioning agreement for their solar credit allocation.
 
 However, during winter months, the reliance on solar energy diminishes significantly, with the lowest solar energy usage recorded in December at merely **8.5%**. This seasonal variance is characteristic of Maine's climate, where solar energy generation is less efficient during shorter, cloudier winter days. The stark contrast in energy sourcing between summer and winter months reflects the natural limitations of solar power in the northeastern United States but also highlights an opportunity for Austin Street to optimize its energy management.
 
@@ -240,9 +241,9 @@ make nf03
 ```
 ![Energy Costs Summary](/fig/analysis/nf/aggregated_costs_fig.png)
 
-While embracing solar energy is a significant step towards sustainability, it currently comes at a higher monetary cost. The total energy costs over time show considerable variability, with a mean monthly cost of about **$1,175**. Breaking down the costs by generation type, solar energy consistently incurs higher expenses (mean: **$1,362**) compared to conventional sources (mean: **$923**). This consistent trend, despite the variability in costs, might be influenced by the efficiency and technology of solar power, particularly in Maine's seasonal climate.
+While embracing solar energy is a significant step towards sustainability, it currently comes at a higher monetary cost. The total energy costs over time show considerable variability, with a mean monthly cost of about **$1,773.40**. Breaking down the costs by generation type, solar energy consistently incurs higher expenses, with a mean monthly cost of **$1,461.84**, compared to conventional sources at **$1,074.25**. This consistent trend, despite the variability in costs, might be influenced by the efficiency and technology of solar power, particularly in Maine's seasonal climate.
 
-The cost per kWh analysis sheds more light on this. Solar energy, across the analyzed period, has a higher per kWh cost compared to conventional sources. It's essential to consider the broader context of solar power's higher initial costs, including the assumed tax credits and long-term savings expected as part of its implementation. These factors, beyond the immediate financial comparison, may influence the overall viability of solar energy for the brewery. However, without in-depth knowledge of these incentives and the long-term economic impact, it's challenging to conclusively assess solar power's financial feasibility for Austin Street Brewery.
+The higher mean monthly cost for solar energy highlights the current economic challenges of sustainable energy solutions. It's important to consider the broader context, including the assumed long-term savings and environmental benefits of solar power. These factors, beyond the immediate financial comparison, may influence the overall viability of solar energy for the brewery. However, without in-depth knowledge of long-term economic impacts and potential incentives, assessing the financial feasibility of solar power for Austin Street Brewery requires a more comprehensive analysis.
 
 <br>
 
@@ -251,13 +252,14 @@ make nf04
 ```
 ![Solar Projections](/fig/analysis/nf/projections_fig.png)
 
-In this analysis, we explore a hypothetical scenario where all of Austin Street's power is sourced from solar energy. The actual vs. projected energy costs reveal a clear trend that follows from the previous charts—switching entirely to solar power would have led to higher expenses for the brewery. Over the analyzed period, the average actual cost per month stands at about **$2,285**, whereas the projected costs under a full solar regime average around **$2,870**.
+In this analysis, we explore a hypothetical scenario where all of Austin Street's power is sourced from solar energy. The actual vs. projected energy costs reveal a clear trend that follows from the previous charts—switching entirely to solar power would have led to higher expenses for the brewery. Over the analyzed period, the average actual cost per month stands at about **$2,362.32**, whereas the projected costs under a full solar regime average around **$2,524.36**.
 
-Interestingly, the cost per kWh for solar energy averages at **$0.234**, which, while relatively stable (std. dev.: **$0.027**), contributes to higher projected costs. This reaffirms that, under current conditions and pricing models, solar energy is more expensive per unit than the brewery's existing energy mix.
+Interestingly, the cost per kWh for solar energy averages at **$0.224**, with a relatively stable standard deviation of **$0.025**. This consistency contributes to higher projected costs, reaffirming that, under current conditions and pricing models, solar energy is more expensive per unit than the brewery's existing energy mix.
 
-The percentage differences between actual and projected costs provide a nuanced perspective. In certain months like December 2022 and January 2023, the cost difference is strikingly high, reaching up to **74.58%** and **43.63%**, underscoring the substantial financial impact that a full shift to solar energy could have during months with higher energy demands.
+The analysis becomes particularly insightful when examining the percentage differences between actual and projected costs, especially in significant months. For instance, in December 2022, the cost difference reaches a substantial **50.31%**, and in January 2023, it stands at **36.41%**. These figures underscore the substantial financial impact that a full shift to solar energy could have during months with higher energy demands.
 
-In summary, while the transition to solar energy aligns with sustainability goals, it currently presents a significant cost increase for Austin Street Brewery. This analysis highlights the importance of a balanced approach, where solar energy complements rather than completely replaces conventional energy sources. It also emphasizes the need for further exploration into cost-effective solar solutions, potential subsidies, and incentives that could make a full transition more financially viable in the future.
+In summary, while the transition to solar energy aligns with sustainability goals, it currently presents a considerable cost increase for Austin Street Brewery, particularly in high-demand months. This analysis highlights the importance of a balanced approach, where solar energy complements rather than completely replaces conventional energy sources. It also underscores the need for further exploration into cost-effective solar solutions, potential subsidies, and incentives that could make a full transition more financially viable in the future.
+
 
 ### Peak Hour & Supplier Modeling
 
