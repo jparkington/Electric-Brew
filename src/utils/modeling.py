@@ -184,19 +184,19 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
     try:
         # Step 1: Expand 'dim_bills' and group by source
         explode = {s: df.rename(columns = {'id': 'dim_bills_id'}) 
-                    for s, df in dim_bills.explode('billing_interval')
-                                            .assign(date = lambda x: pd.to_datetime(x['billing_interval']),
-                                                    kwh_left = 0.0,
-                                                    kwh_used = 0.0)
-                                            .groupby('source')}
+                   for s, df in dim_bills.explode('billing_interval')
+                                         .assign(date = lambda x: pd.to_datetime(x['billing_interval']),
+                                                 kwh_left = 0.0,
+                                                 kwh_used = 0.0)
+                                         .groupby('source')}
 
 
         # Step 2: Merge expanded billing data with meter usage and dimension tables
         flat_df = meter_usage.assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], format = '%m/%d/%Y %I:%M:%S %p')) \
-                                .merge(dim_datetimes,     on = 'timestamp', how = 'left', suffixes = ('', '_dat')) \
-                                .merge(dim_meters,        on = 'meter_id',  how = 'left', suffixes = ('', '_met')) \
-                                .sort_values(by = ['account_number', 'id']).reset_index() \
-                                .rename(columns = {'index': 'flat_id'})
+                             .merge(dim_datetimes,     on = 'timestamp', how = 'left', suffixes = ('', '_dat')) \
+                             .merge(dim_meters,        on = 'meter_id',  how = 'left', suffixes = ('', '_met')) \
+                             .sort_values(by = ['account_number', 'id']).reset_index() \
+                             .rename(columns = {'index': 'flat_id'})
 
         # Filter to only dates with corresponding bills
         flat_df = flat_df[flat_df['date'] <= '2023-08-10']

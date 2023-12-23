@@ -2,7 +2,7 @@ import numpy  as np
 import pandas as pd
 
 from utils.dataframes import fct_electric_brew, dim_datetimes, dim_meters, dim_bills
-from utils.runtime    import setup_plot_params, pickle_and_load
+from utils.runtime    import pickle_and_load
 
 def prepare_data() -> pd.DataFrame:
     '''
