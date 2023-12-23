@@ -101,12 +101,11 @@ Each of these commands can be called from the CLI with the keyword construction 
 - **`jp04`**: Applies anomaly detection using Isolation Forest.
 - **`jp05`**: Visualizes heatmap of high correlations among numeric columns.
 - **`jp06`**: Applies feature selection using LASSO.
-- **`jp07`**: Performs K-Means clustering and PCA visualization.
-- **`jp08`**: Fits a Linear Regression model and visualizes results.
-- **`jp09`**: Fits a Random Forest model and visualizes predictions.
-- **`jp10`**: Compares cross-validation R² scores across models.
-- **`jp11`**: Performs SLSQP optimization and visualizes results.
-- **`jp12`**: Visualizes percentage changes in categorical values after optimization.
+- **`jp07`**: Fits a Linear Regression model and visualizes results.
+- **`jp08`**: Fits a Random Forest model and visualizes predictions.
+- **`jp09`**: Compares cross-validation R² scores across models.
+- **`jp10`**: Performs SLSQP optimization and visualizes results.
+- **`jp11`**: Visualizes percentage changes in categorical values after optimization.
 - **`jp-all`**: Executes all scripts in 'Peak Hour & Supplier Modeling' sequentially.
 
 **All Analysis**
@@ -321,22 +320,7 @@ The presence of multiple supplier features in the selected set indicates their t
 ```bash
 make jp07
 ```
-![07 - KMeans Clusters in Reduced Dimensional Space](<./fig/analysis/jp/07 - KMeans Clusters in Reduced Dimensional Space.png>)
-
-Purely out of curiosity, we turn to **K-Means Clustering** on the Principal Components of the selected features to evaluate how pattern-driven the emerging LASSO data is. K-Means Clustering is a method used to group data points into clusters based on similarity. Because there are still 30+ features to evaluate, we pair that clustering process with PCA, which simplifies the data by reducing its dimensions while retaining the most important information.
-
-In our case, we have eight distinct, slash-like clusters, all pointing towards the top-right, implying a directional trend in the data. This could be indicative of a relationship between the operational variables under consideration – possibly the kWh and total costs, which were central to our initial analysis.
-
-Notably, the clusters are long and narrow, with some appearing as multiple slashes in close proximity. This could suggest varying degrees of a similar operational characteristic within the brewery's data. For instance, different clusters might represent varying levels of energy consumption or cost patterns that are fundamentally similar but differ in magnitude or frequency. The concentration of data points in certain areas of these slashes might also point to more common operational scenarios, while the sparser regions could indicate less frequent or more unique situations.
-
-The fact that these patterns re-emerge in a PCA-reduced and clustered visualization is a promising sign. It suggests that the underlying data, despite being simplified and grouped into clusters, retains a core structural integrity that mirrors our initial observations.
-
-<br>
-
-```bash
-make jp08
-```
-![08 - Linear Regression Predictions vs Actual Values](<./fig/analysis/jp/08 - Linear Regression Predictions vs Actual Values.png>)
+![07 - Linear Regression Predictions vs Actual Values](<./fig/analysis/jp/07 - Linear Regression Predictions vs Actual Values.png>)
 
 We now have everything we need to start predictive modeling with **Linear Regression**, a logical step following our previous efforts in refining the dataset.
 
@@ -347,9 +331,9 @@ The residual analysis, which examines the differences between the actual and pre
 <br>
 
 ```bash
-make jp09
+make jp08
 ```
-![09 - Random Forest Predictions vs Actual Values](<./fig/analysis/jp/09 - Random Forest Predictions vs Actual Values.png>)
+![08 - Random Forest Predictions vs Actual Values](<./fig/analysis/jp/08 - Random Forest Predictions vs Actual Values.png>)
 
 Given the presence of those prediction errors, which hint at complexities beyond linear associations, this was our cue to explore a more sophisticated model, capable of unraveling the intricate, potentially non-linear interplays within the data.
 
@@ -360,9 +344,9 @@ Our implementation of Random Forest achieved a high Coefficient of Determination
 <br>
 
 ```bash
-make jp10
+make jp09
 ```
-![10 - Cross-Validation R2 Scores Comparison](<./fig/analysis/jp/10 - Cross-Validation R2 Scores Comparison.png>)
+![09 - Cross-Validation R2 Scores Comparison](<./fig/analysis/jp/09 - Cross-Validation R2 Scores Comparison.png>)
 
 From here, it is essential that we run **cross-validation exercises** on each of the models, as they provide a more robust and unbiased assessment of each model's performance. Cross-validation evaluates how well each model generalizes to an independent dataset.
 
@@ -373,9 +357,9 @@ The decision to utilize more than the standard five folds (eight in this case) w
 <br>
 
 ```bash
-make jp11
+make jp10
 ```
-![11 - Distribution of Predicted Costs in Optimized Feature Sets](<./fig/analysis/jp/11 - Distribution of Predicted Costs in Optimized Feature Sets.png>)
+![10 - Distribution of Predicted Costs in Optimized Feature Sets](<./fig/analysis/jp/10 - Distribution of Predicted Costs in Optimized Feature Sets.png>)
 
 Having established a robust predictive framework through our analyses with LASSO and Random Forest, the next logical step is to bend this framework towards scenarios that align with the brewery's primary objective: maximizing kWh delivery while minimizing costs. This is where the strategic implementation of an optimization technique like **SLSQP (Sequential Least Squares Quadratic Programming)** becomes invaluable.
 
@@ -390,9 +374,9 @@ By filtering out the extremes and focusing on the middle ground - scenarios that
 <br>
 
 ```bash
-make jp12
+make jp11
 ```
-![12 - Percent Change in Categorical Features After Optimization](<./fig/analysis/jp/12 - Percent Change in Categorical Features After Optimization.png>)
+![11 - Percent Change in Categorical Features After Optimization](<./fig/analysis/jp/11 - Percent Change in Categorical Features After Optimization.png>)
 
 
 For the concluding phase of our unsupervised analysis, we turn our attention to understanding the impact of our optimization efforts on various operational features picked by LASSO and amplified in predictive power by Random Forest.

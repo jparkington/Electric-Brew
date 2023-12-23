@@ -130,30 +130,26 @@ jp06:
 	@conda run -n $(ENV_NAME) python -B src/analysis/jp/jp06.py
 
 jp07:
-	@echo "Performing K-Means Clustering and PCA Visualization..."
+	@echo "Fitting Linear Regression Model and Visualizing Results..."
 	@conda run -n $(ENV_NAME) python -B src/analysis/jp/jp07.py
 
 jp08:
-	@echo "Fitting Linear Regression Model and Visualizing Results..."
+	@echo "Fitting Random Forest Model and Visualizing Predictions..."
 	@conda run -n $(ENV_NAME) python -B src/analysis/jp/jp08.py
 
 jp09:
-	@echo "Fitting Random Forest Model and Visualizing Predictions..."
+	@echo "Comparing Cross-Validation R² Scores Across Folds..."
 	@conda run -n $(ENV_NAME) python -B src/analysis/jp/jp09.py
 
 jp10:
-	@echo "Comparing Cross-Validation R² Scores Across Folds..."
+	@echo "Performing SLSQP Optimization and Visualizing Results..."
 	@conda run -n $(ENV_NAME) python -B src/analysis/jp/jp10.py
 
 jp11:
-	@echo "Performing SLSQP Optimization and Visualizing Results..."
+	@echo "Visualizing Percentage Changes in Categorical Values After Optimization..."
 	@conda run -n $(ENV_NAME) python -B src/analysis/jp/jp11.py
 
-jp12:
-	@echo "Visualizing Percentage Changes in Categorical Values After Optimization..."
-	@conda run -n $(ENV_NAME) python -B src/analysis/jp/jp12.py
-
-jp-all: jp01 jp02 jp03 jp04 jp05 jp06 jp07 jp08 jp09 jp10 jp11 jp12
+jp-all: jp01 jp02 jp03 jp04 jp05 jp06 jp07 jp08 jp09 jp10 jp11
 	@echo "All scripts for 'Peak Hour & Supplier Modeling' executed."
 
 
