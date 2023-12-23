@@ -20,8 +20,9 @@ def eda3(df: pd.DataFrame = prepared_data):
         A scatter plot saved as a PNG file and displayed on the screen.
     '''
 
-    # 1: Grouping the data and calculating mean total_cost
+    # 1: Grouping all billed data and calculating mean total_cost
     dfg = df.groupby(['period', 'date'])['total_cost'].mean().reset_index()
+
 
     # 2: Creating the scatter plot
     p = sns.scatterplot(data = dfg[dfg['total_cost'] > 0], 

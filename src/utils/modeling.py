@@ -169,8 +169,8 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
         1. Expand 'dim_bills' for daily granularity based on billing intervals and group by the source.
         2. Merge expanded billing data with meter usage and dimension tables, sorting by account number and timestamp ID.
         3. Merge the result with billing information from CMP and Ampion sources.
-        4. Process CMP data to calculate kWh usage details.
-        5. Process Ampion data, incorporating unused kWh from CMP, to calculate kWh usage details.
+        4. Process Ampion data to calculate kWh usage details.
+        5. Process CMP data, incorporating unused kWh from Ampion, to complete kWh usage details.
         6. Combine processed CMP and Ampion data into an integrated DataFrame.
         7. Calculate the ratio of kWh used for service and tax cost allocation.
         8. Merge the integrated data with flat data, sort by account number and timestamp ID.
@@ -195,11 +195,16 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
                              .sort_values(by = ['account_number', 'id']).reset_index() \
                              .rename(columns = {'index': 'flat_id'})
         
+        # Filter to only dates with corresponding bills
+        flat_df = flat_df[flat_df['date'] <= '2023-08-10']
+        
         # Step 3: Merge with CMP and Ampion billing data
         matched_c = flat_df.merge(explode['CMP'],    on = ['account_number', 'date'], how = 'inner')
         matched_a = flat_df.merge(explode['Ampion'], on = ['account_number', 'date'], how = 'inner')
 
-        # Step 4: Process CMP data for kWh usage
+        # Step 4: Process Ampion data for kWh usage
+        
+
         def process_matched_df(df              : pd.DataFrame, 
                                contains_unused : Optional[pd.DataFrame] = None) -> pd.DataFrame:
             
