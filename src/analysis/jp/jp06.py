@@ -45,7 +45,8 @@ def lasso(df: pd.DataFrame = without_anomalies) -> Tuple[np.ndarray, np.ndarray,
             .drop(['billing_interval', 'invoice_number', 'street', 'label', 'source',
                    'account_number', 'account_number_dm', 'account_number_db',
                    'kwh', 'period', 'week', 'month', 'quarter', 
-                   'delivery_cost', 'supply_cost', 'tax_cost', 'service_charge'], axis = 1) \
+                   'delivery_cost', 'supply_cost', 'tax_cost', 'service_cost',
+                   'delivery_rate', 'supply_rate', 'service_charge'], axis = 1) \
             .dropna()
 
     X = dff.drop(['total_cost'], axis = 1)

@@ -45,10 +45,10 @@ def random_forest(X : np.ndarray = lasso_outputs['X_train'],
     rf = RandomForestRegressor(random_state = 0)
 
     # Hyperparameter Grid
-    hyperparameter_grid = {'n_estimators'      : [1, 2, 4, 8, 16],
-                           'max_depth'         : [1, 2, 4, 8, 16],
-                           'min_samples_split' : [2, 4, 8, 16],
-                           'min_samples_leaf'  : [1, 2, 4, 8]}
+    hyperparameter_grid = {'n_estimators'      : [1, 2, 4, 8, 16, 32],
+                           'max_depth'         : [1, 2, 4, 8, 16, 32],
+                           'min_samples_split' : [2, 4, 8, 16, 32],
+                           'min_samples_leaf'  : [1, 2, 4, 8, 16]}
 
     # 3: # Randomized Search with Cross-Validation
     random_search = RandomizedSearchCV(rf, hyperparameter_grid, n_jobs = -1, random_state = 0)

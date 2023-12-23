@@ -1,4 +1,5 @@
-from utils.curation         import write_results
+from typing           import Optional
+from utils.curation   import write_results
 from utils.dataframes import *
 
 import logging as lg
@@ -165,13 +166,16 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
     of electric delivery and usage.
 
     Methodology:
-        1. Expand 'dim_bills' to create daily granularity based on the billing interval and group by source.
-        2. Merge expanded billing data with meter usage and dimension tables.
-        3. Calculate total kWh recorded for each invoice number and kWh delivered.
-        4. Compute remaining kWh and used kWh per reading for CMP billing, starting at the end of each interval.
-        5. Compute remaining kWh and used kWh per reading for Ampion billing, starting at the beginning of each interval.
-        6. Calculate delivery and supply costs based on used kWh, and allocate service and tax costs.
-        7. Save the resulting DataFrame as a .parquet file in the specified 'model' directory with snappy compression.
+        1. Expand 'dim_bills' for daily granularity based on billing intervals and group by the source.
+        2. Merge expanded billing data with meter usage and dimension tables, sorting by account number and timestamp ID.
+        3. Merge the result with billing information from CMP and Ampion sources.
+        4. Process CMP data to calculate kWh usage details.
+        5. Process Ampion data, incorporating unused kWh from CMP, to calculate kWh usage details.
+        6. Combine processed CMP and Ampion data into an integrated DataFrame.
+        7. Calculate the ratio of kWh used for service and tax cost allocation.
+        8. Merge the integrated data with flat data, sort by account number and timestamp ID.
+        9. Compute delivery, service, supply, and tax costs, and aggregate to get the total cost.
+       10. Save the DataFrame as a .parquet file
 
     Parameters:
         model (str): Directory where the .parquet file should be saved.
@@ -179,51 +183,75 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
     
     try:
         # Step 1: Expand 'dim_bills' and group by source
-        explode = {s: df for s, df in dim_bills.explode('billing_interval')
-                                               .assign(date = lambda x: pd.to_datetime(x['billing_interval']))
-                                               .groupby('source')}
+        explode = {s: df.rename(columns = {'id': 'dim_bills_id'}) 
+                   for s, df in dim_bills.explode('billing_interval')
+                                         .assign(date = lambda x: pd.to_datetime(x['billing_interval']))
+                                         .groupby('source')}
 
-        # Step 2: Merge with meter usage and dimension tables
-        bill_fields = ['account_number', 'date']
-        int_df = meter_usage.assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], format = '%m/%d/%Y %I:%M:%S %p')) \
-                            .merge(dim_datetimes,     on = 'timestamp', how = 'left', suffixes = ('', '_dat')) \
-                            .merge(dim_meters,        on = 'meter_id',  how = 'left', suffixes = ('', '_met')) \
-                            .merge(explode['CMP'],    on = bill_fields, how = 'left', suffixes = ('', '_cmp')) \
-                            .merge(explode['Ampion'], on = bill_fields, how = 'left', suffixes = ('', '_amp')) \
-                            .apply(lambda col: col.fillna(0) if col.dtype.kind in 'biufc' else col)
+        # Step 2: Merge expanded billing data with meter usage and dimension tables
+        flat_df = meter_usage.assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], format = '%m/%d/%Y %I:%M:%S %p')) \
+                             .merge(dim_datetimes,     on = 'timestamp', how = 'left', suffixes = ('', '_dat')) \
+                             .merge(dim_meters,        on = 'meter_id',  how = 'left', suffixes = ('', '_met')) \
+                             .sort_values(by = ['account_number', 'id']).reset_index() \
+                             .rename(columns = {'index': 'flat_id'})
+        
+        # Step 3: Merge with CMP and Ampion billing data
+        matched_c = flat_df.merge(explode['CMP'],    on = ['account_number', 'date'], how = 'inner')
+        matched_a = flat_df.merge(explode['Ampion'], on = ['account_number', 'date'], how = 'inner')
 
-        # Step 3: Calculate total kWh recorded
-        int_df['total_recorded_kwh'] = int_df.groupby(['invoice_number', 'kwh_delivered'])['kwh'].transform('sum')
-        int_df['kwh_ratio']          = int_df['kwh'] / int_df['total_recorded_kwh']
+        # Step 4: Process CMP data for kWh usage
+        def process_matched_df(df              : pd.DataFrame, 
+                               contains_unused : Optional[pd.DataFrame] = None) -> pd.DataFrame:
+            
+            df['kwh_left'] = df['kwh_used'] = 0.0
 
-        # Steps 4 & 5: Calculate remaining and used kWh for CMP and Ampion
-        cmp_waterfall = int_df.sort_values(by = ['invoice_number', 'timestamp'])
-        int_df['delivered_kwh_left'] = cmp_waterfall.groupby(['invoice_number', 'kwh_delivered'], group_keys = False) \
-                                                    .apply(lambda g: (g['kwh_delivered'].iloc[0] - g['kwh'].iloc[::-1].cumsum()).clip(lower = 0))
-        int_df['delivered_kwh_used'] = np.minimum(int_df['kwh'], int_df['delivered_kwh_left']).clip(lower = 0)
-        int_df['kwh_remaining']      = int_df['kwh'] - int_df['delivered_kwh_used']
+            # Step 5: Incorporate unused kWh from CMP if processing Ampion data
+            if contains_unused is not None:
+                ratio_fields = ['flat_id', 'kwh_unused', 'ratio_bill_id', 'service_charge', 'taxes']
+                df = df.merge(contains_unused[ratio_fields], on = 'flat_id', how = 'left', suffixes = ('', '_cmp'))
+                
+                df['kwh']            = df['kwh_unused'].combine_first(df['kwh'])
+                df['ratio_bill_id']  = df['ratio_bill_id'].combine_first(df['dim_bills_id'])
+                df['service_charge'] = df['service_charge_cmp'].combine_first(df['service_charge'])
+                df['taxes']          = df['taxes_cmp'].combine_first(df['taxes'])
 
-        ampion_waterfall = int_df.sort_values(by = ['invoice_number_amp', 'timestamp'])
-        int_df['ampion_kwh_left'] = ampion_waterfall.groupby(['invoice_number_amp', 'kwh_delivered_amp'], group_keys = False) \
-                                                    .apply(lambda g: (g['kwh_delivered_amp'].iloc[0] - g['kwh_remaining'].cumsum()).clip(lower = 0))
-        int_df['ampion_kwh_used'] = np.minimum(int_df['kwh_remaining'], int_df['ampion_kwh_left']).clip(lower = 0)
-        int_df = int_df.apply(lambda col: col.fillna(0) if col.dtype.kind in 'biufc' else col)
+            else:
+                df['ratio_bill_id'] = df['dim_bills_id']
 
-        # Step 6: Compute cost metrics
-        df = pd.DataFrame(index = int_df.index)
-        df['dim_datetimes_id']  = int_df['id']
-        df['dim_meters_id']     = int_df['id_met']
-        df['dim_bills_id']      = np.where(int_df['delivered_kwh_used'] >= int_df['ampion_kwh_used'], int_df['id_cmp'], int_df['id_amp'])
-        df['account_number']    = int_df['account_number']
-        df['kwh']               = int_df['kwh']
-        df['delivery_cost']     = int_df['delivered_kwh_used'] * int_df['delivery_rate']
-        df['service_cost']      = int_df['service_charge']     * int_df['kwh_ratio']
-        df['supply_cost']       = int_df['delivered_kwh_used'] * int_df['supply_rate'] + int_df['ampion_kwh_used'] * int_df['supply_rate_amp']
-        df['tax_cost']          = int_df['taxes']              * int_df['kwh_ratio']
-        df['total_cost']        = df['delivery_cost'] + df['service_cost'] + df['supply_cost'] + df['tax_cost']
+            # Calculate kWh usage details
+            group = df.groupby(['source', 'invoice_number', 'account_number', 'kwh_delivered'], observed = True)
+            df['kwh_left']   = (group['kwh_delivered'].transform('first') - group['kwh'].cumsum()).clip(lower = 0)
+            df['kwh_used']   = np.minimum(df['kwh'], df['kwh_left'])
+            df['kwh_unused'] = df['kwh'] - df['kwh_used']
 
-        # Step 7: Save the DataFrame as a .parquet file
-        write_results(data   = df, 
+            return df
+
+        kwh_used_c = process_matched_df(matched_c)
+        kwh_used_a = process_matched_df(matched_a, kwh_used_c)
+
+        # Step 6: Combine CMP and Ampion data
+        int_df = pd.concat([kwh_used_c, kwh_used_a])[lambda x: x['kwh_used'] > 0]
+
+        # Step 7: Calculate the kWh usage ratio
+        int_df['kwh_ratio'] = int_df['kwh_used'] / int_df.groupby(['ratio_bill_id'])['kwh_used'].transform('sum')
+
+        # Step 8: Merge with flat data and sort
+        df = flat_df.merge(int_df, on  = 'flat_id', how = 'left', suffixes = ('', '_int')) \
+                    .sort_values(by = ['account_number', 'id'])
+
+        # Step 9: Compute cost metrics and keys
+        df['dim_datetimes_id'] = df['id']
+        df['dim_meters_id']    = df['id_met']
+        df['kwh']              = df['kwh_used'].combine_first(df['kwh'])
+        df['delivery_cost']    = df['kwh_used']       * df['delivery_rate']
+        df['service_cost']     = df['service_charge'] * df['kwh_ratio']
+        df['supply_cost']      = df['kwh_used']       * df['supply_rate']
+        df['tax_cost']         = df['taxes']          * df['kwh_ratio']
+        df['total_cost']       = df.filter(regex = '_cost$').sum(axis = 1)
+
+        # Step 10: Save the DataFrame as a .parquet file
+        write_results(data   = df[['dim_datetimes_id', 'dim_meters_id', 'dim_bills_id', 'account_number', 
+                                   'kwh', 'delivery_cost', 'service_cost', 'supply_cost', 'tax_cost', 'total_cost']], 
                       dest   = model,
                       add_id = True)
 
