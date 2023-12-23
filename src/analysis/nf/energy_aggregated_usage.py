@@ -53,6 +53,7 @@ query = """ SELECT date,
                    kwh
             FROM fct_electric_brew fe
             LEFT JOIN dim_datetimes dd ON fe.dim_datetimes_id = dd.id
+            WHERE dd.date <= '2023-07-31'
         """
 
 # connect to db

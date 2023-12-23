@@ -1,62 +1,79 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import numpy  as np
+import pandas as pd
 
-from analysis.jp.jp06      import lasso_outputs
-from sklearn.cluster       import KMeans
-from sklearn.decomposition import PCA
-from utils.runtime         import find_project_root
+from analysis.jp.jp06     import lasso_outputs
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics      import mean_squared_error, r2_score
+from utils.runtime        import find_project_root
 
-def kmeans(X: np.ndarray = lasso_outputs['X_train']):
+def slr(X_train : np.ndarray = lasso_outputs['X_train'], 
+        X_test  : np.ndarray = lasso_outputs['X_test'], 
+        y_train : pd.Series  = lasso_outputs['y_train'], 
+        y_test  : pd.Series  = lasso_outputs['y_test']):
     '''
-    Applies K-Means clustering and PCA (Principal Component Analysis) on the dataset for visualization.
+    Fits a Linear Regression model and visualizes predictions against actual values.
 
     Methodology:
-        1. Apply K-Means clustering to the dataset.
-        2. Perform PCA for dimensionality reduction to 2 components.
-        3. Visualize the clusters in the reduced dimensional space.
+        1. Fit a Linear Regression model using the training data.
+        2. Predict values using the test data.
+        3. Visualize the predicted vs. actual values and calculate R² and MSE.
 
     Data Science Concepts:
-        • K-Means Clustering:
-            - An unsupervised machine learning algorithm used for clustering data into 'K' number of clusters.
-            - Works by assigning data points to clusters such that the sum of the squared distance between the 
-              data points and the cluster's centroid (arithmetic mean of all the data points that belong to that cluster) is minimized.
-        • PCA (Principal Component Analysis):
-            - A technique for reducing the dimensionality of datasets, increasing interpretability while minimizing information loss.
-            - It transforms the original variables into a new set of variables (principal components) that are orthogonal 
-              (uncorrelated), with the most important principal components carrying most of the variability in the data.
+        • Linear Regression:
+            - A linear approach to modelling the relationship between a dependent variable and one or more independent variables.
+        • R² (Coefficient of Determination):
+            - A statistical measure of how well the regression predictions approximate the real data points.
+        • MSE (Mean Squared Error):
+            - The average squared difference between the estimated values and the actual value.
 
     Parameters:
-        X (np.ndarray): The transformed training feature set from LASSO feature selection.
+        X_train (np.ndarray) : The transformed training feature set from LASSO feature selection.
+        X_test  (np.ndarray) : The transformed test feature set from LASSO feature selection.
+        y_train (pd.Series)  : The training target variable.
+        y_test  (pd.Series)  : The test target variable.
 
     Produces:
-        A scatter plot saved as a PNG file and displayed on the screen, showing KMeans clusters in reduced dimensional space.
+        A scatter plot saved as a PNG file and displayed on the screen, showing the comparison between predicted and actual values.
     '''
 
-    # 1: Applying K-Means clustering
-    kmeans   = KMeans(n_init = 'auto', random_state = 0)
-    clusters = kmeans.fit_predict(X)
+    # 1: Fitting the Linear Regression model
+    linear_regression = LinearRegression()
+    linear_regression.fit(X_train, y_train)
+    y_pred = linear_regression.predict(X_test)
 
-    # 2: Applying PCA for dimensionality reduction
-    pca     = PCA(n_components = 2)
-    reduced = pca.fit_transform(X.toarray())
+    # 2: Plotting perfect prediction line
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color = '#545B63', linestyle = '--')
 
-    # 3: Visualizing the clusters in 2D
-    plt.scatter(reduced[:, 0], 
-                reduced[:, 1], 
-                c    = clusters, 
-                cmap = 'viridis')
+    # 3: Plotting the scatter plot for actual vs predicted values
+    plt.scatter(x = y_test, 
+                y = y_pred, 
+                c = y_test - y_pred,
+                cmap = 'twilight_shifted',
+                vmin = -1, 
+                vmax = 1,
+                edgecolor = None)
 
-    plt.xlabel('PCA Component 1')
-    plt.ylabel('PCA Component 2')
-    plt.title('$07$: KMeans Clusters in Reduced Dimensional Space ($PCA$)')
+    # Displaying R² and MSE
+    plt.text(0.5, 0.1, 
+             (f"R²  ${r2_score(y_test, y_pred):.3f}$\n"
+              f"MSE ${mean_squared_error(y_test, y_pred):.3f}$"), 
+             fontsize = 12, fontweight = 'bold', linespacing = 1.8,
+             bbox = dict(facecolor = '0.3', edgecolor = '0.3', boxstyle = 'round,pad = 0.75', alpha = 0.5),
+             ha = 'left', va = 'center', transform = plt.gca().transAxes)
+
+    plt.colorbar(label = 'Residuals')
+    plt.xlabel('Total Cost')
+    plt.ylabel('Predicted Values')
+    plt.title('$07$: Linear Regression - Predictions vs. Actual Values')
     plt.tight_layout(pad = 2.0)
 
     # Saving the plot to a file
-    file_path = find_project_root('./fig/analysis/jp/07 - KMeans Clusters in Reduced Dimensional Space.png')
+    file_path = find_project_root('./fig/analysis/jp/07 - Linear Regression Predictions vs Actual Values.png')
     plt.savefig(file_path)
     plt.show()
     
 
 if __name__ == "__main__":
     
-    kmeans()
+    slr()

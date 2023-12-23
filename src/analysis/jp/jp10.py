@@ -1,74 +1,110 @@
 import matplotlib.pyplot as plt
-import numpy  as np
-import pandas as pd
+import numpy as np
+import random
 
-from analysis.jp.jp06        import lasso_outputs
-from analysis.jp.jp09        import random_forest_outputs
-from sklearn.ensemble        import RandomForestRegressor
-from sklearn.linear_model    import LinearRegression
-from sklearn.model_selection import cross_val_score
-from utils.runtime           import find_project_root
+from analysis.jp.jp06 import lasso_outputs
+from analysis.jp.jp08 import random_forest_outputs
+from sklearn.ensemble import RandomForestRegressor
+from scipy.optimize   import minimize
+from typing           import List, Tuple
+from utils.runtime    import find_project_root, pickle_and_load
 
-def cross_validation(X    : np.ndarray            = lasso_outputs['X_train'], 
-                     y    : pd.Series             = lasso_outputs['y_train'], 
-                     best : RandomForestRegressor = random_forest_outputs['best']):
+def slsqp(X    : np.ndarray            = lasso_outputs['X_train'], 
+          best : RandomForestRegressor = random_forest_outputs['best']) -> Tuple[List[np.ndarray], List[np.ndarray], Tuple[float, float]]:
     '''
-    Compares the cross-validation R² scores of the Random Forest and Linear Regression models.
+    Performs optimization on feature sets and visualizes the distribution of predicted costs for these optimized sets.
 
     Methodology:
-        1. Perform cross-validation on the Random Forest and Linear Regression models.
-        2. Visualize the R² scores for each fold in a bar chart.
-
-    Parameters:
-        X    (pd.np.ndarray)         : The transformed training feature set from LASSO feature selection.
-        y    (pd.Series)             : The training target variable.
-        best (RandomForestRegressor) : The best-fitted Random Forest model from Randomized Search CV.
+        1. Convert the sparse matrix to a dense array for manipulation.
+        2. Select a random subset of samples for optimization.
+        3. Define an objective function based on the Random Forest predictions.
+        4. Perform optimization on each sample.
 
     Data Science Concepts:
-        • Cross-Validation:
-            - A resampling procedure used to evaluate machine learning models on a limited data sample.
-            - The goal is to estimate the model's performance on an independent dataset and mitigate overfitting.
-        • R² Score:
-            - A statistical measure representing the proportion of variance for a dependent variable that's explained by 
-              an independent variable or variables in a regression model.
-            - Indicates the goodness of fit of the model.
+        • SLSQP (Sequential Least Squares Quadratic Programming):
+            - A mathematical optimization algorithm that solves nonlinearly constrained optimization problems.
+            - Particularly useful in this context for its ability to handle constraints effectively.
+            - We use SLSQP to constrain one specific feature (`num__kwh_delivered`) while allowing other features to vary.
 
-    Produces:
-        A bar chart saved as a PNG file and displayed on the screen, showing the R² score comparison between the models.
+    Parameters:
+        X    (np.ndarray)            : The transformed training feature set from LASSO feature selection.
+        best (RandomForestRegressor) : The best-fitted Random Forest model from Randomized Search CV.
+
+    Returns:
+        all_sets       (List[np.ndarray])    : All feature sets evaluated during the optimization.
+        optimized_sets (List[np.ndarray])    : Feature sets that meet the specified cost bounds.
+        cost_bounds    (Tuple[float, float]) : Lower and upper bounds for the optimized cost range.
     '''
 
-    # 1: Performing cross-validation
-    cv_scores_rf = cross_val_score(best,               X, y, cv = 8, scoring = 'r2', n_jobs = -1)
-    cv_scores_lr = cross_val_score(LinearRegression(), X, y, cv = 8, scoring = 'r2', n_jobs = -1)
+    # 1: Set constants and prepare data
+    X_dense         = X.toarray()
+    random_samples  = random.sample(range(len(X_dense)), int(len(X_dense) * 0.05))
+    mean_total_cost = best.predict(X).mean()
+    cost_bounds     = (mean_total_cost * 0.75, mean_total_cost * 0.95)
+    mean_constraint = X_dense[:, 0].mean()
+    constraints     = {'type' : 'eq', 
+                       'fun'  : lambda features: features[0] - mean_constraint}
 
-    # 2: Visualizing the R² scores in a bar chart
-    n_folds   = np.arange(1, len(cv_scores_rf) + 1)
-    bar_width = 0.35
+    # 2: Define the objective function
+    def objective_function(features):
+        return best.predict([features])[0]
 
-    bars_rf = plt.bar(n_folds - bar_width/2, cv_scores_rf, bar_width, label = 'Random Forest', color = 'forestgreen')
-    bars_lr = plt.bar(n_folds + bar_width/2, cv_scores_lr, bar_width, label = 'Linear Regression')
+    # 3: Optimizing and storing results
+    all_sets       = []
+    optimized_sets = []
 
-    # Annotations for each bar
-    for bars in [bars_rf, bars_lr]:
-        for bar in bars:
-            height = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width() / 2, 0.02, f'{height:.3f}', 
-                     ha = 'center', va = 'bottom',
-                     bbox=dict(facecolor = '0', alpha = 0.5, boxstyle = 'round, pad = 0.75'))
+    for i in random_samples:
 
-    plt.legend(loc = 'upper center', ncol = 2, title_fontproperties = {'weight' : 'bold', 'size' : 10})
-    plt.xticks(n_folds)
-    plt.xlabel('Fold')
-    plt.ylabel('R² Score')
-    plt.title('$10$: Cross-Validation R² Scores Comparison')
+        result = minimize(objective_function, X_dense[i], method = 'SLSQP', constraints = constraints)
+        all_sets.append(result.x)
+
+        if cost_bounds[0] <= objective_function(result.x) <= cost_bounds[1]:
+            optimized_sets.append(result.x)
+
+    return {'all_sets'       : all_sets, 
+            'optimized_sets' : optimized_sets, 
+            'cost_bounds'    : cost_bounds}
+
+slsqp_outputs = pickle_and_load(slsqp, 'jp10.pkl')
+
+
+def plot_slsqp(best        : RandomForestRegressor = random_forest_outputs['best'], 
+               all_sets    : List[np.ndarray]      = slsqp_outputs['all_sets'],
+               cost_bounds : Tuple[float, float]   = slsqp_outputs['cost_bounds']):
+    '''
+    Visualizes the distribution of predicted costs for all and optimized feature sets.
+
+    Parameters:
+        best        (RandomForestRegressor) : The best-fitted Random Forest model.
+        all_sets    (List[np.ndarray])      : List of all feature sets evaluated.
+        cost_bounds (Tuple[float, float])   : Lower and upper bounds for the optimized cost range.
+
+    Produces:
+        A scatter plot saved as a PNG file and displayed on the screen, showing the distribution of predicted costs.
+    '''
+
+    predicted_costs = best.predict(all_sets)
+
+    # Visualizing the results
+    plt.scatter(range(len(predicted_costs)), 
+                predicted_costs, 
+                c    = predicted_costs,
+                cmap = 'twilight_shifted',
+                vmin = cost_bounds[0], 
+                vmax = cost_bounds[1],
+                edgecolor = None)
+
+    plt.xlabel('Optimization Sequence')
+    plt.ylabel('Predicted Cost')
+    plt.title('$10$: Distribution of Predicted Costs in Optimized Feature Sets')
     plt.tight_layout(pad = 2.0)
 
     # Saving the plot to a file
-    file_path = find_project_root('./fig/analysis/jp/10 - Cross-Validation R2 Scores Comparison.png')
+    file_path = find_project_root('./fig/analysis/jp/10 - Distribution of Predicted Costs in Optimized Feature Sets.png')
     plt.savefig(file_path)
     plt.show()
 
 
 if __name__ == "__main__":
     
-    cross_validation()
+    plot_slsqp()

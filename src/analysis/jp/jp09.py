@@ -3,122 +3,72 @@ import numpy  as np
 import pandas as pd
 
 from analysis.jp.jp06        import lasso_outputs
+from analysis.jp.jp08        import random_forest_outputs
 from sklearn.ensemble        import RandomForestRegressor
-from sklearn.metrics         import mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
-from typing                  import Tuple
-from utils.runtime           import find_project_root, pickle_and_load
+from sklearn.linear_model    import LinearRegression
+from sklearn.model_selection import cross_val_score
+from utils.runtime           import find_project_root
 
-def random_forest(X : np.ndarray = lasso_outputs['X_train'], 
-                  y : pd.Series  = lasso_outputs['y_train']) -> Tuple[RandomForestRegressor, pd.Series, np.ndarray]:
+def cross_validation(X    : np.ndarray            = lasso_outputs['X_train'], 
+                     y    : pd.Series             = lasso_outputs['y_train'], 
+                     best : RandomForestRegressor = random_forest_outputs['best']):
     '''
-    Fits a Random Forest Regressor model using Randomized Search CV for hyperparameter tuning and visualizes predictions.
+    Compares the cross-validation R² scores of the Random Forest and Linear Regression models.
 
     Methodology:
-        1. Perform a train/test split on the training dataset.
-        2. Tune hyperparameters using Randomized Search CV.
-        3. Fit the best Random Forest model and make predictions.
-        4. Visualize the predicted vs. actual values and calculate R² and MSE.
+        1. Perform cross-validation on the Random Forest and Linear Regression models.
+        2. Visualize the R² scores for each fold in a bar chart.
+
+    Parameters:
+        X    (pd.np.ndarray)         : The transformed training feature set from LASSO feature selection.
+        y    (pd.Series)             : The training target variable.
+        best (RandomForestRegressor) : The best-fitted Random Forest model from Randomized Search CV.
 
     Data Science Concepts:
-        • Random Forest:
-            - An ensemble learning method that operates by constructing multiple decision trees during training.
-            - For regression tasks, the output of the random forest is the mean prediction of the individual trees.
-        • Hyperparameter Tuning:
-            - The process of selecting the set of optimal hyperparameters for a learning algorithm, often using methods like 
-              grid search or randomized search.
+        • Cross-Validation:
+            - A resampling procedure used to evaluate machine learning models on a limited data sample.
+            - The goal is to estimate the model's performance on an independent dataset and mitigate overfitting.
+        • R² Score:
+            - A statistical measure representing the proportion of variance for a dependent variable that's explained by 
+              an independent variable or variables in a regression model.
+            - Indicates the goodness of fit of the model.
 
-    Parameters:
-        X (np.ndarray) : The transformed training feature set from LASSO feature selection.
-        y (pd.Series)  : The training target variable.
-
-    Returns:
-        best_estimator (RandomForestRegressor) : The best-fitted Random Forest model.
-        y_test_rf      (pd.Series)             : The test target variable for RandomForestRegressor.
-        y_pred_rf      (np.ndarray)            : Predicted values by the model on the test set.
-    '''
-
-    # 1: Splitting the data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state = 0)
-
-    # 2: Initialize the Random Forest Regressor
-    rf = RandomForestRegressor(random_state = 0)
-
-    # Hyperparameter Grid
-    hyperparameter_grid = {'n_estimators'      : [1, 2, 4, 8, 16, 32],
-                           'max_depth'         : [1, 2, 4, 8, 16, 32],
-                           'min_samples_split' : [2, 4, 8, 16, 32],
-                           'min_samples_leaf'  : [1, 2, 4, 8, 16]}
-
-    # 3: # Randomized Search with Cross-Validation
-    random_search = RandomizedSearchCV(rf, hyperparameter_grid, n_jobs = -1, random_state = 0)
-    random_search.fit(X_train, y_train)
-
-    # Predictions using the best model
-    best   = random_search.best_estimator_
-    y_pred = best.predict(X_test)
-
-    return {'best'   : best, 
-            'y_test' : y_test, 
-            'y_pred' : y_pred}
-
-random_forest_outputs = pickle_and_load(random_forest, 'jp09.pkl')
-
-
-def plot_random_forest(best   : RandomForestRegressor = random_forest_outputs['best'], 
-                       y_test : pd.Series             = random_forest_outputs['y_test'], 
-                       y_pred : np.ndarray            = random_forest_outputs['y_pred']):
-    '''
-    Visualizes predictions of the Random Forest model compared to actual values. Then calculates R² and MSE.
-
-    Parameters:
-        best   (RandomForestRegressor) : The fitted Random Forest model.
-        y_test (pd.Series)             : The test target variable for RandomForestRegressor.
-        y_pred (np.ndarray)            : Predicted values by the model on the test set.
-    
     Produces:
-        A scatter plot saved as a PNG file and displayed on the screen, showing the comparison between predicted and actual values.
+        A bar chart saved as a PNG file and displayed on the screen, showing the R² score comparison between the models.
     '''
-    # 4: Visualizing predictions vs. actual values
-    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color = '#545B63', linestyle = '--')
-    plt.scatter(x = y_test, 
-                y = y_pred, 
-                c = y_test - y_pred,
-                cmap = 'twilight_shifted',
-                vmin = -1, 
-                vmax = 1,
-                edgecolor = None)
 
-    # Text annotation for R² and MSE
-    plt.text(0.5, 0.1, 
-             (f"R²  ${r2_score(y_test, y_pred):.3f}$\n"
-              f"MSE ${mean_squared_error(y_test, y_pred):.3f}$"), 
-             fontsize = 12, fontweight = 'bold', linespacing = 1.8,
-             bbox = dict(facecolor = '0.3', edgecolor = '0.3', boxstyle = 'round,pad = 0.75', alpha = 0.5),
-             ha = 'left', va = 'center', transform = plt.gca().transAxes)
+    # 1: Performing cross-validation
+    cv_scores_rf = cross_val_score(best,               X, y, cv = 8, scoring = 'r2', n_jobs = -1)
+    cv_scores_lr = cross_val_score(LinearRegression(), X, y, cv = 8, scoring = 'r2', n_jobs = -1)
 
-    # Second text annotation for hyperparameters (top left)
-    plt.text(0.05, 0.95, 
-             (f"Max Depth         ${best.get_params()['max_depth']}$\n"
-              f"Min Samples Split ${best.get_params()['min_samples_split']}$\n"
-              f"Min Samples Leaf  ${best.get_params()['min_samples_leaf']}$\n"
-              f"# of Estimators   ${best.get_params()['n_estimators']}$"), 
-             fontsize = 9, fontweight = 'bold', linespacing = 1.3,
-             bbox = dict(facecolor = '0.3', edgecolor = '0.3', boxstyle = 'round,pad = 0.75', alpha = 0.5),
-             ha = 'left', va = 'top', transform = plt.gca().transAxes)
+    # 2: Visualizing the R² scores in a bar chart
+    n_folds   = np.arange(1, len(cv_scores_rf) + 1)
+    bar_width = 0.35
 
-    plt.colorbar(label = 'Residuals')
-    plt.xlabel('Total Cost')
-    plt.ylabel('Predicted Values')
-    plt.title('$09$: Random Forest - Predictions vs. Actual Values')
+    bars_rf = plt.bar(n_folds - bar_width/2, cv_scores_rf, bar_width, label = 'Random Forest', color = 'forestgreen')
+    bars_lr = plt.bar(n_folds + bar_width/2, cv_scores_lr, bar_width, label = 'Linear Regression')
+
+    # Annotations for each bar
+    for bars in [bars_rf, bars_lr]:
+        for bar in bars:
+            height = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width() / 2, 0.02, f'{height:.3f}', 
+                     ha = 'center', va = 'bottom',
+                     bbox=dict(facecolor = '0', alpha = 0.5, boxstyle = 'round, pad = 0.75'))
+
+    plt.legend(loc = 'upper center', ncol = 2, title_fontproperties = {'weight' : 'bold', 'size' : 10})
+    plt.xticks(n_folds)
+    plt.xlabel('Fold')
+    plt.ylabel('R² Score')
+    plt.title('$09$: Cross-Validation R² Scores Comparison')
     plt.tight_layout(pad = 2.0)
 
     # Saving the plot to a file
-    file_path = find_project_root('./fig/analysis/jp/09 - Random Forest Predictions vs Actual Values.png')
+    file_path = find_project_root('./fig/analysis/jp/09 - Cross-Validation R2 Scores Comparison.png')
     plt.savefig(file_path)
     plt.show()
 
 
 if __name__ == "__main__":
     
-    plot_random_forest()
+    cross_validation()

@@ -58,25 +58,29 @@ def generate_solor_projections_fig(cost_df: pd.DataFrame) -> None:
 
     # annotate percent difference
     for idx, val in percent_diff.items():
-        x_val = idx.to_timestamp().to_pydatetime()
-        total_cost_val = cost_df.loc[idx, 'total_cost_2']
-        projected_cost_val = cost_df.loc[idx, 'projected_costs']
-        
-        # Ensure that the values are single elements, not Series
-        if isinstance(total_cost_val, pd.Series):
-            total_cost_val = float(total_cost_val.iloc[0])
-        if isinstance(projected_cost_val, pd.Series):
-            projected_cost_val = float(projected_cost_val.iloc[0])
+        # Only show annotations for absolute percent differences greater than 7%
+        if abs(val) > 7:
+            x_val = idx.to_timestamp().to_pydatetime()
+            total_cost_val = cost_df.loc[idx, 'total_cost_2']
+            projected_cost_val = cost_df.loc[idx, 'projected_costs']
+            
+            # Ensure that the values are single elements, not Series
+            if isinstance(total_cost_val, pd.Series):
+                total_cost_val = float(total_cost_val.iloc[0])
+            if isinstance(projected_cost_val, pd.Series):
+                projected_cost_val = float(projected_cost_val.iloc[0])
 
-        y_val = (total_cost_val + projected_cost_val) / 2
-        plt.annotate(f"{val:.2f}%",
-                    (x_val, y_val),
-                    textcoords="offset points",
-                    xytext=(90, 0),
-                    ha='center',
-                    fontsize=8,
-                    color='red',
-                    weight = 'bold')
+            y_val = (total_cost_val + projected_cost_val) / 2
+            # Change color to green if the percent difference is negative
+            color = 'green' if val < 0 else 'red'
+            plt.annotate(f"{val:.2f}%",
+                        (x_val, y_val),
+                        textcoords="offset points",
+                        xytext=(90, 0),
+                        ha='center',
+                        fontsize=8,
+                        color=color,
+                        weight='bold')
         
     # add dummy label to legend for annotations
     handles, labels = plt.gca().get_legend_handles_labels()

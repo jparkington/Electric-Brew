@@ -184,58 +184,51 @@ def model_fct_electric_brew(model: str  = "./data/modeled/fct_electric_brew"):
     try:
         # Step 1: Expand 'dim_bills' and group by source
         explode = {s: df.rename(columns = {'id': 'dim_bills_id'}) 
-                   for s, df in dim_bills.explode('billing_interval')
-                                         .assign(date = lambda x: pd.to_datetime(x['billing_interval']))
-                                         .groupby('source')}
+                    for s, df in dim_bills.explode('billing_interval')
+                                            .assign(date = lambda x: pd.to_datetime(x['billing_interval']),
+                                                    kwh_left = 0.0,
+                                                    kwh_used = 0.0)
+                                            .groupby('source')}
+
 
         # Step 2: Merge expanded billing data with meter usage and dimension tables
         flat_df = meter_usage.assign(timestamp = lambda df: pd.to_datetime(df['interval_end_datetime'], format = '%m/%d/%Y %I:%M:%S %p')) \
-                             .merge(dim_datetimes,     on = 'timestamp', how = 'left', suffixes = ('', '_dat')) \
-                             .merge(dim_meters,        on = 'meter_id',  how = 'left', suffixes = ('', '_met')) \
-                             .sort_values(by = ['account_number', 'id']).reset_index() \
-                             .rename(columns = {'index': 'flat_id'})
-        
+                                .merge(dim_datetimes,     on = 'timestamp', how = 'left', suffixes = ('', '_dat')) \
+                                .merge(dim_meters,        on = 'meter_id',  how = 'left', suffixes = ('', '_met')) \
+                                .sort_values(by = ['account_number', 'id']).reset_index() \
+                                .rename(columns = {'index': 'flat_id'})
+
         # Filter to only dates with corresponding bills
         flat_df = flat_df[flat_df['date'] <= '2023-08-10']
-        
+
         # Step 3: Merge with CMP and Ampion billing data
         matched_c = flat_df.merge(explode['CMP'],    on = ['account_number', 'date'], how = 'inner')
         matched_a = flat_df.merge(explode['Ampion'], on = ['account_number', 'date'], how = 'inner')
 
         # Step 4: Process Ampion data for kWh usage
-        
+        kwh_used_a = matched_a.merge(matched_c[['flat_id', 'dim_bills_id', 'service_charge', 'taxes']], on = 'flat_id', how = 'left', suffixes = ('', '_cmp'))
+        kwh_used_a['ratio_bill_id']  = kwh_used_a['dim_bills_id_cmp'].combine_first(kwh_used_a['dim_bills_id'])
+        kwh_used_a['service_charge'] = kwh_used_a['service_charge_cmp'].combine_first(kwh_used_a['service_charge'])
+        kwh_used_a['taxes']          = kwh_used_a['taxes_cmp'].combine_first(kwh_used_a['taxes'])
+        kwh_used_a = kwh_used_a.drop(kwh_used_a.filter(regex = '_cmp$').columns, axis = 1) # Drop temporary `_cmp` columns for subsequent `pd.concat()`
 
-        def process_matched_df(df              : pd.DataFrame, 
-                               contains_unused : Optional[pd.DataFrame] = None) -> pd.DataFrame:
-            
-            df['kwh_left'] = df['kwh_used'] = 0.0
+        group = kwh_used_a.groupby(['source', 'invoice_number', 'account_number', 'kwh_delivered'], observed = True)
+        kwh_used_a['kwh_left']   = (group['kwh_delivered'].transform('first') - group['kwh'].cumsum()).clip(lower = 0)
+        kwh_used_a['kwh_used']   = np.minimum(kwh_used_a['kwh'], kwh_used_a['kwh_left'])
+        kwh_used_a['kwh_unused'] = kwh_used_a['kwh'] - kwh_used_a['kwh_used']
 
-            # Step 5: Incorporate unused kWh from CMP if processing Ampion data
-            if contains_unused is not None:
-                ratio_fields = ['flat_id', 'kwh_unused', 'ratio_bill_id', 'service_charge', 'taxes']
-                df = df.merge(contains_unused[ratio_fields], on = 'flat_id', how = 'left', suffixes = ('', '_cmp'))
-                
-                df['kwh']            = df['kwh_unused'].combine_first(df['kwh'])
-                df['ratio_bill_id']  = df['ratio_bill_id'].combine_first(df['dim_bills_id'])
-                df['service_charge'] = df['service_charge_cmp'].combine_first(df['service_charge'])
-                df['taxes']          = df['taxes_cmp'].combine_first(df['taxes'])
+        # Step 5: Incorporate unused kWh from CMP if processing Ampion data
+        kwh_used_c = matched_c.merge(kwh_used_a[['flat_id', 'kwh_unused']], on = 'flat_id', how = 'left')
+        kwh_used_c['ratio_bill_id'] = kwh_used_c['dim_bills_id']
+        kwh_used_c['kwh']           = kwh_used_c['kwh_unused'].combine_first(kwh_used_c['kwh'])
 
-            else:
-                df['ratio_bill_id'] = df['dim_bills_id']
-
-            # Calculate kWh usage details
-            group = df.groupby(['source', 'invoice_number', 'account_number', 'kwh_delivered'], observed = True)
-            df['kwh_left']   = (group['kwh_delivered'].transform('first') - group['kwh'].cumsum()).clip(lower = 0)
-            df['kwh_used']   = np.minimum(df['kwh'], df['kwh_left'])
-            df['kwh_unused'] = df['kwh'] - df['kwh_used']
-
-            return df
-
-        kwh_used_c = process_matched_df(matched_c)
-        kwh_used_a = process_matched_df(matched_a, kwh_used_c)
+        group = kwh_used_c.groupby(['source', 'invoice_number', 'account_number', 'kwh_delivered'], observed = True)
+        kwh_used_c['kwh_left']   = (group['kwh_delivered'].transform('first') - group['kwh'].cumsum()).clip(lower = 0)
+        kwh_used_c['kwh_used']   = np.minimum(kwh_used_c['kwh'], kwh_used_c['kwh_left'])
+        kwh_used_c['kwh_unused'] = kwh_used_c['kwh'] - kwh_used_c['kwh_used']
 
         # Step 6: Combine CMP and Ampion data
-        int_df = pd.concat([kwh_used_c, kwh_used_a])[lambda x: x['kwh_used'] > 0]
+        int_df = pd.concat([kwh_used_a, kwh_used_c.reindex(columns = kwh_used_a.columns)])[lambda x: x['kwh_used'] > 0]
 
         # Step 7: Calculate the kWh usage ratio
         int_df['kwh_ratio'] = int_df['kwh_used'] / int_df.groupby(['ratio_bill_id'])['kwh_used'].transform('sum')
