@@ -279,13 +279,13 @@ make jp04
 ```
 ![04 - Applying Anomaly Detection with Total Cost](<./fig/analysis/jp/04 - Applying Anomaly Detection with Total Cost.png>)
 
-The first step in our series of unsupervised models is to apply an **Isolation Forest** algorithm to trim the outliers from our `total_cost` data, removing the top 0.1% of readings. This is crucial because these outliers can muddle our analysis, especially considering the clear patterns we've started to see, like the high costs associated with heating, cooling, and solar energy from Ampion.
+The first step in our series of unsupervised models is to apply an **Isolation Forest** algorithm to trim the outliers from our `total_cost` data, removing anomalies from the dataset. This is crucial because these outliers can muddle our analysis, especially considering the clear patterns we've started to see, like the high costs associated with heating, cooling, and solar energy from Ampion.
 
-- **Before Anomaly Detection**: The initial dataset, with nearly a **half-million** entries, shows a wide range of `total_cost` values (min: **$0.00**, max: **$4.38**) with a mean of **$0.1246** and a relatively high standard deviation of **$0.2313**. This high variance indicates significant fluctuations in energy costs, possibly reflecting occasional spikes in energy usage or pricing anomalies from Austin Street's suppliers.
+- **Before Anomaly Detection**: The initial dataset, with nearly a half-million entries, shows a wide range of `total_cost` values (min: **$0.00**, max: **$3.63**) with a mean of **$0.1389** and a relatively high standard deviation of **$0.2340**. This high variance indicates significant fluctuations in energy costs, possibly reflecting occasional spikes in energy usage or pricing anomalies from Austin Street's suppliers.
 
-- **After Anomaly Detection**: After `IsolationForest`, the mean `total_cost` slightly decreases to **$0.1222**, and the standard deviation is reduced to **$0.2173**, indicating a more uniform dataset. The maximum cost value notably drops to **$2.23**, suggesting that the removed anomalies were indeed significantly higher than typical cost values.
+- **After Anomaly Detection**: After applying `IsolationForest`, the mean `total_cost` slightly decreases to **$0.1371**, and the standard deviation is reduced slightly to **$0.2239**, indicating a more uniform dataset. The maximum cost value notably drops to **$2.33**, suggesting that the removed anomalies were indeed significantly higher than typical cost values.
 
-- **Number of Detected Anomalies**: With 305 anomalies detected and removed, the dataset becomes more representative of the brewery's regular energy cost patterns. This reduction in extreme values should allow for more accurate analysis in subsequent machine learning models.
+- **Number of Detected Anomalies**: With **220** anomalies detected and removed, the dataset becomes more representative of the brewery's regular energy cost patterns. This reduction in extreme values should allow for more accurate analysis in subsequent machine learning models.
 
 <br>
 
@@ -296,7 +296,7 @@ make jp05
 
 Following the outlier removal, our next analytical step involves addressing **multicollinearity among the features**. This step is crucial in avoiding preconceived notions or biases from influencing the selection of numeric fields for our upcoming analyses. By systematically identifying highly correlated variables, we aim to let the data guide our insights, rather than making arbitrary choices that could skew our understanding.
 
-The presence of multicollinearity in our dataset is not unexpected. In our model, cost components such as `total_cost` are calculated using a variety of other variables, like `delivery_cost`, `supply_cost`, and rate multiplications involving `kwh`. However, while these relationships are expected, they can pose challenges in predictive modeling. High multicollinearity can lead to unstable estimates of regression coefficients, making it difficult to ascertain the true effect of each independent variable on the dependent variable, which is `total_cost` in this case.
+The presence of multicollinearity in our dataset is not unexpected. In our model, cost components such as `total_cost` are calculated using a variety of other variables, like `delivery_cost`, `supply_cost`, and ratio-based allocations involving `kwh`. However, while these relationships are expected, they can pose challenges in predictive modeling. High multicollinearity can lead to unstable estimates of regression coefficients, making it difficult to ascertain the true effect of each independent variable on the dependent variable, which is `total_cost` in this case.
 
 In that sense, addressing and removing multicollinear fields is not just about statistical accuracy, but rather ensuring that the insights we gain are reflective of the true drivers of energy costs.
 
@@ -311,11 +311,11 @@ With the dataset cleaned of anomalies and problematic fields, our primary object
 
 This is where **LASSO (Least Absolute Shrinkage and Selection Operator)** regression becomes an invaluable tool. LASSO is ideally suited for scenarios like ours, where the dataset contains a large number of potential predictors. It adeptly handles any missed multicollinearity and further simplifies the model by excluding less important features, making it more interpretable and manageable. Additionally, LASSO's regularization guards against overfitting, maintaining the model's effectiveness on both training data and new, unseen data.
 
-The LASSO model has identified several key features, with operational areas, especially those linked to heating and cooling, emerging as top predictors. This finding is consistent with our previous analyses, underscoring the significant impact of these areas on overall energy costs. 
+The LASSO model has identified several key features, with operational areas related to heating, cooling, and industrial processes emerging as top predictors. These areas, particularly 'Package/Hot/Chill' and 'Industrial-3', underscore the significant impact of specific operational processes on overall energy costs. This finding aligns with our earlier analyses, emphasizing the critical role of these areas in driving energy expenditure, as they both generally increase over time in cost and usage.
 
-The model's output also sheds light on the time-sensitive aspects of energy consumption. While it attributes some level of importance to specific months and hours, the coefficients related to each hour are relatively minor. This could be indicative of the static nature of delivery and supply rates, set on a monthly basis, making it challenging for the model to discern significant differences in costs across different hours.
+Time-sensitive aspects of energy consumption are also highlighted in the model's output. Specific hours, particularly during the afternoon (from 12 PM to 5 PM), have been identified as influential, although the coefficients for each hour are modest. These hours typically coincide with increased production activities, heating or cooling demands, and other energy-intensive processes at the brewery. Therefore, the consistent importance of these afternoon hours in the LASSO model suggests that they are key periods where energy usage, and thus costs, are concentrated.
 
-The presence of multiple supplier features in the selected set indicates their tangible impact on energy costs as well. Specifically, supplier structures like those with the 'Standard Offer' and 'MEGA ENERGY' have positive coefficients, suggesting a direct correlation with increased total costs. Conversely, the supplier 'CONSTELLATION' has a negative coefficient, implying that when this supplier is chosen, there's a tendency towards lower total costs.
+Furthermore, the model has revealed notable insights into the impact of different energy suppliers. Notably, the supplier 'Ampion', associated with solar energy, shows a significant negative coefficient, suggesting that opting for solar energy tends to lower total costs, in spite of our earlier analyses. The supplier 'CONSTELLATION' also emerges with a negative coefficient, implying cost savings when this supplier is chosen. In contrast, conventional suppliers like 'MEGA ENERGY' have positive coefficients, indicating a correlation with increased costs.
 
 <br>
 
@@ -326,9 +326,9 @@ make jp07
 
 We now have everything we need to start predictive modeling with **Linear Regression**, a logical step following our previous efforts in refining the dataset.
 
-The Linear Regression model, applied to this curated dataset, achieved a Coefficient of Determination (R²) of **0.677** and a Mean Squared Error (MSE) of **0.023**. These results indicate that the model successfully captures a substantial portion of the variance in the energy cost data. The R² value reflects the model's effectiveness in explaining the relationship between the selected features and energy costs, a testament to the relevance of the features identified by LASSO. That said, the MSE, while relatively low, suggests that there is still some prediction error, possibly due to complex, non-linear relationships in the data or other influential factors not captured by the current model.
+The Linear Regression model, applied to this curated dataset, achieved a Coefficient of Determination (R²) of **0.674** and a Mean Squared Error (MSE) of **0.024**. These results indicate that the model successfully captures a substantial portion of the variance in the energy cost data. This R² value reflects the model's effectiveness in explaining the relationship between the selected features and energy costs, validating the relevance of the features identified by LASSO. However, the MSE, while relatively low, points to some prediction error, potentially due to complex, non-linear relationships in the data or other influential factors not captured by the current model.
 
-The residual analysis, which examines the differences between the actual and predicted values, shows a mean close to zero. This indicates no significant bias in the model's predictions. However, the standard deviation of the residuals (0.150) and the range of minimum and maximum residuals (-1.170 to 1.540) highlight the presence of some large prediction errors, suggesting that certain specific scenarios or outliers are not fully captured by the model. The model's predictions also show a slightly narrower spread than the actual values, hinting at a conservative estimation in some cases.
+The residual analysis, examining the differences between the actual and predicted values, shows a mean close to zero, indicating no significant bias in the model's predictions. However, the standard deviation of the residuals at **0.153** and the range of minimum and maximum residuals (from **-0.775** to **1.666**) highlight the presence of some large prediction errors. These suggest that specific scenarios or outliers are not fully captured by the model. The model's predictions also display a slightly narrower spread than the actual values, implying a conservative estimation in some cases.
 
 <br>
 
@@ -337,11 +337,9 @@ make jp08
 ```
 ![08 - Random Forest Predictions vs Actual Values](<./fig/analysis/jp/08 - Random Forest Predictions vs Actual Values.png>)
 
-Given the presence of those prediction errors, which hint at complexities beyond linear associations, this was our cue to explore a more sophisticated model, capable of unraveling the intricate, potentially non-linear interplays within the data.
+Given the presence of prediction errors hinting at complexities beyond linear associations, we turned to a more sophisticated model capable of capturing intricate, potentially non-linear relationships within the data. For this, we chose **Random Forest**, an ensemble learning method known for its proficiency in handling complex datasets where linear models might struggle.
 
-For this step, we chose **Random Forest**, an ensemble learning method that combines multiple decision trees to improve predictive accuracy and control over-fitting. This model is particularly adept at handling datasets with complex structures, like ours, where linear models might fall short.
-
-Our implementation of Random Forest achieved a high Coefficient of Determination (R²) of **0.906** and a low Mean Squared Error (MSE) of **0.006**. Residual analysis shows a very low mean, indicating no systematic bias in predictions. This improvement in the metrics signals a substantial leap in our model's ability to capture the nuances of the brewery's energy costs, which we'll use as a canvas for our final unsupervised recommendations.
+Our implementation of Random Forest demonstrated a notable improvement in predictive accuracy, achieving a Coefficient of Determination (R²) of **0.781** and a Mean Squared Error (MSE) of **0.015**. These metrics indicate a significant enhancement in the model's ability to capture the variance in the brewery's energy costs compared to linear approaches. A lower MSE also demonstrates the model's increased accuracy in predictions, setting a robust foundation for our upcoming unsupervised recommendations.
 
 <br>
 
@@ -352,7 +350,7 @@ make jp09
 
 From here, it is essential that we run **cross-validation exercises** on each of the models, as they provide a more robust and unbiased assessment of each model's performance. Cross-validation evaluates how well each model generalizes to an independent dataset.
 
-Both models exhibit similar performance consistency across different folds, as shown by their respective standard deviations in R² scores. However, the Random Forest model consistently achieves higher R² scores in each fold, indicating its superior predictive ability compared to the Linear Regression model.
+In our cross-validation analysis, both models demonstrated similar performance consistency across different folds, as shown by their respective standard deviations in R² scores. The Random Forest model, with a standard deviation of **0.007**, consistently achieved higher R² scores in each fold. This indicates its superior predictive ability compared to the Linear Regression model, which exhibited a slightly higher standard deviation of **0.009** and notably lower R² scores across the folds. 
 
 The decision to utilize more than the standard five folds (eight in this case) was intentional to rigorously test the models' integrity against random data splits. This approach strengthens our confidence in the models' performance, ensuring that the results are not skewed by specific data partitions.
 
@@ -365,9 +363,9 @@ make jp10
 
 Having established a robust predictive framework through our analyses with LASSO and Random Forest, the next logical step is to bend this framework towards scenarios that align with the brewery's primary objective: maximizing kWh delivery while minimizing costs. This is where the strategic implementation of an optimization technique like **SLSQP (Sequential Least Squares Quadratic Programming)** becomes invaluable.
 
-Optimization techniques like SLSQP are adept at navigating through intricate data terrains to seek out specific goals, in this case, cost-efficient operational scenarios. They provide the analytical finesse to adjust various influential factors identified by LASSO within the prediction realm of our Random Forest model. This approach allows us to move beyond mere prediction and understanding of the data, enabling us to actively explore 'what could be' scenarios that are not only feasible within the existing operational framework but are also beneficial to the brewery's bottom line.
+Optimization techniques like SLSQP are adept at navigating through intricate data terrains to seek out specific goals, in this case, cost-efficient operational scenarios. They provide the analytical finesse to adjust various influential factors identified by LASSO within the prediction realm of our Random Forest model. This approach allows us to move beyond mere prediction and understanding of the data, enabling us to actively explore 'what could be' scenarios that are not only feasible within the existing operational framework but are also beneficial to the brewery's bottom line. In this case, we ask the optimization algorithm to hold the `kwh_delivered` steady, while freely moving the other 40+ features to see where the target, `total_cost`, can possibly land.
 
-In executing this optimization, we set targeted cost bounds at **75%** to **95%** of the mean total cost, creating a focused search area for the SLSQP algorithm. We found **465** local minima (or *possibilities*) that fell within our desired cost efficiency range. 
+In executing this optimization, we set targeted cost bounds at **80%** to **90%** of the mean total cost, creating a focused search area for the SLSQP algorithm. In doing so, we found **1,664** local minima (or *possibilities*) that fell within our desired cost efficiency range. 
 
 Of the other thousands of minima discovered, we see a broad range of predicted costs from our optimization, extending from exceedingly low to high, which demands careful scrutiny. While the lower end of this spectrum presents seemingly attractive cost figures, some of these scenarios might border on the ludicrous when translated into real-world operations. For example, an optimization result suggesting minimal operational hours to significantly reduce costs (effectively implying a shutdown) is trivial from a business standpoint.
 
@@ -379,7 +377,6 @@ By filtering out the extremes and focusing on the middle ground - scenarios that
 make jp11
 ```
 ![11 - Percent Change in Categorical Features After Optimization](<./fig/analysis/jp/11 - Percent Change in Categorical Features After Optimization.png>)
-
 
 For the concluding phase of our unsupervised analysis, we turn our attention to understanding the impact of our optimization efforts on various operational features picked by LASSO and amplified in predictive power by Random Forest.
 
