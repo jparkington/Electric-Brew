@@ -41,9 +41,9 @@ def slsqp(X    : np.ndarray            = lasso_outputs['X_train'],
     random_samples  = random.sample(range(len(X_dense)), int(len(X_dense) * 0.05))
     mean_total_cost = best.predict(X).mean()
     cost_bounds     = (mean_total_cost * 0.75, mean_total_cost * 0.95)
-    mean_constraint = X_dense[:, 1].mean()
+    mean_constraint = X_dense[:, 0].mean()
     constraints     = {'type' : 'eq', 
-                       'fun'  : lambda features: features[1] - mean_constraint}
+                       'fun'  : lambda features: features[0] - mean_constraint}
 
     # 2: Define the objective function
     def objective_function(features):
