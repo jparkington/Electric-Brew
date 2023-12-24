@@ -386,27 +386,31 @@ The percent changes we observe are a measure of how much more or less frequently
 
 These changes don't directly describe costs, but rather how each operational feature contributes to achieving the desired cost-efficiency.
 
-**Seasonal Impact on Energy Costs**
+In our final phase of unsupervised analysis, we integrate insights from LASSO and Random Forest with our optimization efforts to comprehend the impact on Austin Street Brewery's operational features.
 
-The significant rise in features like 'cat__month_name_March', 'January', and 'February' suggests that winter months are much more prevalent in the optimized, cost-efficient scenarios. 
+**Understanding the Final Metric**
 
-This could be attributed to the lower reliance on expensive solar energy during these months, as solar generation is less effective in Maine's winter. Consequently, electricity costs are generally lower during these times.
+The percent changes in features from optimization processes provide a nuanced understanding of their influence in cost-efficient scenarios. These changes don't directly translate to costs, but illustrate how each feature affects the brewery's cost-efficiency efforts.
 
-**Daily Business as Usual**
+**Seasonal and Hourly Patterns**
 
-The appearance of specific hours like 'cat__hour_16', '11', '12', and '13' in the optimization outcomes might not indicate a significant shift in operational strategy but rather a reinforcement of existing practices.
+- **Summer Months and Early Hours**: The significant increases in 'cat__month_name_September' (**244%**) and 'July' (**137%**) highlight the potential for strategic energy management in summer months, aligning with higher solar energy production balanced with cheaper conventional energy. Contrary to our initial focus on winter energy demands, this suggests summer months as pivotal for leveraging solar power, especially in Maine's climate. The emphasis on early hours like '4' (**51%**) and '0' (**38%**) could reflect operational strategies for tapping into conventional energy when it's most cost-efficienct, reinforcing the hypothesis that a shift in high-energy processes to these times could reap huge benefits.
 
-Given that LASSO initially showed no specific hour as significantly impactful and considering that these hours are peak times, it could be that the optimization is suggesting a 'business as usual' approach, where operations continue as they are, especially if the energy rates remain constant across all hours. The decrease in intensity of off-hours like '1', '2', '3', and '5' further underscores that notion.
+- **Afternoon Operational Efficiency**: The attention to afternoon hours 'cat__hour_14' (**77%**) and '13' (**59%**) aligns with our earlier observations of peak operational activities and high energy costs during these times. Rather than expanding operations, the brewery might benefit from optimizing existing processes in these hours.
 
-**Focus on Specific Operational Areas**
+**Operational Areas: A Focus on Efficiency**
 
-The increase in features such as 'cat__operational_area_Industrial-2' and 'Front' may indicate areas where slight operational adjustments could lead to outsized cost benefits compared to the other areas.
+**Operational Areas: A Focus on Efficiency**
 
-On the other hand, seeing 'Industrial-3' as the most intense detractor to cost-efficiency validates our earlier finding that shifting the operational focus (installing an energy-intense cooler) in the middle of the analytical timeframe sticks out when predicting costs.
+- **Leveraging Consistent Usage Patterns**: The analysis highlights 'cat__operational_area_Brewpump' (**31%**) and 'Industrial-1' (**29%**) as areas with consistent usage patterns, suggesting their operations are already streamlined and efficient. This consistency is beneficial, as it implies stable energy consumption without the inefficiencies associated with frequent system shutdowns and startups. In these areas, maintaining the current operational rhythm appears to be advantageous, allowing the brewery to leverage these stable patterns for ongoing energy efficiency.
 
-**Influence of Supplier Selection**
+- **Reassessing Areas with High Variability**: In contrast, the large decrease in influence of 'Package/Hot/Chill' (**-82%**) and 'Industrial-3' (**-81%**) in the optimized scenarios suggests these areas have room for improvement in terms of energy efficiency. Unlike the consistently used areas, these might be experiencing variability in energy consumption, potentially due to irregular operation or less efficient equipment. Focusing on optimizing these areas, possibly through process improvements, upgrading to energy-efficient equipment, or reevaluating operational schedules, could lead to significant savings.
 
-The changes seen in 'cat__supplier_Standard' and 'MEGA' emphasize the significant role that supplier choice plays in energy cost management. The optimization suggests that careful selection of suppliers with preferable rates or even renegotiating terms could be effective in controlling operational costs.
+**Supplier Selection and Energy Costs**
+
+- **Solar Energy's Balanced Role**: The positive change in 'cat__supplier_Ampion' (**20%**) reflects a more nuanced role for solar energy than initially thought. Despite its higher costs, as observed in earlier analyses, this finding suggests Austin Street Brewery might consider a balanced approach, where solar power complements rather than fully replaces conventional energy sources, optimizing both costs and environmental impact based on availability of other power sources.
+
+- **Supplier Dynamics in Cost Management**: Changes in the influence of suppliers like 'MEGA' (**-2%**) and 'CONSTELLATION' (**-25%**) underscore the impact of supplier choice on energy cost management. Earlier findings highlighted the variability in costs with different suppliers. This optimization suggests exploring strategic supplier partnerships or negotiating favorable rates with suppliers like 'CONSTELLATION' to control operational costs effectively.
 
 
 ### Major Takeaways

@@ -58,7 +58,6 @@ def percent_changes(X    : np.ndarray       = lasso_outputs['X_train'],
     plt.savefig(file_path)
     plt.show()
 
-
 if __name__ == "__main__":
 
     percent_changes()
