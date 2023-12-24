@@ -386,8 +386,6 @@ The percent changes we observe are a measure of how much more or less frequently
 
 These changes don't directly describe costs, but rather how each operational feature contributes to achieving the desired cost-efficiency.
 
-In our final phase of unsupervised analysis, we integrate insights from LASSO and Random Forest with our optimization efforts to comprehend the impact on Austin Street Brewery's operational features.
-
 #### Seasonal and Hourly Patterns
 
 - **Summer Months and Early Hours**: The significant increases in 'cat__month_name_September' (**244%**) and 'July' (**137%**) highlight the potential for strategic energy management in summer months, aligning with higher solar energy production balanced with cheaper conventional energy. Contrary to our initial focus on winter energy demands, this suggests summer months as pivotal for leveraging solar power, especially in Maine's climate. The emphasis on early hours like '4' (**51%**) and '0' (**38%**) could reflect operational strategies for tapping into conventional energy when it's most cost-efficienct, reinforcing the hypothesis that a shift in high-energy processes to these times could reap huge benefits.
