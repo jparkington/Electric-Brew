@@ -380,7 +380,7 @@ make jp11
 
 For the concluding phase of our unsupervised analysis, we turn our attention to understanding the impact of our optimization efforts on various operational features picked by LASSO and amplified in predictive power by Random Forest.
 
-**Understanding the Final Metric**
+#### Understanding the Final Metric
 
 The percent changes we observe are a measure of how much more or less frequently (or intensely) a particular feature appears in the optimized scenarios compared to the original dataset. A positive percentage indicates an increase in the feature's influence in the optimized cost-efficient scenarios, while a negative percentage suggests a decrease. 
 
@@ -388,25 +388,19 @@ These changes don't directly describe costs, but rather how each operational fea
 
 In our final phase of unsupervised analysis, we integrate insights from LASSO and Random Forest with our optimization efforts to comprehend the impact on Austin Street Brewery's operational features.
 
-**Understanding the Final Metric**
-
-The percent changes in features from optimization processes provide a nuanced understanding of their influence in cost-efficient scenarios. These changes don't directly translate to costs, but illustrate how each feature affects the brewery's cost-efficiency efforts.
-
-**Seasonal and Hourly Patterns**
+#### Seasonal and Hourly Patterns
 
 - **Summer Months and Early Hours**: The significant increases in 'cat__month_name_September' (**244%**) and 'July' (**137%**) highlight the potential for strategic energy management in summer months, aligning with higher solar energy production balanced with cheaper conventional energy. Contrary to our initial focus on winter energy demands, this suggests summer months as pivotal for leveraging solar power, especially in Maine's climate. The emphasis on early hours like '4' (**51%**) and '0' (**38%**) could reflect operational strategies for tapping into conventional energy when it's most cost-efficienct, reinforcing the hypothesis that a shift in high-energy processes to these times could reap huge benefits.
 
 - **Afternoon Operational Efficiency**: The attention to afternoon hours 'cat__hour_14' (**77%**) and '13' (**59%**) aligns with our earlier observations of peak operational activities and high energy costs during these times. Rather than expanding operations, the brewery might benefit from optimizing existing processes in these hours.
 
-**Operational Areas: A Focus on Efficiency**
-
-**Operational Areas: A Focus on Efficiency**
+#### Operational Areas: A Focus on Efficiency
 
 - **Leveraging Consistent Usage Patterns**: The analysis highlights 'cat__operational_area_Brewpump' (**31%**) and 'Industrial-1' (**29%**) as areas with consistent usage patterns, suggesting their operations are already streamlined and efficient. This consistency is beneficial, as it implies stable energy consumption without the inefficiencies associated with frequent system shutdowns and startups. In these areas, maintaining the current operational rhythm appears to be advantageous, allowing the brewery to leverage these stable patterns for ongoing energy efficiency.
 
 - **Reassessing Areas with High Variability**: In contrast, the large decrease in influence of 'Package/Hot/Chill' (**-82%**) and 'Industrial-3' (**-81%**) in the optimized scenarios suggests these areas have room for improvement in terms of energy efficiency. Unlike the consistently used areas, these might be experiencing variability in energy consumption, potentially due to irregular operation or less efficient equipment. Focusing on optimizing these areas, possibly through process improvements, upgrading to energy-efficient equipment, or reevaluating operational schedules, could lead to significant savings.
 
-**Supplier Selection and Energy Costs**
+#### Supplier Selection and Energy Costs
 
 - **Solar Energy's Balanced Role**: The positive change in 'cat__supplier_Ampion' (**20%**) reflects a more nuanced role for solar energy than initially thought. Despite its higher costs, as observed in earlier analyses, this finding suggests Austin Street Brewery might consider a balanced approach, where solar power complements rather than fully replaces conventional energy sources, optimizing both costs and environmental impact based on availability of other power sources.
 
