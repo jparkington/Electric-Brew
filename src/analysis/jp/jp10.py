@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+import warnings
 
 from analysis.jp.jp06 import lasso_outputs
 from analysis.jp.jp08 import random_forest_outputs
+from joblib           import Parallel, delayed
 from sklearn.ensemble import RandomForestRegressor
 from scipy.optimize   import minimize
 from typing           import List, Tuple
@@ -40,31 +42,30 @@ def slsqp(X    : np.ndarray            = lasso_outputs['X_train'],
     X_dense         = X.toarray()
     random_samples  = random.sample(range(len(X_dense)), int(len(X_dense) * 0.05))
     mean_total_cost = best.predict(X).mean()
-    cost_bounds     = (mean_total_cost * 0.70, mean_total_cost * 0.80)
+    cost_bounds     = (mean_total_cost * 0.65, mean_total_cost * 0.85)
     mean_constraint = X_dense[:, 0].mean()
     constraints     = {'type': 'eq', 'fun': lambda features: features[0] - mean_constraint}
+    bounds          = [(0.01, None) for _ in range(X.shape[1])]
 
     # 2: Define the objective function
-    def objective_function(features):
-        return best.predict([features])[0]
+    def optimize_sample(i):
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category = RuntimeWarning) # Scipy warns every time the bounds are clipped
+
+            result = minimize(lambda features: best.predict([features])[0], 
+                              np.clip(X_dense[i], 0.01, None), 
+                              method      = 'SLSQP', 
+                              constraints = constraints, 
+                              bounds      = bounds)
+            
+            return result.x, best.predict([result.x])[0]
 
     # 3: Optimizing and storing results
-    all_sets       = []
-    optimized_sets = []
+    results = Parallel(n_jobs = -1)(delayed(optimize_sample)(i) for i in random_samples)
 
-    for i in random_samples:
-        
-        reduction_limit = 0.25 # No feature can reduce more than 25% of its original value
-        bounds = [(max(feature * reduction_limit, 0.05), None) for feature in X_dense[i]]
-
-        result = minimize(objective_function, X_dense[i], method = 'SLSQP', constraints = constraints, bounds = bounds)
-        all_sets.append(result.x)
-
-        if cost_bounds[0] <= objective_function(result.x) <= cost_bounds[1]:
-            optimized_sets.append(result.x)
-
-    return {'all_sets'       : all_sets, 
-            'optimized_sets' : optimized_sets, 
+    return {'all_sets'       : [result[0] for result in results], 
+            'optimized_sets' : [result[0] for result in results if cost_bounds[0] <= result[1] <= cost_bounds[1]], 
             'cost_bounds'    : cost_bounds}
 
 slsqp_outputs = pickle_and_load(slsqp, 'jp10.pkl')
